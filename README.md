@@ -57,7 +57,6 @@ This project is a documentation and configuration toolkit for AI agents. It leve
 [![Graphify](https://img.shields.io/badge/Graphify-F59E0B?style=for-the-badge&logo=neo4j&logoColor=white)](https://github.com/safishamsi/graphify)
 [![Firecrawl](https://img.shields.io/badge/Firecrawl-EF4444?style=for-the-badge&logo=firefox&logoColor=white)](https://firecrawl.dev)
 [![Morph](https://img.shields.io/badge/Morph-3B82F6?style=for-the-badge&logo=vim&logoColor=white)](https://github.com/opencode-ai/morph)
-[![Maven](https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -125,7 +124,7 @@ Every task follows this sequence:
 | **Spec** (gate) | @system-analyst | GWT-format specs, DDD review |
 | **Execute** | @developer | Implementation + tests |
 | **Review** | @quality-analyst | Code quality, security, DevOps |
-| **Verify** | Build commands | `mvn test`, conventions check |
+| **Verify** | Quality gates | Validated JSON, conventions check |
 | **Ship** | Tech lead | Post-flight protocol |
 
 ### Key Commands
