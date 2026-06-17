@@ -57,6 +57,7 @@ This project is a documentation and configuration toolkit for AI agents. It leve
 [![Graphify](https://img.shields.io/badge/Graphify-F59E0B?style=for-the-badge&logo=neo4j&logoColor=white)](https://github.com/safishamsi/graphify)
 [![Firecrawl](https://img.shields.io/badge/Firecrawl-EF4444?style=for-the-badge&logo=firefox&logoColor=white)](https://firecrawl.dev)
 [![Morph](https://img.shields.io/badge/Morph-3B82F6?style=for-the-badge&logo=vim&logoColor=white)](https://github.com/opencode-ai/morph)
+[![Ponytail](https://img.shields.io/badge/Ponytail-F97316?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIgMTJsMTAgMTAiLz48cGF0aCBkPSJNMTIgMjJsMTAtMTAiLz48cGF0aCBkPSJNMTIgMTJsLTEwLTEwIi8+PHBhdGggZD0iTTEyIDEybDEwLTEwIi8+PC9zdmc+&logoColor=white)](https://github.com/DietrichGebert/ponytail)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -82,20 +83,56 @@ git --version
 
 ### Installation
 
-1. Clone the repo
+1. **Clone the repo**
 
    ```sh
    git clone https://github.com/RizkiRachman/workflow-state-engine.git
    cd workflow-state-engine
    ```
 
-2. Bootstrap symlinks
+2. **Bootstrap symlinks and verify prerequisites**
 
    ```sh
    bash setup.sh
    ```
 
-3. Verify the orchestration envelope loads
+   `setup.sh` runs pre-flight checks (Git, OpenCode, lean-ctx), verifies MCP tools are available, checks required plugins are installed, and creates `.opencode/` symlinks pointing to the root-level source directories.
+
+3. **Configure `opencode.json`**
+
+   Copy the template and configure your API keys:
+
+   ```sh
+   cp opencode.json.template opencode.json
+   # Then edit opencode.json — replace YOUR_SUMOPOD_API_KEY,
+   # YOUR_FIRECRAWL_API_KEY, and other placeholders with real values.
+   ```
+
+   The template (`opencode.json.template`) annotates each MCP server and plugin with its tier:
+
+   | Tier | Label | Components |
+   |------|-------|------------|
+   | **MANDATORY** | All agents rely on these | `gitnexus`, `lean-ctx` |
+   | **RECOMMENDED** | Adds web capabilities | `firecrawl` |
+   | **OPTIONAL** | Enhances specific agents | `context7`, all plugins |
+
+4. **Run MCP verification (optional)**
+
+   ```sh
+   source scripts/check-mcp.sh
+   ```
+
+   This verifies that all MANDATORY MCP servers (lean-ctx, gitnexus) are available and prints RECOMMENDED/OPTIONAL status. Compatible with `set -e` scripts.
+
+5. **Run plugin verification (optional)**
+
+   ```sh
+   bash scripts/check-plugins.sh
+   ```
+
+   This checks all npm plugins from `opencode.json` are installed globally or locally, and verifies custom plugins (`auto-wrap.ts`, `ponytail.mjs`) exist on disk.
+
+6. **Verify the orchestration envelope loads**
 
    ```sh
    lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode exact
@@ -103,11 +140,13 @@ git --version
 
    If the envelope exists, you're resuming a session. If not, a fresh one will be created on first delegation.
 
-4. (Optional) Configure your branch
+7. **Configure your branch**
 
    ```sh
    git checkout -b feature/your-task-description
    ```
+
+   ⚠️ Never work on `main` — the orchestrator enforces this before any operation.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -167,20 +206,16 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 .
 ├── agent.md           ← Orchestrator instructions (instructions[0])
 ├── agents/            ← 11 agent instruction files
-│   ├── system-analyst.md
-│   ├── developer.md
-│   ├── quality-analyst.md
-│   └── ...
-├── skills/            ← 35 skill directories
-│   ├── java-developer/
-│   ├── spec-driven-development/
-│   ├── gitnexus/
-│   └── ...
+├── skills/            ← 35 skill directories + package.json per skill
 ├── template/          ← Shared JSON envelope, state.md, superpowers contract
 ├── rules/             ← State machine transitions, scoring thresholds
 ├── usage/             ← 15 tool usage guides
-├── doc/               ← Workflow docs, project docs, gap analyses
-└── config/            ← Plugin configurations
+├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
+├── config/            ← Plugin configurations
+├── scripts/           ← Verification scripts (check-mcp.sh, check-plugins.sh)
+├── opencode.json      ← OpenCode configuration
+├── opencode.json.template ← Redacted template with annotated MCP tiers
+└── setup.sh           ← Bootstrap: pre-flight checks + MCP/plugin verification + symlinks
 ```
 
 ### Agent Delegation Model
@@ -238,6 +273,8 @@ Three-tier scoring runs after every delegation:
 - [x] Ponytail frugality ladder integration
 - [x] Vercel-style skill packaging (package.json per skill)
 - [x] Cross-reference audit and broken-link detection
+- [x] Template configuration (opencode.json.template with MCP/plugin tiers)
+- [x] MCP and plugin verification scripts (scripts/check-mcp.sh, check-plugins.sh)
 - [ ] Skill registry publishing (skills.sh)
 - [ ] Intensity modes for ponytail (off/lite/full/ultra)
 - [ ] Debt ledger harvesting (`/ponytail-debt` command)
@@ -289,7 +326,7 @@ Additional thanks to:
 - [GitNexus](https://github.com/RizkiRachman/gitnexus) — code intelligence graph
 - [Graphify](https://github.com/safishamsi/graphify) — knowledge graph builder
 - [Firecrawl](https://firecrawl.dev) — web scraping for AI agents
-- [Ponytail](https://github.com/DietrichGebert/ponytail) — frugality ladder inspiration
+- [Ponytail](https://github.com/DietrichGebert/ponytail) — frugality ladder inspiration and plugin
 - [Vercel Skills](https://github.com/vercel-labs/skills) — cross-agent skill packaging
 - [Img Shields](https://shields.io) — badge generation
 - [Choose an Open Source License](https://choosealicense.com) — license guidance
