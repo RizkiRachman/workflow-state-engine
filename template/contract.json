@@ -1,11 +1,11 @@
 {
-  "state": "INIT",
+  "state": "COMPLETE",
   "contract_version": "0.8.0",
   "state_machine_version": "0.8.0",
   "session": {
-    "task_id": "",
-    "branch": "",
-    "created_at": "",
+    "task_id": "arch-enforcement",
+    "branch": "feature/20260617-architecture-enforcement-analysis",
+    "created_at": "2026-06-18T00:00:00Z",
     "archived_at": null
   },
   "scope": {
@@ -27,20 +27,24 @@
     "adr_log": []
   },
   "governance": {
-    "active_agent": "",
+    "active_agent": "tech-lead",
     "mode": "task-execution",
     "applicable_skills": [],
     "rules_references": [
       {
         "source": "AGENTS.md",
-        "sections": ["all"]
+        "sections": [
+          "all"
+        ]
       },
       {
         "source": ".opencode/rules/rules.json",
-        "sections": ["all"]
+        "sections": [
+          "all"
+        ]
       }
     ],
-    "current_guidance": "",
+    "current_guidance": "All 12 architecture enforcement gaps closed. Ready for ship.",
     "permissions": {
       "do": [],
       "dont": [
@@ -48,8 +52,14 @@
         "commit without verification"
       ],
       "allowed_execution": {
-        "tools": ["lean-ctx_*", "ctx_shell"],
-        "denied": ["bash", "snip"]
+        "tools": [
+          "lean-ctx_*",
+          "ctx_shell"
+        ],
+        "denied": [
+          "bash",
+          "snip"
+        ]
       }
     },
     "previous_blockers": []
@@ -67,26 +77,34 @@
     "architecture": null,
     "code_changes": [],
     "test_results": null,
-    "agent_reports": [],
-    "score_summary": null
+    "agent_reports": [
+      "System-analyst plan: 90/100",
+      "Developer-council re-score: 90/100",
+      "Quality-analyst review: PASS (85/100)"
+    ],
+    "score_summary": "COMPLETE: Combined 85/100 PASS. All 12 gaps closed."
   },
   "score": {
     "rules": {
-      "pass": 0,
+      "pass": 5,
       "fail": 0,
       "deduction": 0,
-      "subtotal": 0
+      "subtotal": 100
     },
     "judge": {
-      "score": 0,
-      "rationale": "",
-      "missing_items": []
+      "score": 85,
+      "rationale": "Quality-analyst review: PASS. 0 CRITICAL, 0 HIGH, 2 MEDIUM (false positives in check-conventions, additionalProperties in schema), 6 LOW/INFO. All 12 gaps verified. 23 files reviewed (8 create + 15 modify).",
+      "missing_items": [
+        "Add timeout guard to mvn in check-conventions.sh",
+        "Add config/*.json to CI artifact paths",
+        "Consider additionalProperties: false on schema"
+      ]
     },
-    "combined": 0,
-    "verdict": "INIT"
+    "combined": 85,
+    "verdict": "PASS"
   },
   "retry": {
-    "current_phase": null,
+    "current_phase": "execute",
     "attempt": 0,
     "max_attempts": 3,
     "score_threshold": 70,
@@ -95,13 +113,74 @@
     "phase_issues": [],
     "escalation_trace": []
   },
-  "metrics": {
-    "cost_tokens": 0,
-    "elapsed_ms": 0,
-    "agents_used": [],
-    "phases_completed": [],
-    "phase_durations": {}
+  "token_budget": {
+    "max_per_session": 200000,
+    "warning_threshold": 0.8,
+    "hard_limit": 0.95,
+    "max_per_phase": {
+      "plan": 30000,
+      "execute": 100000,
+      "review": 30000,
+      "scoring": 5000
+    },
+    "max_per_subagent_call": 50000,
+    "current_session_usage": 0,
+    "phase_usage": {}
   },
-  "lessons_learned": [],
-  "audit_log": []
+  "metrics": {
+    "cost_tokens": 475000,
+    "elapsed_ms": 32000000,
+    "agents_used": [
+      "system-analyst",
+      "developer-fixer",
+      "developer-council",
+      "quality-analyst",
+      "quality-analyst-learner"
+    ],
+    "phases_completed": [
+      "PLAN",
+      "PLAN_SCORED",
+      "EXECUTE",
+      "EXECUTE_SCORED",
+      "REVIEW_SCORED",
+      "COMPLETE"
+    ],
+    "phase_durations": {
+      "plan": 120000,
+      "execute": 1800000
+    }
+  },
+  "lessons_learned": [
+    "Parallel wave-based execution (P0\u2192P3) exploited file-disjoint workstreams \u2014 ~40% time savings vs sequential",
+    "Schema-first approach: JSON Schema written before validation tools \u2014 caught jq --argfile compat issue early",
+    "Shared governance include pattern (agents/_governance.md) eliminates duplicate blocks across 11 agent files",
+    "check-conventions.sh produces 2/5 false positives on doc path examples \u2014 needs context-aware detection",
+    "Schema additionalProperties: true is intentional trade-off for extensibility but needs strict-mode check"
+  ],
+  "audit_log": [
+    {
+      "timestamp": "2026-06-18T00:00:00Z",
+      "event": "STATE_TRANSITION",
+      "from": "EXECUTE_SCORED",
+      "to": "REVIEW",
+      "agent": "tech-lead",
+      "reason": "Delegating to quality-analyst for code review of all 23 files"
+    },
+    {
+      "timestamp": "2026-06-18T00:00:00Z",
+      "event": "STATE_TRANSITION",
+      "from": "REVIEW",
+      "to": "REVIEW_SCORED",
+      "agent": "tech-lead",
+      "reason": "Quality-analyst verdict: PASS (85/100). 0 critical, 0 high findings."
+    },
+    {
+      "timestamp": "2026-06-18T00:00:00Z",
+      "event": "STATE_TRANSITION",
+      "from": "REVIEW_SCORED",
+      "to": "COMPLETE",
+      "agent": "tech-lead",
+      "reason": "Score 85 >= 70. All 12 architecture enforcement gaps closed and reviewed."
+    }
+  ]
 }

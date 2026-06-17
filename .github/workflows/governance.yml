@@ -1,0 +1,352 @@
+# =============================================================================
+# Governance Pipeline — CI/CD for Architecture Enforcement
+# =============================================================================
+# Runs on push to any branch (except main) and PRs targeting main.
+# Enforces project conventions, JSON schema validity, and toolkit integrity.
+# =============================================================================
+
+name: Governance Pipeline
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # Job 1: conventions-check
+  # ---------------------------------------------------------------------------
+  conventions-check:
+    name: Conventions Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run project conventions script
+        id: conventions
+        continue-on-error: false
+        run: |
+          if bash scripts/check-conventions.sh; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      - name: Scan ponytail markers (debt tracking)
+        id: ponytail
+        continue-on-error: false
+        run: |
+          if bash scripts/scan-ponytail-debt.sh --strict; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      - name: Upload results as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conventions-check-results
+          path: |
+            scripts/*.sh
+          retention-days: 7
+          overwrite: true
+
+      - name: Summarize conventions check
+        if: always()
+        run: |
+          echo "## Conventions Check Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Conventions script**: ${{ steps.conventions.outputs.status || 'skipped' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Ponytail debt scan**: ${{ steps.ponytail.outputs.status || 'skipped' }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Job 2: schema-validation
+  # ---------------------------------------------------------------------------
+  schema-validation:
+    name: Schema Validation
+    needs: [conventions-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate template/contract.json is valid JSON
+        id: contract-json
+        run: |
+          if python3 -m json.tool template/contract.json > /dev/null 2>&1; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+            echo "✓ template/contract.json is valid JSON"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            echo "✗ template/contract.json is NOT valid JSON"
+            exit 1
+          fi
+
+      - name: Validate contract.schema.json is valid JSON
+        id: schema-json
+        run: |
+          if python3 -m json.tool template/contract.schema.json > /dev/null 2>&1; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+            echo "✓ template/contract.schema.json is valid JSON"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            echo "✗ template/contract.schema.json is NOT valid JSON"
+            exit 1
+          fi
+
+      - name: Validate contract.json against schema
+        id: schema-validate
+        run: |
+          ERRORS=0
+
+          # Extract required top-level keys from schema
+          REQUIRED_KEYS=$(python3 -c "
+import json
+with open('template/contract.schema.json') as f:
+    schema = json.load(f)
+required = schema.get('required', [])
+for k in required:
+    print(k)
+")
+
+          # Check each required key exists in contract.json
+          for key in $REQUIRED_KEYS; do
+            if python3 -c "
+import json
+with open('template/contract.json') as f:
+    doc = json.load(f)
+assert '$key' in doc, 'Missing required key: $key'
+" 2>/dev/null; then
+              echo "  ✓ Required key '$key' present"
+            else
+              echo "  ✗ Missing required key '$key'"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "status=pass" >> "$GITHUB_OUTPUT"
+
+      - name: Validate all JSON files in config/
+        id: config-json
+        run: |
+          ERRORS=0
+          for f in config/*.json; do
+            if [ -f "$f" ]; then
+              if python3 -m json.tool "$f" > /dev/null 2>&1; then
+                echo "  ✓ $f is valid JSON"
+              else
+                echo "  ✗ $f is NOT valid JSON"
+                ERRORS=$((ERRORS + 1))
+              fi
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "status=pass" >> "$GITHUB_OUTPUT"
+
+      - name: Upload schema validation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-validation-results
+          path: |
+            template/contract.json
+            template/contract.schema.json
+            config/*.json
+          retention-days: 7
+          overwrite: true
+
+      - name: Summarize schema validation
+        if: always()
+        run: |
+          echo "## Schema Validation Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **contract.json validity**: ${{ steps.contract-json.outputs.status || 'skipped' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **contract.schema.json validity**: ${{ steps.schema-json.outputs.status || 'skipped' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Schema validation**: ${{ steps.schema-validate.outputs.status || 'skipped' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Config JSON files**: ${{ steps.config-json.outputs.status || 'skipped' }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Job 3: toolkit-integrity
+  # ---------------------------------------------------------------------------
+  toolkit-integrity:
+    name: Toolkit Integrity
+    needs: [conventions-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify .opencode symlinks resolve correctly
+        id: symlinks
+        run: |
+          ERRORS=0
+          declare -A SYMLINK_MAP=(
+            ["agents"]="agents"
+            ["skills"]="skills"
+            ["orchestration"]="template"
+            ["planning"]="doc/planning"
+            ["reports"]="doc/reports"
+            ["usage"]="usage"
+            ["rules"]="rules"
+            ["config"]="config"
+          )
+
+          for name in "${!SYMLINK_MAP[@]}"; do
+            target="${SYMLINK_MAP[$name]}"
+            link_path=".opencode/$name"
+
+            if [ ! -L "$link_path" ] && [ ! -d "$link_path" ]; then
+              echo "  ✗ $link_path — does not exist (expected symlink or directory to $target)"
+              ERRORS=$((ERRORS + 1))
+              continue
+            fi
+
+            # Check if it's a symlink pointing to the right place, or a plain directory
+            if [ -L "$link_path" ]; then
+              resolved=$(readlink "$link_path")
+              if [ "$resolved" = "$target" ]; then
+                echo "  ✓ $link_path → $resolved"
+              else
+                echo "  ✗ $link_path → $resolved (expected → $target)"
+                ERRORS=$((ERRORS + 1))
+              fi
+            elif [ -d "$link_path" ]; then
+              echo "  ~ $link_path is a directory (not a symlink) — assuming correct"
+            fi
+          done
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "status=pass" >> "$GITHUB_OUTPUT"
+
+      - name: Verify all referenced agent files exist
+        id: agent-files
+        run: |
+          ERRORS=0
+          AGENTS=$(python3 -c "
+import json
+with open('opencode.json') as f:
+    cfg = json.load(f)
+for name in cfg.get('agents', {}):
+    print(name)
+" 2>/dev/null)
+
+          if [ -z "$AGENTS" ]; then
+            echo "  ! No agents found in opencode.json — checking default agents/*.md files"
+            for f in agents/*.md; do
+              if [ -f "$f" ]; then
+                echo "  ✓ $f exists"
+              fi
+            done
+          else
+            echo "  Verifying agents listed in opencode.json..."
+            for name in $AGENTS; do
+              file="agents/${name}.md"
+              if [ -f "$file" ]; then
+                echo "  ✓ $file exists (agent: $name)"
+              else
+                echo "  ✗ $file NOT FOUND (agent: $name)"
+                ERRORS=$((ERRORS + 1))
+              fi
+            done
+          fi
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "status=pass" >> "$GITHUB_OUTPUT"
+
+      - name: Upload toolkit integrity results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolkit-integrity-results
+          path: |
+            opencode.json
+          retention-days: 7
+          overwrite: true
+
+      - name: Summarize toolkit integrity
+        if: always()
+        run: |
+          echo "## Toolkit Integrity Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Symlinks**: ${{ steps.symlinks.outputs.status || 'skipped' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Agent files**: ${{ steps.agent-files.outputs.status || 'skipped' }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Job 4: summary
+  # ---------------------------------------------------------------------------
+  summary:
+    name: Governance Summary
+    if: always()
+    needs: [conventions-check, schema-validation, toolkit-integrity]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate job results
+        id: aggregate
+        run: |
+          TOTAL=3
+          PASSED=0
+          FAILED=0
+
+          declare -A JOBS=(
+            ["conventions-check"]="${{ needs.conventions-check.result }}"
+            ["schema-validation"]="${{ needs.schema-validation.result }}"
+            ["toolkit-integrity"]="${{ needs.toolkit-integrity.result }}"
+          )
+
+          echo "| Job | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|--------|" >> "$GITHUB_STEP_SUMMARY"
+          for job in "${!JOBS[@]}"; do
+            result="${JOBS[$job]}"
+            echo "| $job | $result |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$result" = "success" ]; then
+              PASSED=$((PASSED + 1))
+            else
+              FAILED=$((FAILED + 1))
+            fi
+          done
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Overall: $PASSED / $TOTAL jobs passed" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "❌ Governance pipeline has failures — review the failing jobs above." >> "$GITHUB_STEP_SUMMARY"
+            echo "conclusion=failure" >> "$GITHUB_OUTPUT"
+          else
+            echo "✅ All governance checks passed." >> "$GITHUB_STEP_SUMMARY"
+            echo "conclusion=success" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set final status
+        if: always()
+        run: |
+          CONCLUSION="${{ steps.aggregate.outputs.conclusion }}"
+          if [ "$CONCLUSION" = "failure" ]; then
+            exit 1
+          fi

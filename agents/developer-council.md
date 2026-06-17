@@ -42,13 +42,13 @@ You are the **council** — multi-LLM consensus engine. You run several councill
 
 ## Orchestration Envelope — Session Protocol
 
-The orchestrator uses a **shared JSON envelope** (`template/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
+The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
 
 ### At Session Start (before any work)
 1. **READ** — Load the envelope: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    - If found: extract `requirements.*`, `decisions.*`, `governance.*` — these are your analysis inputs
    - If NOT found (run standalone): Create a fresh envelope:
-     - Read `template/contract.json` as base
+     - Read `.opencode/orchestration/contract.json` as base
      - Populate `session.task_id` (short slug like `"developer-council-standalone-<date>"`), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract val <base JSON with populated fields>`
 2. **UPDATE** — After completing analysis, persist results:

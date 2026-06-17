@@ -43,13 +43,13 @@ You are a read-only code reviewer. You analyze code, configs, and dependencies �
 
 ## Orchestration Envelope — Session Protocol
 
-The orchestrator uses a **shared JSON envelope** (`template/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
+The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
 
 ### At Session Start (before any work)
 1. **READ** — Load the envelope: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    - If found: extract `requirements.*`, `governance.*`, `retry.issues[]`, `outputs.code_changes[]` (these tell you what code was changed and what to review)
    - If NOT found (running standalone, not via orchestrator): Create a fresh envelope:
-     - Read `template/contract.json` as base
+     - Read `.opencode/orchestration/contract.json` as base
      - Populate `session.task_id` (short slug like `"quality-analyst-standalone-<date>"`), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract value <base JSON with populated fields>`
      - Log the standalone session for traceability

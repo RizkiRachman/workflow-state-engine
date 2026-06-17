@@ -212,7 +212,7 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 ├── usage/             ← 15 tool usage guides
 ├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
 ├── config/            ← Plugin configurations
-├── scripts/           ← Verification scripts (check-mcp.sh, check-plugins.sh)
+├── scripts/           ← Verification & architecture enforcement scripts (check-conventions.sh, validate-toolkit.sh, check-mcp.sh, check-plugins.sh, scan-ponytail-debt.sh, archive-sessions.sh)
 ├── opencode.json      ← OpenCode configuration
 ├── opencode.json.template ← Redacted template with annotated MCP tiers
 └── setup.sh           ← Bootstrap: pre-flight checks + MCP/plugin verification + symlinks
@@ -275,6 +275,16 @@ Three-tier scoring runs after every delegation:
 - [x] Cross-reference audit and broken-link detection
 - [x] Template configuration (opencode.json.template with MCP/plugin tiers)
 - [x] MCP and plugin verification scripts (scripts/check-mcp.sh, check-plugins.sh)
+- [x] Architecture convention checking (scripts/check-conventions.sh — agent paths, JSON schema, forbidden patterns, state.md sync)
+- [x] Toolkit integrity validation (scripts/validate-toolkit.sh — symlinks, contract integrity, agent consistency, cross-references)
+- [x] Ponytail debt scanning (scripts/scan-ponytail-debt.sh — ponytail:, TODO, FIXME, HACK markers)
+- [x] Session archival (scripts/archive-sessions.sh — days-based cleanup with dry-run/restore)
+- [x] Shared governance document (agents/_governance.md — contract protocol, permissions, frugality, post-flight)
+- [x] JSON Schema enforcement (template/contract.schema.json — Draft 2020-12, $defs, numeric constraints, valid states)
+- [x] CI/CD governance pipeline (.github/workflows/governance.yml — conventions, schema, toolkit validation)
+- [x] Token budget enforcement (token_budget in contract.json + TOKEN_001-004 in rules.json)
+- [x] Skillful configuration catalog (config/opencode-skillful.json — 56 skills across 7 categories)
+- [x] Configuration template sync (opencode.json.template — 4 placeholders, synced from opencode.json)
 - [ ] Skill registry publishing (skills.sh)
 - [ ] Intensity modes for ponytail (off/lite/full/ultra)
 - [ ] Debt ledger harvesting (`/ponytail-debt` command)

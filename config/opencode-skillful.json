@@ -2,10 +2,89 @@
   "debug": false,
   "promptRenderer": "xml",
   "basePaths": [
+    "skills",
     "~/.config/opencode/skills",
-    "toolkit/skills"
+    "~/.agents/skills"
   ],
+  "lazyLoading": true,
   "modelRenderers": {
     "deepseek-v4-flash": "xml"
+  },
+  "project": {
+    "name": "workflow-state-engine",
+    "description": "Contract-driven state machine orchestration engine for AI agent workflows"
+  },
+  "skillCategories": {
+    "orchestration": [
+      "orchestration-template",
+      "system-analyst",
+      "writing-plans",
+      "executing-plans",
+      "brainstorming",
+      "business-analyst",
+      "spec-driven-dev",
+      "subagent-driven-dev",
+      "verification-before-completion",
+      "shipping-and-launch"
+    ],
+    "development": [
+      "java-developer",
+      "software-developer",
+      "test-driven-dev",
+      "simplify",
+      "code-review-and-quality",
+      "token-optimize",
+      "receiving-code-review",
+      "requesting-code-review",
+      "humanizer"
+    ],
+    "quality": [
+      "qa-expert",
+      "security-expert",
+      "devops-expert",
+      "audit-observability",
+      "observability-and-instrumentation",
+      "doubt-driven-dev"
+    ],
+    "debugging": [
+      "systematic-debugging",
+      "release-plan"
+    ],
+    "codeIntel": [
+      "gitnexus",
+      "graphify"
+    ],
+    "externalData": [
+      "firecrawl-search",
+      "firecrawl-scrape",
+      "firecrawl-interact",
+      "firecrawl-crawl",
+      "firecrawl-download",
+      "firecrawl-map",
+      "firecrawl-monitor",
+      "firecrawl-build-onboarding",
+      "firecrawl-build-scrape",
+      "firecrawl-build-search",
+      "firecrawl-build-interact",
+      "firecrawl-knowledge-base",
+      "firecrawl-knowledge-ingest",
+      "firecrawl-company-directories",
+      "firecrawl-competitive-intel",
+      "firecrawl-dashboard-reporting",
+      "firecrawl-deep-research",
+      "firecrawl-demo-walkthrough",
+      "firecrawl-lead-research",
+      "firecrawl-market-research",
+      "firecrawl-research-papers",
+      "firecrawl-website-design-clone",
+      "firecrawl-workflows"
+    ],
+    "workflow": [
+      "deepwork",
+      "worktrees",
+      "codemap",
+      "clonedeps",
+      "reflect"
+    ]
   }
 }

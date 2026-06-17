@@ -42,13 +42,13 @@ You are a **search specialist for discovering unknowns across the codebase**. Yo
 
 ## Orchestration Envelope — Session Protocol
 
-The orchestrator uses a **shared JSON envelope** (`template/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
+The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
 
 ### At Session Start (before any work)
 1. **READ** — Load the envelope: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    - If found: extract `requirements.goal`, `scope.included`, `scope.excluded` — these tell you what and where to search
    - If NOT found (running standalone): Create a fresh envelope:
-     - Read `template/contract.json` as base
+     - Read `.opencode/orchestration/contract.json` as base
      - Populate `session.task_id` (short slug like `"developer-explorer-standalone-<date>"`), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract value <base JSON with populated fields>`
 
