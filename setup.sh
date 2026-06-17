@@ -74,7 +74,8 @@ ln -sfn ../skills   .opencode/skills
 ln -sfn ../plugins  .opencode/plugins
 ln -sfn ../rules    .opencode/rules
 ln -sfn ../template .opencode/orchestration
-ln -sfn ../doc      .opencode/planning
+ln -sfn ../doc/planning .opencode/planning
+ln -sfn ../doc/reports  .opencode/reports
 ln -sfn ../usage    .opencode/usage
 ln -sfn ../config   .opencode/config
 ln -sfn ../agent.md .opencode/AGENTS.md
@@ -90,7 +91,8 @@ declare -A SYMLINKS=(
   [".opencode/plugins"]="../plugins"
   [".opencode/rules"]="../rules"
   [".opencode/orchestration"]="../template"
-  [".opencode/planning"]="../doc"
+  [".opencode/planning"]="../doc/planning"
+  [".opencode/reports"]="../doc/reports"
   [".opencode/usage"]="../usage"
   [".opencode/config"]="../config"
   [".opencode/AGENTS.md"]="../agent.md"
@@ -122,6 +124,8 @@ if [ "$VALIDATION_FAILED" -eq 1 ]; then
   echo "  .opencode/skills        -> ../skills"
   echo "  .opencode/rules         -> ../rules"
   echo "  .opencode/orchestration -> ../template"
+  echo "  .opencode/planning      -> ../doc/planning"
+  echo "  .opencode/reports       -> ../doc/reports"
   echo "  STATE.md                -> contract/state.md"
   echo "  PROJECT.md              -> doc/project.md"
   echo "  AGENTS.md               -> ../agent.md"
