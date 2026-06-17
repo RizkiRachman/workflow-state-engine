@@ -33,7 +33,7 @@ permission:
 2. **Validate state**: Expected states: `["REVIEW_SCORED", "COMPLETE"]` (post-execution learning)
    → If wrong state → STOP, report "Contract state is ${state}, expected one of: REVIEW_SCORED, COMPLETE"
 3. **Sync ALL memory systems** before analysis:
-   - toolkit/template/state.md, PROJECT.md, AGENTS.md
+   - template/state.md, PROJECT.md, AGENTS.md
    - lean-ctx knowledge (recall architecture, conventions, testing)
    - gitnexus: re-index + detect_changes
    - graphify: check stats
@@ -104,7 +104,7 @@ If found → extract ALL fields: `session`, `requirements`, `decisions`, `output
 
 | Source | Action |
 |--------|--------|
-| `toolkit/template/state.md` | Read full file via `ctx_read` — capture current focus, blockers, decisions, quality metrics |
+| `template/state.md` | Read full file via `ctx_read` — capture current focus, blockers, decisions, quality metrics |
 | `PROJECT.md` | Read via `ctx_read` — project vision, scope, constraints |
 | `AGENTS.md` | Read via `ctx_read` — project conventions |
 | `lean-ctx knowledge` | Recall ALL categories: `ctx_knowledge recall --query "architecture"`, `ctx_knowledge recall --query "conventions"`, `ctx_knowledge recall --query "testing"` |
@@ -139,7 +139,7 @@ Every system listed below **MUST** be updated before the learner completes. **No
 | System | Tool | What to Do |
 |--------|------|------------|
 | **lean-ctx knowledge** | `ctx_knowledge remember` | Persist gotchas, patterns, decisions from `knowledge_updates[]` |
-| **toolkit/template/state.md** | `ctx_edit` | Append completed work to Completed Work section, update Current Focus, add Known Blockers if any |
+| **template/state.md** | `ctx_edit` | Append completed work to Completed Work section, update Current Focus, add Known Blockers if any |
 | **PROJECT.md** | `ctx_edit` | Update if task changed project scope, vision, or added significant new capabilities |
 | **AGENTS.md** | `ctx_edit` | Update if task introduced new conventions, rules, or agent behaviors that should be documented for future sessions |
 | **Orchestration envelope** | `ctx_knowledge remember --key orchestration-contract` | Set `state = COMPLETE`, update `outputs.*`, `score.*`, `metrics.*`, append to `lessons_learned[]` |
@@ -152,7 +152,7 @@ Every system listed below **MUST** be updated before the learner completes. **No
 
 ### Update Order
 1. Write to lean-ctx (fastest, most durable)
-2. Update toolkit/template/state.md (human-readable single source of truth)
+2. Update template/state.md (human-readable single source of truth)
 3. Update PROJECT.md / AGENTS.md if scope or conventions changed
 4. Finalize orchestration envelope (set COMPLETE state, persist lessons)
 5. Re-index gitnexus (keeps code intelligence current)
@@ -256,11 +256,11 @@ Rate the confidence of each learning:
 - **Stop doing**: Extract from "What went wrong" → time-wasting patterns to drop
 - **Continue doing**: Extract from "What went well" → practices that worked
 
-**Example** (from a price comparison regex parsing task):
+**Example** (from a state machine transition logic task):
 ```
-- Start: Validate input format in domain service before calling LLM adapter
-- Stop: Hard‑coding provider names in web layer — use store registry
-- Continue: Using gitnexus_impact before editing shared parsing logic
+- Start: Validate state transition rules in domain service before calling the orchestrator
+- Stop: Hard‑coding state names in web layer — use the contract registry
+- Continue: Using gitnexus_impact before editing shared transition logic
 ```
 
 ### 2. 4L Retro (Liked, Learned, Lacked, Longed For)
@@ -273,11 +273,11 @@ Rate the confidence of each learning:
 - **Lacked**: Missing tooling, docs, or test coverage found during execution
 - **Longed For**: Infrastructure or process changes that would accelerate similar tasks
 
-**Example** (from a Flyway migration + JPA entity task):
+**Example** (from a state machine scoring pipeline task):
 ```
 - Liked: Spotless caught formatting issues before commit — zero rework
-- Learned: @TransactionalEventListener(AFTER_COMMIT) prevents partial‑update bugs
-- Lacked: No test fixture for the new price_history table — manual H2 setup
+- Learned: Pre-loading the orchestration contract before scoring prevents context drift
+- Lacked: No test fixture for the combined scoring verdict — manual mock setup
 - Longed For: A shared test data builder per domain to reduce fixture boilerplate
 ```
 
@@ -303,11 +303,11 @@ Pattern: First attempt consistently 2x larger than needed
 
 **How to produce**: Map `retry.issues[]` to MAD (tooling failures, blocker delays). Map `score.loss` explanations to SAD (missed acceptance criteria, incomplete coverage). Map "What went well" to GLAD.
 
-**Example** (from a CI‑blocked deploy task):
+**Example** (from a blocked orchestrator task):
 ```
-😠 MAD: SpotBugs false positive on `switch` expression — cost 2 retry cycles
-😞 SAD: Couldn't test price‑alert SNS integration without staging env
-😊 GLAD: gitnexus_impact caught the blast radius before PII logging change
+😠 MAD: Misunderstood scoring pipeline threshold — cost 2 retry cycles
+😞 SAD: Couldn't test scoring pipeline integration without full contract fixture
+😊 GLAD: gitnexus_impact caught the blast radius before state transition change
 ```
 
 ### 5. Sailboat Retro — For systemic issues
@@ -320,12 +320,12 @@ Pattern: First attempt consistently 2x larger than needed
 - **Rocks**: Risks visible during analysis — upcoming dependencies, deprecated libs, schema changes
 - **Island**: The ideal state this task moved toward — compare `requirements.goal` against broader project vision
 
-**Example** (from 3 tasks building store‑domain CRUD over 2 weeks):
+**Example** (from 3 tasks building state machine transitions over 2 weeks):
 ```
-🌬️ Wind: Domain service pattern made adding new endpoints predictable (~2h each)
-⚓ Anchor: No store‑domain JPA repository base class → 3x duplicate pagination code
-🪨 Rocks: goods-price-comparison-api:1.3.0 removes store search endpoint in next release
-🏝️ Island: Store domain is self‑contained — can extract to its own module later
+🌬️ Wind: Contract-driven delegation pattern made adding new states predictable (~2h each)
+⚓ Anchor: No state machine base class → 3x duplicate transition validation code
+🪨 Rocks: workflow-state-engine:1.0.0 deprecates legacy state names in next release
+🏝️ Island: State machine is self‑contained — can extract to its own module later
 ```
 
 ## Retrospective

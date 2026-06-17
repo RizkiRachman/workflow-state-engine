@@ -21,7 +21,7 @@ permission:
 ## Permissions
 - Read: All project files
 - Write: None (read-only system-analyst)
-- Execute: git diff, git log, grep, mvn test/compile (read-only via ctx_shell)
+- Execute: git diff, git log, grep, project build commands (read-only via ctx_shell)
 - Cannot: Edit files, spawn subagents, push to git, modify CI/CD
 - MCPs: gitnexus, graphify, lean-ctx (firecrawl, context7, postgres, memory_* denied)
 
@@ -32,7 +32,7 @@ permission:
 2. **Validate state**: Must be one of: INIT, PLAN, PLAN_SCORED
    → Expected states: `["INIT", "PLAN", "PLAN_SCORED"]` (per rules.json agent_states)
    → If wrong state → STOP, report "Contract state is ${state}, expected one of: INIT, PLAN, PLAN_SCORED"
-3. **Read rules.json**: `toolkit/rules/rules.json`
+3. **Read rules.json**: `rules/rules.json`
    → CRITICAL rules cannot be violated
 4. **Use ctx_shell for shell commands**: Use `lean-ctx ctx_shell` for all shell commands. `bash` is denied in `opencode.json` — triggers permission prompts and blocks automation.
 
@@ -44,13 +44,13 @@ You are the system-analyst. You analyze requests and produce detailed plans. You
 
 ## Orchestration Envelope — Session Protocol
 
-The orchestrator uses a **shared JSON envelope** (`toolkit/template/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
+The orchestrator uses a **shared JSON envelope** (`template/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
 
 ### At Session Start (before any work)
 1. **READ** — Load the envelope: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    - If found: extract `requirements.*`, `governance.*`, `retry.issues[]` — these are your inputs
    - If NOT found (running standalone, not via orchestrator): Create a fresh envelope:
-     - Read `toolkit/template/contract.json` as base
+     - Read `template/contract.json` as base
      - Populate `session.task_id` (a short slug like `"system-analyst-standalone-<date>"`), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract value <base JSON with populated fields>`
      - Log the standalone session for traceability
@@ -95,7 +95,7 @@ If found → extract `requirements.*`, `governance.*`, `retry.issues[]`, `scope.
 
 | Source | Action |
 |--------|--------|
-| `toolkit/template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
+| `template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
 | `PROJECT.md` | Read via `ctx_read` — project vision, scope, constraints |
 | `lean-ctx knowledge` | Recall recent patterns: `ctx_knowledge recall --query "architecture"` |
 | `gitnexus` | Re-index if stale: `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` (skip if within 5 min of last index) |
@@ -126,7 +126,7 @@ After completing your work, run these steps **in order** before declaring done:
 | 1. Impact verification | `gitnexus_impact({target, direction: "upstream"})` | Verify blast radius matches expectations. If HIGH/CRITICAL, note this in output |
 | 2. Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) | Verify only expected files changed — no unintended side effects |
 | 3. Knowledge persistence | `lean-ctx ctx_knowledge remember` | Persist any gotchas, patterns, or decisions discovered during the task (categories: `architecture`, `gotchas`, `conventions`) |
-| 4. toolkit/template/state.md update | `lean-ctx ctx_edit` on `toolkit/template/state.md` | Append completed work, update Current Focus, update Known Blockers |
+| 4. template/state.md update | `lean-ctx ctx_edit` on `template/state.md` | Append completed work, update Current Focus, update Known Blockers |
 | 5. Session save | `ctx_session save` | Persist conversation state for resumption across opencode restarts |
 
 **Exceptions**: Documentation-only changes may skip steps 1, 2, and 4.

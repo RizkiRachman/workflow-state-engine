@@ -2,8 +2,6 @@
 
 **Contract-driven state machine orchestration engine for AI agent workflows.**
 
-Extracted from the Goods Price Comparison Service toolkit — a reusable orchestration framework that drives multi-agent collaboration through a shared JSON envelope contract.
-
 ## What It Is
 
 A state machine orchestrator that:
@@ -14,11 +12,13 @@ A state machine orchestrator that:
 - Handles retries, blockades, and escalation automatically
 - Tracks metrics, lessons learned, and cross-session knowledge
 
+This file is `authoritative` but the canonical agent instruction file is [`agent.md`](agent.md) which serves as `instructions[0]` for every agent.
+
 ## Architecture
 
 ```
 agents/     → 11 agent instruction files (tech-lead, developer, quality-analyst, etc.)
-skills/     → 32 skill directories (java-developer, gitnexus, spec-driven-development, etc.)
+skills/     → 35 skill directories (spec-driven-development, qa-expert, java-developer, etc.)
 template/   → contract.json, superpowers-contract.json, state.md
 rules/      → rules.json (state machine, scoring thresholds)
 doc/        → workflow.md, project.md, gap analysis
@@ -42,7 +42,7 @@ INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVI
               BLOCKED ← ← ← ← RETRY ← ← ← ← (score < 50 or attempts >= 3)
 ```
 
-See [doc/workflow.md](doc/workflow.md) for the full state machine, scoring pipeline, and validation rules.
+See [`template/contract.json`](template/contract.json) for the canonical contract schema and [`doc/workflow.md`](doc/workflow.md) for the full state machine, scoring pipeline, and validation rules.
 
 ## License
 
