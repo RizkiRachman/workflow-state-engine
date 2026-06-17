@@ -23,6 +23,8 @@ Load this skill **first thing on every session start** and whenever the user say
 lean-ctx ctx_knowledge recall --query "orchestration-contract"
 
 ```
+→ Then check session archive: `ls session/$(git branch --show-current)/` — if exists, load contract.json from there for full resume fidelity
+
 ### Step 2: Decision Gate
 
 **If envelope FOUND:**
@@ -52,9 +54,13 @@ If YES:
 
   3. Persist via: lean-ctx ctx_knowledge remember key orchestration-contract value <JSON>
 
+  3b. Establish session baseline: `scripts/snapshot-contract.sh --summary "Session init: {task_id}"`
+
   4. Sync STATE.md: set Current Focus = "New orchestration session: {task_id}"
 
   5. Proceed with the workflow
+
+  6. First snapshot: `scripts/snapshot-contract.sh` — archive INIT state for resumption
 
 If NO:
 
@@ -76,6 +82,9 @@ After ANY delegation or phase change:
 
 4. ctx_session save — survive opencode restart
 
+5. Snapshot to session archive: `scripts/snapshot-contract.sh --snapshot-only`
+   This preserves the exact contract state at every transition for crash recovery and audit.
+
 ```
 ### Step 4: Session Resume Detection
 
@@ -89,6 +98,8 @@ When resuming (envelope found with COMPLETE state):
 3. Summarize to user: what was done, what's pending, any blockers
 
 4. If blocked → ask user for guidance before continuing
+
+5. **Snapshot on resume**: Run `scripts/snapshot-contract.sh` to record that the session was resumed (establishes baseline for continued work).
 
 ```
 ---
@@ -147,5 +158,11 @@ After each phase:
   ctx_session save
 
   sync STATE.md
+
+  # After every transition:
+  scripts/snapshot-contract.sh --snapshot-only
+
+  # At session end:
+  scripts/snapshot-contract.sh --summary "State: COMPLETE — final summary"
 
 ```

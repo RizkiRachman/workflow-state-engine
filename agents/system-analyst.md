@@ -53,13 +53,18 @@ The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contr
      - Read `.opencode/orchestration/contract.json` as base
      - Populate `session.task_id` (a short slug like `"system-analyst-standalone-<date>"`), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract value <base JSON with populated fields>`
+```bash
+scripts/snapshot-contract.sh --snapshot-only  # archive state after update
+```
      - Log the standalone session for traceability
+→ Check session archive: `scripts/snapshot-contract.sh --snapshot-only` — establishes planning-phase baseline
 
 2. **CREATE** — If this is a new task (no prior envelope), initialize `requirements` and `scope` based on instructions received
 
 3. **UPDATE** — During and after work, persist state:
    - After producing plan output: update `outputs.plan`, `outputs.files_affected[]`, `outputs.risks[]`
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
+→ Snapshot: `scripts/snapshot-contract.sh --snapshot-only` — archive plan before orchestrator scoring
    - This ensures crash recovery and traceability
 
 ### Inputs from Envelope

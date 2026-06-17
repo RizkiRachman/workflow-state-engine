@@ -95,6 +95,7 @@ Execute these steps in order BEFORE any analysis, tool call, or output.
 ```lean-ctx
 lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"
 ```
+→ Session archive: `scripts/snapshot-contract.sh --snapshot-only` to establish baseline
 
 ### 2. Sync Latest Memory State
 

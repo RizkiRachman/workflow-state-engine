@@ -20,6 +20,7 @@ Single source of truth for all AI agents. Reference skills and usage guides for 
 5. [5. Development Workflow](#5-development-workflow)
 6. [6. Non-Negotiable Rules](#6-non-negotiable-rules)
 7. [7. Skills Reference](#7-skills-reference)
+8. [8. Session Lifecycle Protocol](#8-session-lifecycle-protocol)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -292,6 +293,50 @@ Use **Doubt-Driven Development (DDD)** when uncertain: spawn a fresh-context adv
 
 Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
+### Session Lifecycle Protocol
+
+Every orchestration session persists contract state to the `session/` directory for cross-session traceability and safe resumption.
+
+#### Directory Layout
+
+```
+session/
+├── state.md              ← Append-only chronological state log
+├── index.md              ← Branch index (status per branch)
+├── main/                 ← Per-branch snapshot for main
+│   ├── contract.json
+│   ├── contract.schema.json
+│   ├── state.md
+│   └── superpowers-contract.json
+├── feature/<name>/       ← Per-feature-branch snapshots
+```
+
+#### Lifecycle Protocol
+
+| Event | Action |
+|-------|--------|
+| **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from snapshot; if no, init fresh from `contract/` templates |
+| **State transition** | Update `contract/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
+| **Session end** (COMPLETE/BLOCKED) | Final snapshot → append summary to `session/state.md` → update `session/index.md` |
+| **Branch switch** | Snapshot current → checkout new → load `session/NEW/` if exists |
+
+#### Snapshot Command Reference
+
+```bash
+scripts/snapshot-contract.sh                # Full snapshot: copy files + update state.md + index.md
+scripts/snapshot-contract.sh --snapshot-only  # Copy files only (skip state.md/index.md updates)
+scripts/snapshot-contract.sh --summary "State: ${STATE} — description"  # Custom entry
+scripts/snapshot-contract.sh --dry-run --verbose  # Preview without changes
+scripts/snapshot-contract.sh --branch feature/my-branch  # Override branch detection
+```
+
+#### Why It Matters
+
+Without per-branch archival, contract files get overwritten when switching branches or resuming sessions. The `session/` archive preserves:
+- **Audit trail**: `session/state.md` grows monotonically — every state transition, every decision, every blocker
+- **Safe resume**: `session/{branch}/contract.json` is the exact state from last session — no reconstruction needed
+- **Discoverability**: `session/index.md` shows all branches with their status at a glance
+
 ### Complex Tasks (Orchestration Template)
 
 See [orchestration-template skill](.opencode/skills/orchestration-template/SKILL.md) and [`doc/workflow.md`](./doc/workflow.md) for the full orchestration protocol.
@@ -362,7 +407,7 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 | `gitnexus-{exploring,impact,debug,refactor,cli,guide}` | GitNexus-specific workflows |
 | `firecrawl-*` (30 skills in `~/.agents/skills/`) | Web search, scraping, crawling, monitoring |
 
-*Last updated: 2026-06-17. If you modify conventions, workflows, or config, update this file.*
+*Last updated: 2026-06-18. If you modify conventions, workflows, or config, update this file.*
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

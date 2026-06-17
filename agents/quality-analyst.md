@@ -60,6 +60,9 @@ The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contr
    - Update `outputs.agent_reports[]` with your verdict, findings, and lens_coverage
    - Update `score.*` fields if applicable
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
+   ```bash
+   scripts/snapshot-contract.sh --snapshot-only  # archive review state
+   ```
    - This ensures the orchestrator can pick up your review results
 
 ### Inputs from Envelope
@@ -89,6 +92,7 @@ Execute these steps in order BEFORE any review, tool call, or output.
 lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"
 ```
 If found → extract `requirements.*`, `governance.*`, `retry.issues[]`, `outputs.code_changes[]`. If not found → create fresh from contract.json (see §Session Protocol above).
+→ Session archive: run `scripts/snapshot-contract.sh --snapshot-only` to establish review-phase baseline
 
 ### 2. Sync Latest Memory State
 
@@ -231,6 +235,8 @@ Be terse for routine findings. Use full clarity for:
 ## Report Format
 
 Return a structured JSON object. The orchestrator uses this for scoring and decision-making.
+
+- `scripts/snapshot-contract.sh --snapshot-only` — archive review findings
 
 ```json
 {

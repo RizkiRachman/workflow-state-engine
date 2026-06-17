@@ -53,6 +53,7 @@ The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contr
 2. **UPDATE** — After completing research, persist results:
    - Update `outputs.agent_reports[]` with research findings
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
+→ Session archive: `scripts/snapshot-contract.sh --snapshot-only` if research results were persisted
 
 ### Inputs from Envelope
 
