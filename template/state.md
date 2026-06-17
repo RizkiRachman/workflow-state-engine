@@ -1,6 +1,6 @@
 # STATE — Workflow State Engine
 ## Current Focus
-COMPLETE — MD Format Standardization. All 21 files formatted with Best-README-Template structure: shields, TOC (>100L), back-to-top links, reference-style link definitions. No content modified.
+Remove-Maven-Refs — opencode.json.template created (API keys redacted, MCP/plugin annotations), setup.sh enhanced with MCP and plugin verification checks.
 
 ## Completed
 - [2026-06-17] **MD Format Standardization**: Applied Best-README-Template structure to 21 MD files (agent.md + 17 usage/*.md + 3 doc/*.md). Added title markers, shields/badges, anchor tags, Tables of Contents, back-to-top links, and reference-style link definitions. Zero content changes. 6 parallel developer-fixer agents dispatched.

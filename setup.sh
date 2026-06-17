@@ -47,6 +47,24 @@ fi
 echo "Pre-flight checks passed."
 # ── End pre-flight checks ──────────────────────────────────────
 
+echo ""
+echo "── Tool Verification ──────────────────────────────────────"
+source "$(dirname "$0")/scripts/check-mcp.sh" || FAILED=1
+echo ""
+source "$(dirname "$0")/scripts/check-plugins.sh"
+echo "────────────────────────────────────────────────────────────"
+
+if [ "$FAILED" -eq 1 ]; then
+  echo ""
+  echo "=============================="
+  echo "  MISSING MANDATORY TOOLS"
+  echo "=============================="
+  echo "  Install the missing tools listed above and re-run setup.sh."
+  exit 1
+fi
+
+echo ""
+
 cd "$(git rev-parse --show-toplevel)"
 echo "Creating .opencode/ symlinks..."
 mkdir -p .opencode
