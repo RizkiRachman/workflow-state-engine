@@ -66,7 +66,7 @@ INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVI
 
 ```
 agents/     → 11 agent instruction files (tech-lead, developer, quality-analyst, etc.)
-skills/     → 35 skill directories (system-analyst, writing-plans, spec-driven-dev, etc.)
+skills/     → 36 skill directories (system-analyst, writing-plans, spec-driven-dev, etc.)
 template/   → contract.json, superpowers-contract.json, state.md
 rules/      → rules.json (state machine transitions, scoring thresholds)
 doc/        → workflow.md, project.md, gap analysis, state-history.md
@@ -87,7 +87,7 @@ This project keeps its toolkit at the project root for direct access. No nested 
 ```
 .opencode/                  (symlinks resolve to root-level source)
    ├── agents/ ──symlink──► agents/         11 agent .md files
-   ├── skills/ ──symlink──► skills/         35 skill directories
+   ├── skills/ ──symlink──► skills/         36 skill directories
    ├── rules/  ──symlink──► rules/          rules.json (state machine)
    ├── orchestration/symlink──► template/   contract.json, superpowers-contract.json, state.md
    ├── planning/symlink──► doc/planning/    Planning docs
@@ -108,7 +108,7 @@ You reference `.opencode/` paths — OpenCode resolves symlinks to root-level so
 ├── config/            ← Plugin configs (vibeguard, opencode-skillful)
 ├── doc/               ← Planning docs, workflow.md, gap analyses
 ├── rules/             ← rules.json (state machine, scoring)
-├── skills/            ← 35 skill directories (java-developer, gitnexus/, spec-driven-dev, etc.)
+├── skills/            ← 36 skill directories (java-developer, gitnexus/, spec-driven-dev, etc.)
 ├── template/          ← contract.json, superpowers-contract.json, state.md
 ├── usage/             ← 15 tool usage guides (one per tool group)
 └── setup.sh           ← Bootstrap: creates all .opencode/ → root-level symlinks
@@ -356,12 +356,13 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 | `systematic-debugging` | Structured root cause analysis |
 | `test-driven-development` | Red/green/refactor cycle |
 | `orchestration-template` | Contract-based multi-agent orchestration |
+| `audit-observability` | State contract audit trail, orchestration observability, score analytics, cross-service consistency |
 | `code-review-and-quality` | Review checklists, quality metrics |
 | `simplify` | Reduce complexity without changing behavior |
 | `gitnexus-{exploring,impact,debug,refactor,cli,guide}` | GitNexus-specific workflows |
 | `firecrawl-*` (30 skills in `~/.agents/skills/`) | Web search, scraping, crawling, monitoring |
 
-*Last updated: 2026-06-16. If you modify conventions, workflows, or config, update this file.*
+*Last updated: 2026-06-17. If you modify conventions, workflows, or config, update this file.*
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

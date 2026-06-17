@@ -206,7 +206,7 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 .
 ├── agent.md           ← Orchestrator instructions (instructions[0])
 ├── agents/            ← 11 agent instruction files
-├── skills/            ← 35 skill directories + package.json per skill
+├── skills/            ← 36 skill directories + package.json per skill
 ├── template/          ← Shared JSON envelope, state.md, superpowers contract
 ├── rules/             ← State machine transitions, scoring thresholds
 ├── usage/             ← 15 tool usage guides
