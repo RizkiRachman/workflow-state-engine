@@ -1,11 +1,11 @@
 {
-  "state": "INIT",
+  "state": "COMPLETE",
   "contract_version": "0.8.0",
   "state_machine_version": "0.8.0",
   "session": {
-    "task_id": "your-task-id",
-    "branch": "feature/your-feature-branch",
-    "created_at": "2026-01-01T00:00:00Z",
+    "task_id": "arch-enforcement-audit-fixes",
+    "branch": "feature/20260618-architecture-enforcement-audit",
+    "created_at": "2026-06-18T02:00:00Z",
     "archived_at": null
   },
   "scope": {
