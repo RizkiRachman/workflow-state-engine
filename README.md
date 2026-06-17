@@ -207,7 +207,8 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 ├── agent.md           ← Orchestrator instructions (instructions[0])
 ├── agents/            ← 11 agent instruction files
 ├── skills/            ← 36 skill directories + package.json per skill
-├── contract/          ← Shared JSON envelope, state.md, superpowers contract
+├── contract/          ← Active orchestration contract (contract.json, schema, state.md, superpowers)
+├── session/           ← Per-branch contract archives (append-only state log + branch snapshots)
 ├── rules/             ← State machine transitions, scoring thresholds
 ├── usage/             ← 15 tool usage guides
 ├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
@@ -285,6 +286,7 @@ Three-tier scoring runs after every delegation:
 - [x] Token budget enforcement (token_budget in contract.json + TOKEN_001-004 in rules.json)
 - [x] Skillful configuration catalog (config/opencode-skillful.json — 56 skills across 7 categories)
 - [x] Configuration template sync (opencode.json.template — 4 placeholders, synced from opencode.json)
+- [x] Session archival protocol (session/ directory — per-branch snapshots, append-only state log, branch index)
 - [ ] Skill registry publishing (skills.sh)
 - [ ] Intensity modes for ponytail (off/lite/full/ultra)
 - [ ] Debt ledger harvesting (`/ponytail-debt` command)

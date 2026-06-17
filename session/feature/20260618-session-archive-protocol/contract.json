@@ -1,0 +1,140 @@
+{
+  "state": "INIT",
+  "contract_version": "0.8.0",
+  "state_machine_version": "0.8.0",
+  "session": {
+    "task_id": "your-task-id",
+    "branch": "feature/your-feature-branch",
+    "created_at": "2026-01-01T00:00:00Z",
+    "archived_at": null
+  },
+  "scope": {
+    "included": [],
+    "excluded": [],
+    "boundary": "project-root",
+    "parallel_eligible": false,
+    "max_parallel_agents": 1
+  },
+  "requirements": {
+    "goal": "Describe what you are building in one sentence",
+    "acceptance_criteria": [
+      "AC 1: System does X",
+      "AC 2: Tests pass"
+    ],
+    "constraints": [
+      "Must follow hexagonal architecture",
+      "No new external dependencies"
+    ]
+  },
+  "decisions": {
+    "approved_architecture": null,
+    "coding_standard": [
+      "Hexagonal architecture",
+      "Port \u2192 Service \u2192 Adapter"
+    ],
+    "rejected_approaches": [],
+    "adr_log": []
+  },
+  "governance": {
+    "active_agent": "tech-lead",
+    "mode": "task-execution",
+    "applicable_skills": [],
+    "rules_references": [
+      {
+        "src": "AGENTS.md",
+        "sections": [
+          "all"
+        ]
+      },
+      {
+        "src": ".opencode/rules/rules.json",
+        "sections": [
+          "all"
+        ]
+      }
+    ],
+    "current_guidance": "Describe current focus and guidance for the active agent",
+    "permissions": {
+      "do": [],
+      "dont": [
+        "modify files outside scope.included",
+        "commit without verification"
+      ],
+      "allowed_execution": {
+        "tools": [
+          "lean-ctx_*",
+          "ctx_shell"
+        ],
+        "denied": [
+          "bash",
+          "snip"
+        ]
+      }
+    },
+    "previous_blockers": []
+  },
+  "validation": {
+    "block_on": {
+      "max_test_failures": 3,
+      "max_score_drop": 30,
+      "max_compile_errors": 1
+    },
+    "rule_overrides": {}
+  },
+  "outputs": {
+    "plan": null,
+    "architecture": null,
+    "code_changes": [],
+    "test_results": null,
+    "agent_reports": [],
+    "score_summary": null
+  },
+  "score": {
+    "rules": {
+      "pass": 0,
+      "fail": 0,
+      "deduction": 0,
+      "subtotal": 0
+    },
+    "judge": {
+      "score": 0,
+      "rationale": "",
+      "missing_items": []
+    },
+    "combined": 0,
+    "verdict": "INIT"
+  },
+  "retry": {
+    "current_phase": null,
+    "attempt": 0,
+    "max_attempts": 3,
+    "score_threshold": 70,
+    "escalation_threshold": 50,
+    "issues": [],
+    "phase_issues": [],
+    "escalation_trace": []
+  },
+  "token_budget": {
+    "max_per_session": 200000,
+    "warning_threshold": 0.8,
+    "hard_limit": 0.95,
+    "max_per_phase": {
+      "plan": 30000,
+      "execute": 100000,
+      "review": 30000,
+      "scoring": 5000
+    },
+    "max_per_subagent_call": 50000,
+    "current_session_usage": 0,
+    "phase_usage": {}
+  },
+  "metrics": {
+    "cost_tokens": 0,
+    "elapsed_ms": 0,
+    "agents_used": [],
+    "phases_completed": [],
+    "phase_durations": {}
+  },
+  "lessons_learned": [],
+  "audit_log": []
+}

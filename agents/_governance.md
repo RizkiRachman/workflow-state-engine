@@ -33,7 +33,59 @@ All agents read from it; write-capable agents update it with results.
 | **Read-write agents** | `developer`, `developer-fixer`, `tech-lead` — may edit files within `scope.included`. |
 
 ---
-## 3. Pre-Edit Safety (write-capable agents only)
+## 3. Session Lifecycle (Contract Archival)
+
+Every orchestration session MUST persist its contract state to the `session/` directory for cross-session traceability and resumption.
+
+### Directory layout
+
+```
+contract/                    ← Active contract (mutable, current state)
+  contract.json
+  contract.schema.json
+  state.md
+  superpowers-contract.json
+
+session/                     ← Historical archive (append-only state log + per-branch snapshots)
+  state.md                   ← Append-only log of ALL state transitions (every session, every branch)
+  index.md                   ← Master branch index (one row per branch, latest state per row)
+  {branch-name}/             ← Per-branch snapshot for resumption
+    contract.json
+    contract.schema.json
+    state.md
+    superpowers-contract.json
+```
+
+### Lifecycle Protocol
+
+| Event | Action |
+|-------|--------|
+| **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from there (load contract.json); if no, init fresh from `contract/` template |
+| **State transition** | Update `contract/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
+| **Session end** (COMPLETE/BLOCKED) | Run final snapshot → append summary to `session/state.md` → update `session/index.md` with result |
+| **Branch switch** | Snapshot old branch (`--branch OLD`) → checkout new branch → load `session/NEW/` if exists |
+
+### Snapshot command
+
+```bash
+# Full snapshot (copies contract files + updates state.md + index.md)
+bash scripts/snapshot-contract.sh --summary "State: ${STATE} — brief description"
+
+# Files-only (skip index updates for hot-reload scenarios)
+bash scripts/snapshot-contract.sh --snapshot-only
+
+# Preview without writing
+bash scripts/snapshot-contract.sh --dry-run --verbose
+```
+
+### Why
+
+Without per-branch archival, contract files get overwritten when switching branches or resuming sessions. The `session/` archive preserves:
+- **Resumability**: Each branch's last state is independently restorable
+- **Audit trail**: `session/state.md` grows monotonically — every state transition, ever
+- **Discoverability**: `session/index.md` shows all branches with their status at a glance
+
+## 4. Pre-Edit Safety (write-capable agents only)
 
 Before editing **any existing symbol** (function, class, method):
 
