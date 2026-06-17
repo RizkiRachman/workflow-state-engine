@@ -15,6 +15,9 @@ graphify-out/
 .DS_Store
 Thumbs.db
 
+# Environment (secrets — never commit)
+.env
+
 # General
 *.log
 *.bak
