@@ -54,8 +54,8 @@ Checks performed:
   2. Symlinks in .opencode/ resolve correctly
      Verifies .opencode/agents -> agents/, .opencode/skills -> skills/,
      .opencode/rules -> rules/, .opencode/orchestration -> contract/,
-     .opencode/reports -> doc/reports/, .opencode/usage -> usage/,
-     .opencode/config -> config/, .opencode/planning -> doc/planning/.
+     .opencode/usage -> usage/,
+     .opencode/config -> config/.
   3. Contract file integrity
      Verifies contract/contract.json and contract/contract.schema.json
      are valid JSON and contract.json validates against the schema.
@@ -306,8 +306,6 @@ check_opencode_symlinks() {
         ["orchestration"]="contract"
         ["usage"]="usage"
         ["config"]="config"
-        ["planning"]="doc/planning"
-        ["reports"]="doc/reports"
     )
 
     for symlink_name in "${!symlink_targets[@]}"; do
