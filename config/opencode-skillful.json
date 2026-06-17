@@ -1,0 +1,11 @@
+{
+  "debug": false,
+  "promptRenderer": "xml",
+  "basePaths": [
+    "~/.config/opencode/skills",
+    "toolkit/skills"
+  ],
+  "modelRenderers": {
+    "deepseek-v4-flash": "xml"
+  }
+}

@@ -1,0 +1,33 @@
+# Graphify Usage Guide
+
+> **Repository**: [github.com/emeraldarrow/Graphify](https://github.com/emeraldarrow/Graphify) — knowledge graph queries for code understanding
+> **MCP**: local Python server (`graphify.serve`)
+
+## Tools
+
+| Tool                     | What it does                             |
+|--------------------------|------------------------------------------|
+| `graphify_query_graph`   | BFS/DFS search of the knowledge graph    |
+| `graphify_get_node`      | Full details for a specific node         |
+| `graphify_get_neighbors` | All direct neighbors with edge details   |
+| `graphify_get_community` | All nodes in a community                 |
+| `graphify_god_nodes`     | Most connected nodes (core abstractions) |
+| `graphify_graph_stats`   | Node count, edge count, communities      |
+| `graphify_shortest_path` | Path between two concepts                |
+| `graphify_list_prs`      | Open PRs with graph impact               |
+| `graphify_get_pr_impact` | Detailed PR graph impact                 |
+| `graphify_triage_prs`    | Actionable PRs for review                |
+
+## When to use
+
+| When you need…                    | Use graphify                                    | Or use gitnexus                        |
+|-----------------------------------|-------------------------------------------------|----------------------------------------|
+| Broad codebase understanding      | `graphify_query_graph({question, mode: "bfs"})` | `gitnexus_query()`                     |
+| Trace a specific dependency chain | `graphify_query_graph({mode: "dfs"})`           | `gitnexus_context()`                   |
+| Core abstractions                 | `graphify_god_nodes()`                          | `gitnexus_impact({summaryOnly: true})` |
+| PR impact assessment              | `graphify_get_pr_impact()`                      | `gitnexus_detect_changes()`            |
+| Direct code references            | —                                               | Prefer gitnexus                        |
+| Quick exploration                 | `graphify_get_node()` + `get_neighbors()`       | —                                      |
+
+> **Tip**: graphify is good for broad exploration; gitnexus is better for precise impact analysis. Use gitnexus for production changes.
+
