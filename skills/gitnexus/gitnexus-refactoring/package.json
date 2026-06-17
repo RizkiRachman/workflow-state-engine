@@ -1,0 +1,9 @@
+{
+  "name": "workflow-state-engine-skill-gitnexus-refactoring",
+  "version": "1.0.0",
+  "description": "Use when the user wants to rename, extract, split, move, or restructure code safely.",
+  "keywords": ["opencode", "skill", "gitnexus-refactoring"],
+  "author": "Workflow State Engine",
+  "license": "MIT",
+  "private": true
+}

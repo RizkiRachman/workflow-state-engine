@@ -1,5 +1,6 @@
 <!-- gitnexus-owned: GITNEXUS-USAGE.md v1 -->
 
+<!-- omit from toc -->
 # GitNexus Usage Guide — goods-price-comparison-service
 
 > **Repository**: [github.com/abhigyanpatwari/GitNexus](https://github.com/abhigyanpatwari/GitNexus) — 42k+ stars, code intelligence knowledge graph
@@ -13,25 +14,25 @@
 
 > **Last analyzed**: see `gitnexus://repo/goods-price-comparison-service/context`
 
-## Table of Contents
+[![GitNexus][gitnexus-shield]][gitnexus-url] [![Docs][docs-shield]][docs-url]
 
+<a id="readme-top"></a>
+
+## Table of Contents
 1. [Quick Reference — Tools by Use Case](#1-quick-reference--tools-by-use-case)
 2. [Before You Edit — Impact Analysis](#2-before-you-edit--impact-analysis)
-
 3. [Before You Commit — Change Detection](#3-before-you-commit--change-detection)
 4. [Exploring Unfamiliar Code](#4-exploring-unfamiliar-code)
-
 5. [Debugging Bugs](#5-debugging-bugs)
 6. [Safe Refactoring](#6-safe-refactoring)
-
 7. [API Route Analysis](#7-api-route-analysis)
 8. [Execution Flow Tracing](#8-execution-flow-tracing)
-
 9. [Architecture Documentation](#9-architecture-documentation)
 10. [Index Management](#10-index-management)
-
 11. [CLI Reference](#11-cli-reference)
 12. [Resources](#12-resources)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -52,6 +53,8 @@
 | Generate architecture docs             | `generate_map` (prompt)                     | Mermaid diagrams from graph                      |
 | Write raw Cypher                       | `cypher({query})`                           | Arbitrary graph queries                          |
 | Check index freshness                  | `gitnexus://repo/{name}/context`            | Staleness, symbol counts, tool list              |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -95,6 +98,8 @@ gitnexus_impact({target: "AbstractGenericService", direction: "upstream", summar
 | Ignore HIGH/CRITICAL risk        | Discuss with user before proceeding  |
 | Use find-and-replace for renames | Use `gitnexus_rename`                |
 | Commit without `detect_changes`  | Run `detect_changes()` before commit |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -166,6 +171,9 @@ gitnexus_cypher({
   query: "MATCH (c:Class)-[:CodeRelation {type: 'IMPLEMENTS'}]->(i:Interface {name: 'ProductService'}) RETURN c.name"
 })
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 5. Debugging Bugs
@@ -188,6 +196,8 @@ gitnexus_trace({source: "findPrice", target: "calculateDiscount"})
 
 3. Read process resource — full step-by-step trace
 4. `gitnexus_detect_changes()` — check recent changes
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -217,6 +227,8 @@ gitnexus_detect_changes()
 - [x] Review `text_search`-tagged edits for false positives
 - [x] Run `detect_changes()` before commit
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 7. API Route Analysis
@@ -245,6 +257,9 @@ gitnexus_api_impact({file: "src/main/java/.../ProductController.java"})
 gitnexus_shape_check({route: "/api/products"})
 // Detects: consumer accessing keys not in route's response shape
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 8. Execution Flow Tracing
@@ -276,6 +291,8 @@ RETURN s.name, r.step ORDER BY r.step
 
 - `entryPointId` and `terminalId` — start and end symbols
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 9. Architecture Documentation
@@ -304,6 +321,9 @@ RETURN n.name, n.kind, degree
 ORDER BY degree DESC
 LIMIT 10
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 10. Index Management
@@ -345,6 +365,9 @@ npx gitnexus status
   "skipSkills": true
 }
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 11. CLI Reference
@@ -379,6 +402,8 @@ bash scripts/gitnexus-analyze.sh    # analyze plus --skip-agents-md
 | `--default-branch develop` | Branch for regression-compare example    |
 | `--worker-timeout 60`      | Increase parse timeout for slow files    |
 | `--repair-fts`             | Rebuild FTS indexes only                 |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -423,4 +448,13 @@ bash scripts/gitnexus-analyze.sh    # analyze plus --skip-agents-md
 - **Communities (clusters)**: 316
 
 - **Parsed languages**: Java (primary), plus 15 others
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- REFERENCE LINKS -->
+
+[gitnexus-shield]: https://img.shields.io/badge/GitNexus-Code%20Intelligence-181717?style=for-the-badge&logo=git
+[gitnexus-url]: #
+[docs-shield]: https://img.shields.io/badge/DOCS-文档-blue?style=for-the-badge
+[docs-url]: #
 

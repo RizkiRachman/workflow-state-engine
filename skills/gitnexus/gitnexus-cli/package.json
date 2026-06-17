@@ -1,0 +1,9 @@
+{
+  "name": "workflow-state-engine-skill-gitnexus-cli",
+  "version": "1.0.0",
+  "description": "Use when the user needs to run GitNexus CLI commands like analyze/index a repo, check status, clean the index, generate a wiki, or list indexed repos.",
+  "keywords": ["opencode", "skill", "gitnexus-cli"],
+  "author": "Workflow State Engine",
+  "license": "MIT",
+  "private": true
+}

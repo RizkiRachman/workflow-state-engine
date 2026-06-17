@@ -27,3 +27,6 @@ node_modules/
 
 # Plugins (installed by skill system)
 plugins/
+
+# Task board (sprint tracking, not version-controlled)
+tasks/

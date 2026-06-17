@@ -1,0 +1,9 @@
+{
+  "name": "workflow-state-engine-skill-gitnexus-debugging",
+  "version": "1.0.0",
+  "description": "Use when the user is debugging a bug, tracing an error, or asking why something fails.",
+  "keywords": ["opencode", "skill", "gitnexus-debugging"],
+  "author": "Workflow State Engine",
+  "license": "MIT",
+  "private": true
+}

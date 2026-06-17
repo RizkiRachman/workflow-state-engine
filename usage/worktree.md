@@ -1,4 +1,6 @@
+<!-- omit from toc -->
 # Worktree Usage Guide
+[![Worktree Plugin][worktree-shield]][worktree-url] [![GitHub][github-shield]][github-url]
 
 > **Plugin**: `opencode-worktree` ([github.com/arturosdg/opencode-worktree](https://github.com/arturosdg/opencode-worktree))
 >
@@ -80,5 +82,10 @@ opencode-worktree
 # Or specify repo path
 
 opencode-worktree /path/to/repo
+
+[worktree-shield]: https://img.shields.io/badge/Worktree-Plugin-blue?style=for-the-badge
+[worktree-url]: #
+[github-shield]: https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github
+[github-url]: #
 
 ```

@@ -1,0 +1,9 @@
+{
+  "name": "workflow-state-engine-skill-gitnexus-exploring",
+  "version": "1.0.0",
+  "description": "Use when the user asks how code works, wants to understand architecture, trace execution flows, or explore unfamiliar parts of the codebase.",
+  "keywords": ["opencode", "skill", "gitnexus-exploring"],
+  "author": "Workflow State Engine",
+  "license": "MIT",
+  "private": true
+}

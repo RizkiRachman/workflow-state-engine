@@ -1,4 +1,7 @@
+<!-- omit from toc -->
 # Firecrawl Usage Guide
+
+[![Firecrawl Plugin][firecrawl-shield]][firecrawl-url] [![Docs][docs-shield]][docs-url]
 
 > **Repository**: [github.com/firecrawl/firecrawl-mcp-server](https://github.com/firecrawl/firecrawl-mcp-server) — web scraping + search + crawling for AI agents
 > **MCP**: `firecrawl-mcp` in opencode.json | **API key**: `$FIRECRAWL_API_KEY`
@@ -49,6 +52,8 @@
 | `firecrawl_agent_status` | Poll agent for results                        |
 | `firecrawl_extract`      | Structured data extraction from specific URLs |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Quick pattern
 
 ```javascript
@@ -63,3 +68,19 @@ firecrawl_scrape({
   jsonOptions: { prompt: "Extract pricing tiers", schema: { /* ... */ } }
 })
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- REFERENCE LINKS -->
+
+[doc-shield]: https://img.shields.io/badge/DOC-文档-blue?style=for-the-badge
+[doc-url]: #
+
+[docs-shield]: https://img.shields.io/badge/DOCS-文档-blue?style=for-the-badge
+[docs-url]: #
+
+[github-shield]: https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github
+[github-url]: #
+
+[firecrawl-shield]: https://img.shields.io/badge/Firecrawl-插件-blue?style=for-the-badge
+[firecrawl-url]: #

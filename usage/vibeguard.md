@@ -1,4 +1,6 @@
+<!-- omit from toc -->
 ## VibeGuard Plugin Usage
+[![VibeGuard Plugin][vibeguard-shield]][vibeguard-url]
 
 **What it does**: Redacts secrets, credentials, and PII from prompts before they're sent to LLM providers. Replaces sensitive values with placeholders (`__VG_API_KEY_abc123__`), then restores them after the response.
 
@@ -29,3 +31,6 @@ Config file: `vibeguard.config.json` at project root.
 - VibeGuard is a **no-op** if `vibeguard.config.json` is missing or `enabled=false`
 - Placeholders are **irreversible to the provider** (HMAC-based, session-scoped)
 - If a redacted value is referenced in a tool result, it's restored before the tool executes
+
+[vibeguard-shield]: https://img.shields.io/badge/VibeGuard-Plugin-blue?style=for-the-badge
+[vibeguard-url]: #

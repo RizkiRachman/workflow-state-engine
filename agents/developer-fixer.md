@@ -99,7 +99,7 @@ Scan available skills. Load matching ones via `/skill`:
 - `/skill software-developer` — SOLID, clean code
 - `/skill qa-expert` — test strategy, coverage, edge cases
 - `/skill test-driven-development` — TDD red/green/refactor cycle
-- `/skill using-git-worktrees` — isolated experiment branches
+- `/skill worktrees` — isolated experiment branches
 - `/skill humanizer` — remove AI writing patterns from output text
 - Any skill matching the current task domain
 
@@ -117,7 +117,7 @@ For huge/massive tasks, follow TDD and isolation patterns:
 5. Commit
 
 ### Worktree Isolation
-For large changes, use `/skill using-git-worktrees` to create an isolated workspace. This prevents conflicts with parallel work.
+For large changes, use `/skill worktrees` to create an isolated workspace. This prevents conflicts with parallel work.
 
 ### Scope Discipline
 Stay within assigned scope. Do NOT expand scope or make unsolicited improvements — that's the orchestrator's job.

@@ -1,0 +1,9 @@
+{
+  "name": "workflow-state-engine-skill-gitnexus-impact-analysis",
+  "version": "1.0.0",
+  "description": "Use when the user wants to know what will break if they change something, or needs safety analysis before editing code.",
+  "keywords": ["opencode", "skill", "gitnexus-impact-analysis"],
+  "author": "Workflow State Engine",
+  "license": "MIT",
+  "private": true
+}

@@ -1,4 +1,7 @@
+<!-- omit from toc -->
 # gh_grep Usage Guide — GitHub Code Search
+
+[![gh-grep Plugin][ghgrep-shield]][ghgrep-url]
 
 > **Source**: `@morphllm/opencode-morph-plugin` ([github.com/morphllm/opencode-morph-plugin](https://github.com/morphllm/opencode-morph-plugin))
 > **Tool**: `gh_grep_searchGitHub` — search 1M+ public repos for real-world code examples
@@ -8,6 +11,8 @@
 | Tool                   | What it does                                             |
 |------------------------|----------------------------------------------------------|
 | `gh_grep_searchGitHub` | Find real-world code patterns across public GitHub repos |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## When to use
 
@@ -27,4 +32,6 @@
 - Good: `"useState("`, `"async function"`, `"import React from"`
 
 - Bad: `"react tutorial"`, `"best practices"`
+[ghgrep-shield]: https://img.shields.io/badge/gh--grep-Plugin-blue?style=for-the-badge
+[ghgrep-url]: #
 

@@ -1,4 +1,7 @@
+<!-- omit from toc -->
 # Dynamic Context Pruning (DCP) Usage Guide
+
+[![DCP Plugin][dcp-shield]][dcp-url]
 
 > **Plugin**: `@tarquinen/opencode-dcp` ([github.com/Tarquinen/opencode-dynamic-context-pruning](https://github.com/Tarquinen/opencode-dynamic-context-pruning))
 >
@@ -25,6 +28,8 @@ Removes repeated tool calls (same tool, same args) — keeps only the most recen
 
 Prunes inputs from errored tool calls after 4 turns. Error messages preserved; only large input content removed.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Slash Commands
 
 | Command | Effect |
@@ -39,6 +44,8 @@ Prunes inputs from errored tool calls after 4 turns. Error messages preserved; o
 | `/dcp compress` | Trigger a single compress execution |
 | `/dcp decompress 2` | Restore compression by ID |
 | `/dcp recompress 2` | Re-apply a decompressed compression |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Config File
 
@@ -60,4 +67,20 @@ Lookup order: `~/.config/opencode/dcp.jsonc` > `.opencode/dcp.jsonc` (project ov
 ### Protected Tools (never pruned by default)
 
 `task`, `skill`, `todowrite`, `todoread`, `compress`, `batch`, `plan_enter`, `plan_exit`, `write`, `edit`
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- REFERENCE LINKS -->
+
+[doc-shield]: https://img.shields.io/badge/DOC-文档-blue?style=for-the-badge
+[doc-url]: #
+
+[docs-shield]: https://img.shields.io/badge/DOCS-文档-blue?style=for-the-badge
+[docs-url]: #
+
+[github-shield]: https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github
+[github-url]: #
+
+[dcp-shield]: https://img.shields.io/badge/DCP-插件-blue?style=for-the-badge
+[dcp-url]: #
 
