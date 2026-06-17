@@ -557,6 +557,31 @@ ls session/{branch-name}/                       # Should show 4 contract files
 diff contract/contract.json session/{branch}/contract/contract.json   # Should match (identical snapshot)
 ```
 
+### Save Session Protocol
+
+When the user says "save session" or a phase completes, save to **ALL** systems. This is the canonical 6-step protocol:
+
+```bash
+# 1. Persist orchestration envelope to lean-ctx knowledge
+lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
+
+# 2. Update contract/state.md — append completed work items
+
+# 3. Archive snapshot to session/ (contract files + state log + index)
+bash scripts/snapshot-contract.sh --snapshot-only
+
+# 4. Save conversation context (survives OpenCode restart)
+lean-ctx ctx_session save
+
+# 5. Re-index GitNexus code intelligence
+bash scripts/gitnexus-analyze.sh
+
+# 6. Re-index Graphify knowledge graph (if graphify-out/ exists)
+graphify --update 2>/dev/null || true
+```
+
+**One-shot alias**: `save session` = all 6 steps above. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes. This is referenced from the Post-Flight Protocol in all agent instruction files.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 [workflow-shield]: https://img.shields.io/badge/Workflow-Orchestration-blue?style=for-the-badge

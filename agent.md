@@ -289,9 +289,34 @@ Use **Doubt-Driven Development (DDD)** when uncertain: spawn a fresh-context adv
 | 3 | Knowledge persist | `lean-ctx ctx_knowledge remember` |
 | 4 | Graphify sync | `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` |
 | 5 | STATE.md | `ctx_edit` |
-| 6 | Session save | `ctx_session save` |
+| 6 | Session save (complete) | See **Save Session Protocol** below |
 
 Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
+
+### Save Session Protocol
+
+When the user says "save session" or a phase completes, save to **ALL** systems:
+
+```bash
+# 1. Persist orchestration envelope to lean-ctx knowledge
+lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
+
+# 2. Update contract/state.md — append completed work items
+
+# 3. Archive snapshot to session/ (contract files + state log + index)
+bash scripts/snapshot-contract.sh --snapshot-only
+
+# 4. Save conversation context (survives OpenCode restart)
+lean-ctx ctx_session save
+
+# 5. Re-index GitNexus code intelligence
+bash scripts/gitnexus-analyze.sh
+
+# 6. Re-index Graphify knowledge graph (if graphify-out/ exists)
+graphify --update 2>/dev/null || true
+```
+
+**One-shot alias**: `save session` = all 6 steps above. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes.
 
 ### Session Lifecycle Protocol
 

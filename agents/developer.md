@@ -59,6 +59,7 @@ The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contr
    - After implementation completes: update `outputs.code_changes[]` (files_created, files_modified), `outputs.test_results` (test_count, pass, fail)
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
    - Snapshot to session archive: `scripts/snapshot-contract.sh --snapshot-only`
+   - Save conversation: `ctx_session save`
    - This ensures crash recovery, audit trail, and cross-session resumption
 
 ### Inputs from Envelope

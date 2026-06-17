@@ -125,9 +125,34 @@ After completing work, run these steps **in order**:
 | 2 | Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) — verify only expected files changed, no unintended side effects. |
 | 3 | Knowledge persistence | `lean-ctx ctx_knowledge remember` — persist gotchas, patterns, decisions (categories: `architecture`, `gotchas`, `conventions`). |
 | 4 | STATE.md update | `lean-ctx ctx_edit` on `contract/state.md` — append completed work, update Current Focus, update Known Blockers. |
-| 5 | Session save | `ctx_session save` — persist conversation state for resumption across opencode restarts. |
+| 5 | Session save (complete) | Run **Save Session Protocol** — persist envelope → update state.md → archive snapshot → save conversation → re-index gitnexus → re-index graphify |
 
 **Exceptions:** Documentation-only changes may skip steps 1, 2, and 4. Config-only changes skip 1, 2.
+
+### Save Session Protocol
+
+When the user says "save session" or a phase completes, save to **ALL** systems:
+
+```bash
+# 1. Persist orchestration envelope to lean-ctx knowledge
+lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
+
+# 2. Update contract/state.md — append completed work items
+
+# 3. Archive snapshot to session/ (contract files + state log + index)
+bash scripts/snapshot-contract.sh --snapshot-only
+
+# 4. Save conversation context (survives OpenCode restart)
+lean-ctx ctx_session save
+
+# 5. Re-index GitNexus code intelligence
+bash scripts/gitnexus-analyze.sh
+
+# 6. Re-index Graphify knowledge graph (if graphify-out/ exists)
+graphify --update 2>/dev/null || true
+```
+
+**One-shot alias**: `save session` = all 6 steps above. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes.
 
 ---
 ## 6. Communication
