@@ -24,3 +24,6 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# Plugins (installed by skill system)
+plugins/
