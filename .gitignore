@@ -1,0 +1,26 @@
+# IDEA
+.idea/
+*.iml
+
+# AI / Agent tooling
+.opencode/
+.lean-ctx/
+.claude/
+.mcp/
+.agent/
+.ai/
+graphify-out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# General
+*.log
+*.bak
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
