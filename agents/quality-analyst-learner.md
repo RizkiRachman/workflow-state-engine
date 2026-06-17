@@ -82,6 +82,7 @@ The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contr
    - Append `lessons_learned[]` to envelope's `lessons_learned[]`
    - Apply `knowledge_updates[]` via `lean-ctx knowledge remember` for each entry
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
+   - `scripts/snapshot-contract.sh --snapshot-only`  # archive learning state
    - This ensures cross-session learning persists
 
 ## 🔴 Pre-Flight Protocol (MANDATORY — before any analysis)

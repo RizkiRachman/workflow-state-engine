@@ -477,6 +477,85 @@ check_state_md() {
     fi
 }
 
+# ── Check 6: Session archive integrity ────────────────────────────────────
+check_session_archive() {
+    echo "---"
+    echo "Check 6: session/ archive integrity"
+
+    local session_dir="$PROJECT_ROOT/session"
+    local violations=0
+
+    # Check session/ directory exists
+    if [[ ! -d "$session_dir" ]]; then
+        log_fail "session/ directory does not exist"
+        return
+    fi
+
+    # Check session/state.md exists
+    if [[ -f "$session_dir/state.md" ]]; then
+        log_verbose "session/state.md exists"
+    else
+        log_fail "session/state.md does not exist"
+        violations=$((violations + 1))
+    fi
+
+    # Check session/index.md exists
+    if [[ -f "$session_dir/index.md" ]]; then
+        log_verbose "session/index.md exists"
+    else
+        log_fail "session/index.md does not exist"
+        violations=$((violations + 1))
+    fi
+
+    # Check at least one branch snapshot directory
+    local branch_snapshots=0
+    while IFS= read -r -d '' d; do
+        # Skip state.md and index.md — they're not branch dirs
+        local basename_d
+        basename_d="$(basename "$d")"
+        if [[ "$basename_d" == "state.md" || "$basename_d" == "index.md" || "$basename_d" == ".gitkeep" ]]; then
+            continue
+        fi
+        branch_snapshots=$((branch_snapshots + 1))
+    done < <(find "$session_dir" -maxdepth 2 -type d -print0 2>/dev/null)
+
+    if [[ "$branch_snapshots" -ge 1 ]]; then
+        log_pass "session/ contains $branch_snapshots branch snapshot(s)"
+    else
+        log_fail "session/ has no branch snapshot directories"
+        violations=$((violations + 1))
+    fi
+
+    # Validate each branch snapshot has the required contract files
+    local broken_snapshots=0
+    while IFS= read -r -d '' d; do
+        # Only validate directories that contain at least one contract file (leaf snapshots)
+        if [[ ! -f "$d/contract.json" && ! -f "$d/contract.schema.json" ]]; then
+            continue
+        fi
+        local basename_d
+        basename_d="${d#$session_dir/}"
+        local missing=""
+        [[ ! -f "$d/contract.json" ]] && missing="$missing contract.json"
+        [[ ! -f "$d/contract.schema.json" ]] && missing="$missing contract.schema.json"
+        [[ ! -f "$d/state.md" ]] && missing="$missing state.md"
+        [[ ! -f "$d/superpowers-contract.json" ]] && missing="$missing superpowers-contract.json"
+
+        if [[ -n "$missing" ]]; then
+            log_fail "session/$basename_d is missing:$missing"
+            broken_snapshots=$((broken_snapshots + 1))
+        fi
+    done < <(find "$session_dir" -maxdepth 2 -type d -print0 2>/dev/null)
+
+    if [[ "$broken_snapshots" -eq 0 && "$branch_snapshots" -ge 1 ]]; then
+        log_pass "All branch snapshots have required contract files"
+    fi
+
+    if [[ "$violations" -gt 0 || "$broken_snapshots" -gt 0 ]]; then
+        CHECK_COUNT=$((CHECK_COUNT + violations + broken_snapshots))
+    fi
+}
+
 # ── Summary ─────────────────────────────────────────────────────────────────
 print_summary() {
     local total_checks=$((CHECK_COUNT + PASS_COUNT + FAIL_COUNT))
@@ -523,6 +602,7 @@ main() {
     check_forbidden_patterns
     check_archunit
     check_state_md
+    check_session_archive
 
     echo ""
     print_summary

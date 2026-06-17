@@ -497,6 +497,91 @@ Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 | Usage guides | How-to references | `usage/*.md` | On-demand via read/lean-ctx |
 | Ponytail | Frugality ladder + debt convention | `usage/ponytail.md`, `agent.md §5`, `skills/simplify/SKILL.md` | On-demand via skill() or plugin injection |
 
+---
+
+## Session Lifecycle (Contract Archival)
+
+Every orchestration session persists its contract state to the `session/` directory for cross-session traceability and resumption.
+
+### Directory Layout
+
+```
+contract/                    ← Active contract (mutable, current state)
+  contract.json
+  contract.schema.json
+  state.md
+  superpowers-contract.json
+
+session/                     ← Historical archive (append-only state log + per-branch snapshots)
+  state.md                   ← Append-only log of ALL state transitions
+  index.md                   ← Master branch index (one row per branch)
+  {branch-name}/             ← Per-branch snapshot for resumption
+    contract.json
+    contract.schema.json
+    state.md
+    superpowers-contract.json
+```
+
+### Lifecycle Protocol
+
+| Event | Action |
+|-------|--------|
+| **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from there; if no, init fresh from `contract/` template |
+| **State transition** | Update `contract/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
+| **Session end** (COMPLETE/BLOCKED) | Run final snapshot → append to `session/state.md` → update `session/index.md` |
+| **Branch switch** | Snapshot old branch → checkout new → load `session/NEW/` if exists |
+
+### Snapshot Command
+
+```bash
+# Full snapshot (copies contract files + updates state.md + index.md)
+bash scripts/snapshot-contract.sh --summary "State: ${STATE} — brief description"
+
+# Files-only (skip index updates for hot-reload scenarios)
+bash scripts/snapshot-contract.sh --snapshot-only
+
+# Preview without writing
+bash scripts/snapshot-contract.sh --dry-run --verbose
+```
+
+### Verification
+
+```bash
+# Validate session/ structure
+ls -la session/                                 # Should show state.md, index.md, and branch dirs
+cat session/state.md                            # Should show chronological state log
+cat session/index.md                            # Should show all branches with status
+
+# Validate per-branch snapshot
+ls session/{branch-name}/                       # Should show 4 contract files
+diff contract/contract.json session/{branch}/contract/contract.json   # Should match (identical snapshot)
+```
+
+### Save Session Protocol
+
+When the user says "save session" or a phase completes, save to **ALL** systems. This is the canonical 6-step protocol:
+
+```bash
+# 1. Persist orchestration envelope to lean-ctx knowledge
+lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
+
+# 2. Update contract/state.md — append completed work items
+
+# 3. Archive snapshot to session/ (contract files + state log + index)
+bash scripts/snapshot-contract.sh --snapshot-only
+
+# 4. Save conversation context (survives OpenCode restart)
+lean-ctx ctx_session save
+
+# 5. Re-index GitNexus code intelligence
+bash scripts/gitnexus-analyze.sh
+
+# 6. Re-index Graphify knowledge graph (if graphify-out/ exists)
+graphify --update 2>/dev/null || true
+```
+
+**One-shot alias**: `save session` = all 6 steps above. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes. This is referenced from the Post-Flight Protocol in all agent instruction files.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 [workflow-shield]: https://img.shields.io/badge/Workflow-Orchestration-blue?style=for-the-badge

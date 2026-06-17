@@ -58,7 +58,9 @@ The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contr
 3. **UPDATE** — During and after work, persist state:
    - After implementation completes: update `outputs.code_changes[]` (files_created, files_modified), `outputs.test_results` (test_count, pass, fail)
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
-   - This ensures crash recovery and the orchestrator can score your output
+   - Snapshot to session archive: `scripts/snapshot-contract.sh --snapshot-only`
+   - Save conversation: `ctx_session save`
+   - This ensures crash recovery, audit trail, and cross-session resumption
 
 ### Inputs from Envelope
 
@@ -209,6 +211,7 @@ Before moving on from any non-trivial code (branches, cross-service calls, irrev
 
 ### 6. Before Moving On
 - Run project formatting commands before reporting done (once at end, not after each file)
+- Run snapshot: `scripts/snapshot-contract.sh --snapshot-only` — archive final state for orchestrator scoring
 - Remove debug code, TODOs, commented-out code
 - Check imports — no fully qualified names
 

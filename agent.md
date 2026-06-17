@@ -20,6 +20,7 @@ Single source of truth for all AI agents. Reference skills and usage guides for 
 5. [5. Development Workflow](#5-development-workflow)
 6. [6. Non-Negotiable Rules](#6-non-negotiable-rules)
 7. [7. Skills Reference](#7-skills-reference)
+8. [8. Session Lifecycle Protocol](#8-session-lifecycle-protocol)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -288,9 +289,78 @@ Use **Doubt-Driven Development (DDD)** when uncertain: spawn a fresh-context adv
 | 3 | Knowledge persist | `lean-ctx ctx_knowledge remember` |
 | 4 | Graphify sync | `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` |
 | 5 | STATE.md | `ctx_edit` |
-| 6 | Session save | `ctx_session save` |
+| 6 | Session save (complete) | See **Save Session Protocol** below |
 
 Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
+
+### Save Session Protocol
+
+When the user says "save session" or a phase completes, save to **ALL** systems:
+
+```bash
+# 1. Persist orchestration envelope to lean-ctx knowledge
+lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
+
+# 2. Update contract/state.md — append completed work items
+
+# 3. Archive snapshot to session/ (contract files + state log + index)
+bash scripts/snapshot-contract.sh --snapshot-only
+
+# 4. Save conversation context (survives OpenCode restart)
+lean-ctx ctx_session save
+
+# 5. Re-index GitNexus code intelligence
+bash scripts/gitnexus-analyze.sh
+
+# 6. Re-index Graphify knowledge graph (if graphify-out/ exists)
+graphify --update 2>/dev/null || true
+```
+
+**One-shot alias**: `save session` = all 6 steps above. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes.
+
+### Session Lifecycle Protocol
+
+Every orchestration session persists contract state to the `session/` directory for cross-session traceability and safe resumption.
+
+#### Directory Layout
+
+```
+session/
+├── state.md              ← Append-only chronological state log
+├── index.md              ← Branch index (status per branch)
+├── main/                 ← Per-branch snapshot for main
+│   ├── contract.json
+│   ├── contract.schema.json
+│   ├── state.md
+│   └── superpowers-contract.json
+├── feature/<name>/       ← Per-feature-branch snapshots
+```
+
+#### Lifecycle Protocol
+
+| Event | Action |
+|-------|--------|
+| **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from snapshot; if no, init fresh from `contract/` templates |
+| **State transition** | Update `contract/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
+| **Session end** (COMPLETE/BLOCKED) | Final snapshot → append summary to `session/state.md` → update `session/index.md` |
+| **Branch switch** | Snapshot current → checkout new → load `session/NEW/` if exists |
+
+#### Snapshot Command Reference
+
+```bash
+scripts/snapshot-contract.sh                # Full snapshot: copy files + update state.md + index.md
+scripts/snapshot-contract.sh --snapshot-only  # Copy files only (skip state.md/index.md updates)
+scripts/snapshot-contract.sh --summary "State: ${STATE} — description"  # Custom entry
+scripts/snapshot-contract.sh --dry-run --verbose  # Preview without changes
+scripts/snapshot-contract.sh --branch feature/my-branch  # Override branch detection
+```
+
+#### Why It Matters
+
+Without per-branch archival, contract files get overwritten when switching branches or resuming sessions. The `session/` archive preserves:
+- **Audit trail**: `session/state.md` grows monotonically — every state transition, every decision, every blocker
+- **Safe resume**: `session/{branch}/contract.json` is the exact state from last session — no reconstruction needed
+- **Discoverability**: `session/index.md` shows all branches with their status at a glance
 
 ### Complex Tasks (Orchestration Template)
 
@@ -362,7 +432,7 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 | `gitnexus-{exploring,impact,debug,refactor,cli,guide}` | GitNexus-specific workflows |
 | `firecrawl-*` (30 skills in `~/.agents/skills/`) | Web search, scraping, crawling, monitoring |
 
-*Last updated: 2026-06-17. If you modify conventions, workflows, or config, update this file.*
+*Last updated: 2026-06-18. If you modify conventions, workflows, or config, update this file.*
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

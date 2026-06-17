@@ -202,6 +202,32 @@ check_required_dirs() {
         fi
     fi
 
+    # session/ — state.md, index.md, at least one branch snapshot
+    dir="$PROJECT_ROOT/session"
+    if [[ ! -d "$dir" ]]; then
+        log_fail "session/ directory does not exist"
+        violations=$((violations + 1))
+    else
+        local ssn_violations=0
+        for f in state.md index.md; do
+            if [[ ! -f "$dir/$f" ]]; then
+                log_fail "session/$f is missing"
+                ssn_violations=$((ssn_violations + 1))
+                violations=$((violations + 1))
+            fi
+        done
+        # Check at least one branch snapshot dir
+        local snapshot_count
+        snapshot_count=$(find "$dir" -maxdepth 2 -type f -name 'contract.json' -print0 2>/dev/null | xargs -0 -I {} echo | wc -l | tr -d ' ')
+        if [[ "$snapshot_count" -eq 0 ]]; then
+            log_fail "session/ has no branch snapshot directories (no contract.json found at depth 2)"
+            violations=$((violations + 1))
+        fi
+        if [[ "$ssn_violations" -eq 0 && "$snapshot_count" -ge 1 ]]; then
+            log_pass "session/ exists with $snapshot_count branch snapshot(s) and required files"
+        fi
+    fi
+
     # doc/ — workflow.md
     dir="$PROJECT_ROOT/doc"
     if [[ ! -d "$dir" ]]; then

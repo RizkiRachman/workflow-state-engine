@@ -53,13 +53,18 @@ The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contr
      - Read `.opencode/orchestration/contract.json` as base
      - Populate `session.task_id` (a short slug like `"system-analyst-standalone-<date>"`), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract value <base JSON with populated fields>`
+```bash
+scripts/snapshot-contract.sh --snapshot-only  # archive state after update
+```
      - Log the standalone session for traceability
+→ Check session archive: `scripts/snapshot-contract.sh --snapshot-only` — establishes planning-phase baseline
 
 2. **CREATE** — If this is a new task (no prior envelope), initialize `requirements` and `scope` based on instructions received
 
 3. **UPDATE** — During and after work, persist state:
    - After producing plan output: update `outputs.plan`, `outputs.files_affected[]`, `outputs.risks[]`
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
+→ Snapshot: `scripts/snapshot-contract.sh --snapshot-only` — archive plan before orchestrator scoring
    - This ensures crash recovery and traceability
 
 ### Inputs from Envelope
@@ -127,7 +132,7 @@ After completing your work, run these steps **in order** before declaring done:
 | 2. Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) | Verify only expected files changed — no unintended side effects |
 | 3. Knowledge persistence | `lean-ctx ctx_knowledge remember` | Persist any gotchas, patterns, or decisions discovered during the task (categories: `architecture`, `gotchas`, `conventions`) |
 | 4. contract/state.md update | `lean-ctx ctx_edit` on `contract/state.md` | Append completed work, update Current Focus, update Known Blockers |
-| 5. Session save | `ctx_session save` | Persist conversation state for resumption across opencode restarts |
+| 5. Session save (complete) | Run **Save Session Protocol** — persist envelope → update state.md → archive snapshot → save conversation → re-index gitnexus → re-index graphify |
 
 **Exceptions**: Documentation-only changes may skip steps 1, 2, and 4.
 

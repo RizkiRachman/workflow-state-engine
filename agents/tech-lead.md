@@ -96,8 +96,8 @@ For every task, follow this sequence:
 - `/skill doubt-driven-development` — cross-examine non-trivial decisions via fresh-context adversarial review before they stand
 - `/skill spec-driven-development` — create GWT-format specs before delegating to developer (gate between PLAN_SCORED→EXECUTE)
 - **Before editing any symbol:** run `gitnexus_impact({target, direction: "upstream"})` to check blast radius — warn user on HIGH/CRITICAL risk
-- If resuming from a previous session: use `ctx_session load` to restore context, or use `ctx_session task "<current task>"` to set the working context for lean-ctx compression
-- If context grows large: use `ctx_session save` to persist state, then `ctx_compress --signatures` to compact the window
+- If resuming from a previous session: check `session/$(git branch --show-current)/contract.json` exists → if yes, load from there for full resume fidelity; then `scripts/snapshot-contract.sh` to snapshot the resume state
+- If context grows large: run **Save Session Protocol** (ctx_session save + archive + re-index) to persist state, then `ctx_compress --signatures` to compact the window
 
 ### 0.5 Memory Bootstrap
 - Call `initialize_context` tool — returns the System Primer (compressed summary of all prior knowledge)
@@ -121,6 +121,7 @@ Run a quick 5-lens check before planning:
 
 ### 2. Plan
 **Checkpoint:** Persist envelope before delegation via `lean-ctx ctx_knowledge remember key orchestration-contract value <JSON>` — ensures last known state survives if opencode closes mid-task.
+→ Then snapshot to session archive: `scripts/snapshot-contract.sh --snapshot-only` — preserves pre-plan state for rollback
 
 **Scope check:** Before delegating, check `scope.included` and `scope.excluded` to ensure the plan respects boundaries. If `scope.parallel_eligible` is true, delegate to @system-analyst with `parallel: true` flag.
 
@@ -155,6 +156,7 @@ After system-analyst returns → run **Scoring Pipeline (§4.5)** on output → 
 
 ### 3. Build
 **Checkpoint:** Persist envelope before delegation via `lean-ctx ctx_knowledge remember key orchestration-contract value <JSON>`.
+→ Then snapshot: `scripts/snapshot-contract.sh --snapshot-only`
 
 Delegate to @developer (`agents/developer.md`). The developer reads the envelope directly for decisions, governance, and retry context. Optionally inject a brief context summary:
 ```
@@ -175,6 +177,7 @@ After developer returns → run **Scoring Pipeline (§4.5)** on output → updat
 
 ### 4. Review
 **Checkpoint:** Persist envelope before delegation via `lean-ctx ctx_knowledge remember key orchestration-contract value <JSON>`.
+→ Then snapshot: `scripts/snapshot-contract.sh --snapshot-only`
 
 Delegate to @quality-analyst (`agents/quality-analyst.md`). The quality-analyst reads the envelope directly for requirements, governance, and files to review. Optionally inject a brief context summary:
 ```
@@ -307,7 +310,7 @@ After each subagent delegation returns and scoring completes, persist state acro
    - Current Focus: `"Agent orchestration — ${state} (phase: ${retry.current_phase}). ${score.combined >= 70 ? '' : 'Score: ' + score.combined}"`
    - If BLOCKED: add to Known Blockers with issues from `retry.issues[]`
    - If PASS: clear Known Blockers
-5. **Save conversation** — `ctx_session save` so conversation context survives opencode restart
+5. **Run Save Session Protocol**: Persist envelope → update state.md → archive snapshot → save conversation → re-index gitnexus → re-index graphify (see §6 Ship for the full 6-step protocol)
 
 ### 5.8 State Machine
 
@@ -342,9 +345,10 @@ If state = `BLOCKED`:
 1. Read envelope from `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
 2. Update contract/state.md Known Blockers: `"BLOCKED at ${phase}: ${issues}"`
 3. Persist envelope final state via `lean-ctx ctx_knowledge remember key orchestration-contract value <JSON>`
-4. Save conversation via `ctx_session save`
-5. Summarize blockers to user: `"I hit BLOCKED at ${phase}. Issues: ${issues}. Please review and decide: adjust threshold, fix guidance, or discard."`
-6. Stop — do not continue execution until user responds
+4. Run **Save Session Protocol**: update state.md → archive snapshot → save conversation (ctx_session save) → re-index gitnexus → re-index graphify
+5. **Snapshot blocked state**: `scripts/snapshot-contract.sh --summary "State: BLOCKED at ${phase} — ${issues}"`
+6. Summarize blockers to user: `"I hit BLOCKED at ${phase}. Issues: ${issues}. Please review and decide: adjust threshold, fix guidance, or discard."`
+7. Stop — do not continue execution until user responds
 
 **Normal completion:**
 If state = `COMPLETE` and scoring passed:
@@ -356,6 +360,8 @@ If state = `COMPLETE` and scoring passed:
 - **Incorporate quality-analyst-learner output**: apply `knowledge_updates[]` to lean-ctx, append `lessons_learned[]` to envelope
 - Summarize what was done
 - Confirm ready for deployment
+- **Final snapshot**: `scripts/snapshot-contract.sh --summary "State: COMPLETE — task complete"`
+- **Run full Save Session Protocol**: persist envelope → update state.md → archive snapshot → save conversation → re-index gitnexus → re-index graphify
 
 > Alternatively, use `/gsd-ship` for GSD-style shipping with changelog + rollback plan.
 
@@ -380,7 +386,7 @@ Before any commit, run the Post-Flight Protocol from agent.md §5:
 | 3 | Knowledge persist | `lean-ctx ctx_knowledge remember` |
 | 4 | Graphify sync | `lean-ctx ctx_shell bash scripts/gitnexus-analyze.sh` |
 | 5 | STATE.md | `ctx_edit` |
-| 6 | Session save | `ctx_session save` |
+| 6 | Session save (complete) | Run **Save Session Protocol**: persist envelope → update state.md → archive snapshot → save conversation → re-index gitnexus → re-index graphify |
 
 Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
@@ -453,5 +459,6 @@ Every agent MUST run these steps in order at session start:
 3. **Load orchestration envelope**: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"` → read current state
 4. **Sync state**: Read `contract/state.md` (Current Focus) + `PROJECT.md` (vision) + lean-ctx knowledge (past decisions)
 5. **Refresh intelligence**: `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` if index is stale (>1 hour old)
+6. **Session archive check**: `ls session/$(git branch --show-current)/` — if exists, load `contract.json` from there for state continuity
 
 These steps ensure every agent starts with the full context of what's available, where the project is, and what's been decided.

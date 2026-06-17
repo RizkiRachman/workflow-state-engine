@@ -60,6 +60,9 @@ The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contr
    - Update `outputs.agent_reports[]` with your verdict, findings, and lens_coverage
    - Update `score.*` fields if applicable
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
+   ```bash
+   scripts/snapshot-contract.sh --snapshot-only  # archive review state
+   ```
    - This ensures the orchestrator can pick up your review results
 
 ### Inputs from Envelope
@@ -89,6 +92,7 @@ Execute these steps in order BEFORE any review, tool call, or output.
 lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"
 ```
 If found → extract `requirements.*`, `governance.*`, `retry.issues[]`, `outputs.code_changes[]`. If not found → create fresh from contract.json (see §Session Protocol above).
+→ Session archive: run `scripts/snapshot-contract.sh --snapshot-only` to establish review-phase baseline
 
 ### 2. Sync Latest Memory State
 
@@ -128,7 +132,7 @@ After completing your work, run these steps **in order** before declaring done:
 | 2. Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) | Verify only expected files changed — no unintended side effects |
 | 3. Knowledge persistence | `lean-ctx ctx_knowledge remember` | Persist any gotchas, patterns, or decisions discovered during the task (categories: `architecture`, `gotchas`, `conventions`) |
 | 4. contract/state.md update | `lean-ctx ctx_edit` on `contract/state.md` | Append completed work, update Current Focus, update Known Blockers |
-| 5. Session save | `ctx_session save` | Persist conversation state for resumption across opencode restarts |
+| 5. Session save (complete) | Run **Save Session Protocol** — persist envelope → update state.md → archive snapshot → save conversation → re-index gitnexus → re-index graphify |
 
 **Exceptions**: Documentation-only changes may skip steps 1, 2, and 4.
 
@@ -231,6 +235,8 @@ Be terse for routine findings. Use full clarity for:
 ## Report Format
 
 Return a structured JSON object. The orchestrator uses this for scoring and decision-making.
+
+- `scripts/snapshot-contract.sh --snapshot-only` — archive review findings
 
 ```json
 {

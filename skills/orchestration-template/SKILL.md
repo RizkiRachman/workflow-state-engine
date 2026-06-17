@@ -23,6 +23,8 @@ Load this skill **first thing on every session start** and whenever the user say
 lean-ctx ctx_knowledge recall --query "orchestration-contract"
 
 ```
+→ Then check session archive: `ls session/$(git branch --show-current)/` — if exists, load contract.json from there for full resume fidelity
+
 ### Step 2: Decision Gate
 
 **If envelope FOUND:**
@@ -52,9 +54,13 @@ If YES:
 
   3. Persist via: lean-ctx ctx_knowledge remember key orchestration-contract value <JSON>
 
+  3b. Establish session baseline: `scripts/snapshot-contract.sh --summary "Session init: {task_id}"`
+
   4. Sync STATE.md: set Current Focus = "New orchestration session: {task_id}"
 
   5. Proceed with the workflow
+
+  6. First snapshot: `scripts/snapshot-contract.sh` — archive INIT state for resumption
 
 If NO:
 
@@ -65,18 +71,23 @@ If NO:
 ```
 ### Step 3: Persist (on every transition)
 
-After ANY delegation or phase change:
+After ANY delegation or phase change, run the **Save Session Protocol** — saves to ALL systems:
 
 ```bash
-1. Update envelope: state, outputs, score, retry, metrics
+1. Persist envelope: Update state, outputs, score, retry, metrics → `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
 
-2. lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>
+2. Update state.md: Append completed work to `contract/state.md`
 
-3. Sync STATE.md: Current Focus + Known Blockers
+3. Archive snapshot: `scripts/snapshot-contract.sh --snapshot-only`
 
-4. ctx_session save — survive opencode restart
+4. Save conversation: `ctx_session save`
 
+5. Re-index gitnexus: `bash scripts/gitnexus-analyze.sh`
+
+6. Re-index graphify: `graphify --update 2>/dev/null || true` (if graphify-out/ exists)
 ```
+
+These 6 steps are the canonical **Save Session Protocol**. Run ALL of them — partial saves lose audit trail and break resumption.
 ### Step 4: Session Resume Detection
 
 When resuming (envelope found with COMPLETE state):
@@ -89,6 +100,8 @@ When resuming (envelope found with COMPLETE state):
 3. Summarize to user: what was done, what's pending, any blockers
 
 4. If blocked → ask user for guidance before continuing
+
+5. **Snapshot on resume**: Run `scripts/snapshot-contract.sh` to record that the session was resumed (establishes baseline for continued work).
 
 ```
 ---
@@ -126,26 +139,13 @@ BLOCKED (any phase) → user intervention → retry with guidance → back to fa
 ## Quick Reference
 
 ```bash
-Session start:
-
   lean-ctx ctx_knowledge recall --query "orchestration-contract"
 
-  if found → resume
-
-  if not → ask user → create fresh
-
-After each phase:
-
-  lean-ctx ctx_knowledge remember \
-
-    category architecture \
-
-    key orchestration-contract \
-
-    value "<updated JSON>"
-
-  ctx_session save
-
-  sync STATE.md
-
+  # Save Session Protocol (all 6 steps):
+  lean-ctx ctx_knowledge remember key orchestration-contract value "<updated JSON>"
+  # Update contract/state.md
+  bash scripts/snapshot-contract.sh --snapshot-only   # archive snapshot
+  lean-ctx ctx_session save                            # save conversation
+  bash scripts/gitnexus-analyze.sh                     # re-index gitnexus
+  graphify --update 2>/dev/null || true                # re-index graphify
 ```
