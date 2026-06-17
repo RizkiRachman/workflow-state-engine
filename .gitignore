@@ -30,3 +30,6 @@ plugins/
 
 # Task board (sprint tracking, not version-controlled)
 tasks/
+# Template artifacts (goods-price-comparison ported files)
+AGENTS.md
+CLAUDE.md
