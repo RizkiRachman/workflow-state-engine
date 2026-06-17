@@ -193,6 +193,14 @@ Does the code fit the project's architecture?
 - Resource constraints: memory, CPU, disk, network
 - Run `/skill devops-expert` for the full reference.
 
+### Over-Engineering Check (Ponytail)
+- Is every abstraction justified? Any YAGNI violations?
+- Could stdlib or existing deps replace any custom code?
+- Any unnecessary indirection (factories, interfaces with one impl, over-abstracted patterns)?
+- Are there `ponytail:` debt comments? If so, are the ceilings and upgrade paths documented?
+- Could any file be eliminated entirely?
+- Are any new dependencies avoidable?
+
 ### Parallel Shard Review
 
 When reviewing code from parallel developer shards:

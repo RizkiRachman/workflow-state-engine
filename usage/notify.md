@@ -1,4 +1,6 @@
+<!-- omit from toc -->
 # Notify Plugin — In-App Notifications
+[![Notify Plugin][notify-shield]][notify-url]
 
 **Plugin**: `opencode-notify`  
 **Status**: Auto-configured on install — no project-level config file needed.
@@ -16,9 +18,13 @@ Shows native OS notifications (popups with actionable buttons) for OpenCode even
 | Subagent needs your input | Notification with question text | Yes — respond from popup |
 | Build/test failure | Notification with exit code summary | Opens terminal output |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Without Notify Plugin
 
 If the plugin is not installed, OpenCode falls back to in-terminal prompts — you see agent permission requests inline and need to switch back to the terminal to approve. Long tasks show a spinner in the status bar but no popup.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Platform Support
 
@@ -29,12 +35,16 @@ If the plugin is not installed, OpenCode falls back to in-terminal prompts — y
 | Linux | ✅ D-Bus notifications | Requires `libnotify` / `notify-send` |
 | SSH/Headless | ⚠️ Terminal fallback | No OS notifications; uses terminal bell |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Troubleshooting
 
 - **Notifications not showing on macOS**: Ensure Notification Center is enabled for your terminal app. Run `osascript -e 'display notification "test" with title "Notify"'` to verify.
 - **Notifications not showing on Linux**: Install `libnotify-bin` (`apt install libnotify-bin`). Verify with `notify-send "test"`.
 - **No notification on task completion**: Task must run >30s to trigger. Shorter tasks complete synchronously without notification.
 - **Stale notifications**: Dismiss before switching contexts — the plugin queues one notification per event and drops duplicates to reduce noise.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Configuration (Advanced)
 
@@ -52,3 +62,6 @@ Notifications are auto-configured. If you want to suppress specific categories:
 ```
 
 Suppression keys: `permission`, `task_complete`, `subagent_input`, `build_failure`.
+
+[notify-shield]: https://img.shields.io/badge/Notify-Plugin-blue?style=for-the-badge
+[notify-url]: #

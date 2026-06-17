@@ -1,0 +1,9 @@
+{
+  "name": "workflow-state-engine-skill-gitnexus",
+  "version": "1.0.0",
+  "description": "Code intelligence toolkit — impact analysis, code query, safe rename, execution flow tracing, and knowledge graph exploration.",
+  "keywords": ["opencode", "skill", "gitnexus"],
+  "author": "Workflow State Engine",
+  "license": "MIT",
+  "private": true
+}

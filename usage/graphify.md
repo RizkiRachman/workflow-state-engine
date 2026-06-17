@@ -1,4 +1,6 @@
+<!-- omit from toc -->
 # Graphify Usage Guide
+[![Graphify Plugin][graphify-shield]][graphify-url] [![Docs][docs-shield]][docs-url]
 
 > **Repository**: [github.com/emeraldarrow/Graphify](https://github.com/emeraldarrow/Graphify) — knowledge graph queries for code understanding
 > **MCP**: local Python server (`graphify.serve`)
@@ -30,4 +32,9 @@
 | Quick exploration                 | `graphify_get_node()` + `get_neighbors()`       | —                                      |
 
 > **Tip**: graphify is good for broad exploration; gitnexus is better for precise impact analysis. Use gitnexus for production changes.
+
+[graphify-shield]: https://img.shields.io/badge/Graphify-Plugin-blue?style=for-the-badge
+[graphify-url]: #
+[docs-shield]: https://img.shields.io/badge/DOCS-文档-blue?style=for-the-badge
+[docs-url]: #
 

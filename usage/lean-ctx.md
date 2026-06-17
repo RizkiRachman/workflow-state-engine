@@ -1,5 +1,6 @@
 <!-- lean-ctx-owned: PROJECT-LEAN-CTX.md v2 -->
 
+<!-- omit from toc -->
 # lean-ctx — Context Engineering Layer
 
 > **Repository**: [github.com/MorphLlama/lean-ctx](https://github.com/MorphLlama/lean-ctx) — context-aware MCP tools for AI agents
@@ -8,6 +9,28 @@
 Token-efficient MCP tools for reading, searching, and persisting context. Replaces native `Read`/`Grep`/`Shell` with cached reads, compressed output, and cross-session knowledge.
 
 **Session savings: ~78% token reduction ($0.78/session avg).** Cache hit rates above 30% mean zero-cost re-reads (~13 tok each).
+
+[![lean-ctx][leanctx-shield]][leanctx-url] [![Version][version-shield]][version-url]
+
+<a id="readme-top"></a>
+
+---
+
+## Table of Contents
+1. [Registered Tools (always available)](#1-registered-tools-always-available)
+2. [Use Case Matrix — When to Use What](#2-use-case-matrix--when-to-use-what)
+3. [ctx_read Mode Selection](#3-ctx_read-mode-selection)
+4. [Batch Operations — ctx_multi_read](#4-batch-operations--ctx_multi_read)
+5. [Knowledge Management — ctx_knowledge](#5-knowledge-management--ctx_knowledge)
+6. [Session Management — ctx_session](#6-session-management--ctx_session)
+7. [Tool Discovery — ctx_discover_tools + ctx_call](#7-tool-discovery--ctx_discover_tools--ctx_call)
+8. [Compression Strategy](#8-compression-strategy)
+9. [Cost Awareness — ctx_metrics](#9-cost-awareness--ctx_metrics)
+10. [Full Tool Inventory — All lean-ctx Capabilities](#10-full-tool-inventory--all-lean-ctx-capabilities)
+11. [Quick Reference — Mini Pattern Card](#11-quick-reference--mini-pattern-card)
+12. [Common Pitfalls](#common-pitfalls)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -25,6 +48,8 @@ Token-efficient MCP tools for reading, searching, and persisting context. Replac
 | `ctx_session(action, …)`      | —                     | Session persistence and resume (see §6)           |      —      |
 
 **Rule of thumb:** If there's a `ctx_*` for it, use it. Native tools trigger permission prompts, bypass caching, and increase token cost.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -47,6 +72,8 @@ Token-efficient MCP tools for reading, searching, and persisting context. Replac
 | Batch multiple edits   | `ctx_multi_read` + native `edit` | Read once, edit multiple sections                      |
 | Discover tools         | `ctx_discover_tools`             | `query="session"` to find all session-related tools    |
 | Call unregistered tool | `ctx_call`                       | `{name:"ctx_metrics", arguments:{action:"status"}}`    |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -77,6 +104,8 @@ Optimize cache hit rate by matching mode to intent:
 
 - Fresh reads (`fresh=true`) bypass cache — only when you know the file changed externally
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 4. Batch Operations — ctx_multi_read
@@ -98,6 +127,8 @@ ctx_multi_read(paths=["Controller.java", "Service.java", "Repository.java"], mod
 - Reading all files in a small directory
 
 Each call still uses cache — batch doesn't force fresh reads.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -155,6 +186,8 @@ recall --query "orchestration-contract"   # load state
 remember key orchestration-contract value "<updated JSON>"  # persist
 
 ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 6. Session Management — ctx_session
@@ -185,6 +218,8 @@ lean-ctx ctx_session load           # restores ~400 tok of context
 lean-ctx ctx_knowledge recall --query "orchestration-contract"  # load envelope
 
 ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 7. Tool Discovery — ctx_discover_tools + ctx_call
@@ -211,6 +246,8 @@ lean-ctx ctx_call name="ctx_graph" arguments='{"action":"status"}'
 lean-ctx ctx_call name="ctx_plan" arguments='{"mode":"budget","files":["..."]}'
 
 ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 8. Compression Strategy
@@ -234,6 +271,8 @@ compress topic="Auth System Exploration"
 
 ```
 Good summary = captures user intent + file paths + decisions + constraints. Fidelity over brevity — a compressed block should be self-contained.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -260,6 +299,8 @@ Returns:
 - CEP Score: >80/100 (currently 64 — diversify modes)
 
 - Compression ratio: >20% (currently 22% — okay)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -318,6 +359,8 @@ Returns:
 | `ctx_prefetch`     | Prewarm cache for refactor blast radius files                                | Before any large multi-file edit |
 | `ctx_callgraph`    | Quick call chain without GitNexus overhead                                   | When investigating a bug         |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 11. Quick Reference — Mini Pattern Card
@@ -362,6 +405,8 @@ ctx_call name="ctx_metrics" arguments='{"action":"status"}'  # check costs
 ```
 > **Cache beats fresh.** An unchanged file at ~13 tok beats any native read. Use mode=map for everything you don't actively edit.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## Common Pitfalls
@@ -394,4 +439,11 @@ Always save after important milestones:
 lean-ctx ctx_session save
 ```
 This survives OpenCode restarts and enables session resume.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+[leanctx-shield]: https://img.shields.io/badge/lean--ctx-Context%20Engineering-7B68EE?style=for-the-badge
+[leanctx-url]: https://github.com/MorphLlama/lean-ctx
+[version-shield]: https://img.shields.io/badge/Version-latest-7B68EE?style=for-the-badge
+[version-url]: #
 

@@ -1,0 +1,9 @@
+{
+  "name": "workflow-state-engine-skill-gitnexus-guide",
+  "version": "1.0.0",
+  "description": "Use when the user asks about GitNexus itself — available tools, how to query the knowledge graph, MCP resources, graph schema, or workflow reference.",
+  "keywords": ["opencode", "skill", "gitnexus-guide"],
+  "author": "Workflow State Engine",
+  "license": "MIT",
+  "private": true
+}

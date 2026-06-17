@@ -1,4 +1,6 @@
+<!-- omit from toc -->
 # Web Search Usage Guide
+[![Web Search Plugin][websearch-shield]][websearch-url]
 
 Two web search tools are available:
 
@@ -22,6 +24,8 @@ websearch_cited({query: "Spring Boot 3.4 new features"})
 
 ```
 **Limit**: max 5 parallel calls (rate limited by LLM provider).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -65,4 +69,7 @@ websearch_web_search_exa({
 
 ```
 **Tip**: Describe the ideal page, not keywords. "blog post comparing React and Vue performance" not "React vs Vue".
+
+[websearch-shield]: https://img.shields.io/badge/Web%20Search-Plugin-blue?style=for-the-badge
+[websearch-url]: #
 

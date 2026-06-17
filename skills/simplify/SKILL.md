@@ -136,3 +136,18 @@ After simplifying, confirm:
 - [ ] No unrelated files were refactored
 - [ ] No error handling was weakened or removed
 - [ ] The result is simpler to review than the original
+
+## Ponytail Debt Convention
+
+Every intentional shortcut must be marked with a `ponytail:` comment naming the ceiling and upgrade path:
+
+```java
+// ponytail: global lock, wont scale past 10 concurrent. Upgrade: ConcurrentHashMap + stripe locks
+```
+
+This creates a harvestable debt ledger. The convention:
+- `ponytail:` prefix makes shortcuts grep-able (`ctx_search "ponytail:"`)
+- Ceiling documents the known limit (concurrency, size, latency)
+- Upgrade path documents the known fix (what to replace it with)
+- No shame — intentional shortcuts are strategic; undocumented ones are technical debt
+- Run `/ponytail-debt` to extract all ponytail comments into a structured report

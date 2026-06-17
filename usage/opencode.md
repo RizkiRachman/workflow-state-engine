@@ -1,8 +1,30 @@
+<!-- omit from toc -->
 # OpenCode — Usage Guide
 
 > **Official docs**: [opencode.ai/docs](https://opencode.ai/docs/)
 
 OpenCode is the AI coding agent platform this project runs on. This guide covers how it's configured, how agents work, and what to do when things go wrong.
+
+[![OpenCode Plugin][opencode-shield]][opencode-url] [![Docs][docs-shield]][docs-url]
+
+<a id="readme-top"></a>
+
+---
+
+## Table of Contents
+1. [How This Project Uses OpenCode](#1-how-this-project-uses-opencode)
+2. [Configuration Reference](#2-configuration-reference)
+3. [Agents](#3-agents)
+4. [Permissions](#4-permissions)
+5. [Tools](#5-tools)
+6. [Rules (AGENTS.md)](#6-rules-agentsmd)
+7. [Skills](#7-skills)
+8. [CLI Reference](#8-cli-reference)
+9. [Project-Specific Configuration](#9-project-specific-configuration)
+10. [Troubleshooting](#10-troubleshooting)
+11. [References](#11-references)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -28,6 +50,8 @@ toolkit/agent.md       ← instructions[0] — loaded every session
 .opencode/ → toolkit/  ← Symlinks: agents/, skills/, rules/, usage/, template/
 AGENTS.md → toolkit/agent.md  ← Symlink (same file)
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -75,6 +99,8 @@ Options include:
 - `scroll_speed` — scroll rate
 - `mouse` — mouse support
 - `attention` — desktop notifications and sounds
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -166,6 +192,8 @@ permission:
 ---
 Instructions for the agent...
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -261,6 +289,8 @@ Use `~` or `$HOME` in permission patterns for external directories:
 }
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 5. Tools
@@ -308,6 +338,8 @@ Define in `opencode.json`:
 | **postgres** | `postgres_*` | Database queries, schema inspection |
 | **context7** | `context7_*` | Library docs lookup |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 6. Rules (AGENTS.md)
@@ -342,6 +374,8 @@ Remote URLs are also supported with 5-second timeout:
   "instructions": ["https://raw.githubusercontent.com/org/shared-rules/main/style.md"]
 }
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -407,6 +441,8 @@ Per-agent overrides:
 }
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 8. CLI Reference
@@ -457,6 +493,8 @@ Per-agent overrides:
 | `OPENCODE_ENABLE_EXA` | Enable web search tool |
 | `OPENCODE_DISABLE_AUTOCOMPACT` | Disable auto context compaction |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 9. Project-Specific Configuration
@@ -503,6 +541,8 @@ This project has 6 MCP servers configured in `opencode.json`:
 - `auto`: Compact sessions automatically when context fills
 - `prune`: Remove old tool outputs to save tokens
 - `reserved`: 8000 token buffer for compaction safety
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -559,6 +599,8 @@ opencode mcp list
 opencode mcp add
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 11. References
@@ -575,3 +617,8 @@ opencode mcp add
 | Permissions Guide | [docs/permissions/](https://opencode.ai/docs/permissions/) |
 | MCP Servers | [docs/mcp-servers/](https://opencode.ai/docs/mcp-servers/) |
 | Plugins Guide | [docs/plugins/](https://opencode.ai/docs/plugins/) |
+
+[opencode-shield]: https://img.shields.io/badge/OpenCode-配置-blue?style=for-the-badge
+[opencode-url]: #
+[docs-shield]: https://img.shields.io/badge/DOCS-文档-blue?style=for-the-badge
+[docs-url]: #

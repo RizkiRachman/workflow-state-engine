@@ -1,8 +1,13 @@
+<!-- omit from toc -->
 # Goods Price Comparison Service
+
+[![Doc][doc-shield]][doc-url]
 
 ## Vision
 
 A modular, event-driven platform for aggregating, comparing, and alerting on goods prices across multiple stores. Enables users to track price history, set price alerts, and leverage LLM-powered receipt analysis.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Tech Stack
 
@@ -17,6 +22,8 @@ A modular, event-driven platform for aggregating, comparing, and alerting on goo
 
 - **Quality**: ArchUnit + SpotBugs + PMD CPD + Spotless (Google Java Style) + JaCoCo (target: 90% INSTRUCTION / 80% BRANCH) + Newman/Postman Smoke Tests
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Code Duplication Landscape (2026-06-11, Updated)
 
 Structural duplication patterns identified via GitNexus graph analysis. PMD CPD confirms **zero literal copy-paste** (abstractions work). Several patterns partially addressed in recent PRs (#130-#134):
@@ -29,6 +36,8 @@ Structural duplication patterns identified via GitNexus graph analysis. PMD CPD 
 
 - **LLM provider methods** (4 providers) — [SKIP] **YAGNI**: Distinct API schema patterns (Gemini vs Groq vs Ollama vs OpenAI) prevent `parseResponse()` consolidation.
 - **Mapper DtoMapperSupport** (4 mappers) — [OK] **Addressed**: Pattern already extracted in PR #129 (`DtoMapperSupport` interface adopted by 5 DTO mappers).
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Improvement Roadmap (2026-06-12)
 
@@ -45,10 +54,25 @@ Prioritized improvement opportunities identified via GitNexus + Graphify + PMD C
 
 **Legend**: 🔲 Proposed → 🟡 In Progress → 🟢 Done → ⚫ YAGNI
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Architecture (Three-Layer Hybrid)
 
 1. **Microservice boundaries** — 8 services under `com.example.goodsprice`: receipt, price, product, store, llm, shopping, alert, system
 2. **Hexagonal per service** — `application/` (pure Java) + `infrastructure/` (Spring adapters)
 
 3. **Event-driven** — Spring ApplicationEvent + @Async + @TransactionalEventListener(AFTER_COMMIT)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- REFERENCE LINKS -->
+
+[doc-shield]: https://img.shields.io/badge/DOC-文档-blue?style=for-the-badge
+[doc-url]: #
+
+[docs-shield]: https://img.shields.io/badge/DOCS-文档-blue?style=for-the-badge
+[docs-url]: #
+
+[github-shield]: https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github
+[github-url]: #
 

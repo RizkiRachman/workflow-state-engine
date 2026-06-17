@@ -1,3 +1,5 @@
+<!-- omit from toc -->
+
 # Workflow State Engine — Orchestration Toolkit
 
 **Contract-driven state machine orchestration engine for AI agent workflows.**
@@ -6,7 +8,20 @@ State machine: `INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED →
 
 Single source of truth for all AI agents. Reference skills and usage guides for depth. This file is `instructions[0]` — loaded by every agent at session start.
 
----
+[![Contributors][contributors-shield]][contributors-url] [![Forks][forks-shield]][forks-url] [![Stargazers][stars-shield]][stars-url] [![Issues][issues-shield]][issues-url] [![License][license-shield]][license-url]
+
+<a id="readme-top"></a>
+
+## Table of Contents
+1. [1. Project Overview](#1-project-overview)
+2. [2. Framework Architecture](#2-framework-architecture)
+3. [3. Agent Reference — 11 Agents](#3-agent-reference--11-agents)
+4. [4. Tool Usage Reference](#4-tool-usage-reference)
+5. [5. Development Workflow](#5-development-workflow)
+6. [6. Non-Negotiable Rules](#6-non-negotiable-rules)
+7. [7. Skills Reference](#7-skills-reference)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## 1. Project Overview
 
@@ -59,6 +74,8 @@ usage/      → 15 tool usage guides (lean-ctx, gitnexus, firecrawl, etc.)
 config/     → Plugin configs (vibeguard, opencode-skillful)
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 2. Framework Architecture
@@ -102,6 +119,8 @@ You reference `.opencode/` paths — OpenCode resolves symlinks to root-level so
 ```bash
 bash setup.sh    # Creates all .opencode/ → root-level symlinks
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -159,6 +178,8 @@ bash setup.sh    # Creates all .opencode/ → root-level symlinks
 
 See [`doc/workflow.md`](./doc/workflow.md) for the canonical state machine, scoring pipeline, gates, and validation rules.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 4. Tool Usage Reference
@@ -208,6 +229,8 @@ Full how-to guides live in `usage/` (15 guides: lean-ctx, gitnexus, firecrawl, p
 | **Large/scattered file edits** | `morph_edit` | Partial-file merge, handles whitespace-sensitive changes better than exact-string replacement |
 | **Multi-model consensus** | `council_session` | Fresh-context adversarial review for high-stakes decisions |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 5. Development Workflow
@@ -226,6 +249,23 @@ Full how-to guides live in `usage/` (15 guides: lean-ctx, gitnexus, firecrawl, p
 2. gitnexus_impact({target: "symbol", direction: "upstream"})   # blast radius
 3. If HIGH/CRITICAL → warn user before proceeding
 ```
+
+### Frugality Ladder (Ponytail — Before Every Code Decision)
+
+Run this ladder in order before writing ANY code:
+
+```
+1. Does this need to exist?       → skip it (YAGNI)
+2. Standard library does it?      → use it
+3. Native platform feature?       → use it
+4. Already-installed dependency?  → use it
+5. Can this be one line?          → one line
+6. Only then: minimum code that works
+```
+
+**Rules:** No unsolicited abstractions. No new deps if avoidable. Deletion > addition. Boring > clever. Fewest files possible. Mark intentional shortcuts with `ponytail:` comments (see `skills/simplify/SKILL.md` for convention details).
+
+**Not sacrificed:** Input validation at trust boundaries, data-loss error handling, security, accessibility, anything explicitly requested. Non-trivial logic leaves ONE runnable check (assert-based, no framework).
 
 ### Orchestration Flow (Spec-Driven Development — SDD)
 
@@ -256,6 +296,8 @@ Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
 See [orchestration-template skill](.opencode/skills/orchestration-template/SKILL.md) and [`doc/workflow.md`](./doc/workflow.md) for the full orchestration protocol.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 ## 6. Non-Negotiable Rules
@@ -281,6 +323,8 @@ See [orchestration-template skill](.opencode/skills/orchestration-template/SKILL
 - Explain tradeoffs, not just decisions
 - Admit unknowns. Be token-efficient: concise, no filler, no full-file dumps
 - Return only what was asked
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ---
 
@@ -318,6 +362,8 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 | `firecrawl-*` (30 skills in `~/.agents/skills/`) | Web search, scraping, crawling, monitoring |
 
 *Last updated: 2026-06-16. If you modify conventions, workflows, or config, update this file.*
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
@@ -362,3 +408,14 @@ This project is indexed by GitNexus as **workflow-state-engine** (1501 symbols, 
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+[contributors-shield]: https://img.shields.io/github/contributors/RizkiRachman/workflow-state-engine?style=for-the-badge
+[contributors-url]: https://github.com/RizkiRachman/workflow-state-engine/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/RizkiRachman/workflow-state-engine?style=for-the-badge
+[forks-url]: https://github.com/RizkiRachman/workflow-state-engine/network/members
+[stars-shield]: https://img.shields.io/github/stars/RizkiRachman/workflow-state-engine?style=for-the-badge
+[stars-url]: https://github.com/RizkiRachman/workflow-state-engine/stargazers
+[issues-shield]: https://img.shields.io/github/issues/RizkiRachman/workflow-state-engine?style=for-the-badge
+[issues-url]: https://github.com/RizkiRachman/workflow-state-engine/issues
+[license-shield]: https://img.shields.io/github/license/RizkiRachman/workflow-state-engine?style=for-the-badge
+[license-url]: https://github.com/RizkiRachman/workflow-state-engine/blob/main/LICENSE

@@ -219,8 +219,15 @@
       "action": "BLOCK",
       "message": "⛔ GREP BLOCKED: Native grep is denied in opencode.json permission + per-agent tools. Use lean-ctx ctx_search for regex code searches."
     },
+    {
+      "id": "SIMPLICITY_001",
+      "severity": "HIGH",
+      "description": "Code simplicity/frugality check: reject unnecessary abstractions, unused deps, over-engineered patterns, YAGNI violations",
+      "condition": "code_has_unnecessary_abstraction",
+      "message": "⚠️ SIMPLICITY: Unnecessary abstraction detected — ponytail ladder skipped? Check: (1) Could stdlib replace this? (2) Is every abstraction justified? (3) Could any file be eliminated?"
+    }
   ],
-
+  
   "scoring": {
     "timeout_ms": 30000,
     "tier1": {
@@ -229,6 +236,7 @@
       "blast_radius_high_deduction": 40,
       "writing_order_wrong_deduction": 15,
       "required_fields_missing_deduction": 15,
+      "over_engineering_deduction": 15,
       "subtotal_threshold": 70
     },
     "tier2": {
