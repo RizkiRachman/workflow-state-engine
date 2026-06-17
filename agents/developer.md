@@ -22,7 +22,7 @@ permission:
 ## Permissions
 - Read: All project files
 - Write: All project files (via lean-ctx ctx_edit/create — write tool is blocked)
-- Execute: mvn test, mvn compile, mvn verify, mvn spotless:apply, git diff, git log, grep, git add/commit
+- Execute: build commands (mvn, gradle, etc.), git ops, grep — project-appropriate
 - Cannot: Push to git (instruction only, not enforced by tool deny), modify CI/CD, modify .opencode/ config, modify AGENTS.md
 - MCPs: gitnexus, graphify, lean-ctx (firecrawl, context7, postgres, memory_* denied)
 
@@ -73,11 +73,11 @@ Your inputs come from the orchestrator's envelope fields:
 
 Your output **will be scored** by the scoring pipeline (§4.5 in orchestrator):
 - **Completeness (0-20)**: Are all tasks in the plan implemented? Tests written alongside code?
-- **Governance compliance (0-30)**: Does code follow AGENTS.md rules (hexagonal, writing order, null handling)?
+- **Governance compliance (0-30)**: Does code follow AGENTS.md rules (writing order, null safety, layering)?
 - **Requirements fulfillment (0-40)**: Does the implementation satisfy the acceptance criteria?
 - **Edge cases (0-10)**: Are nulls, empty states, error paths, and boundaries covered by tests?
 
-Produce output that scores ≥70. Always: implement in Writing Order, test every branch, run `lean-ctx ctx_shell` `mvn spotless:apply` before reporting done.
+Produce output that scores ≥70. Always: implement in Writing Order, test every branch, run project formatting/build commands before reporting done.
 
 ## Pre-Flight Protocol (MANDATORY — before any work)
 
@@ -93,7 +93,7 @@ If found → extract `decisions.*`, `governance.*`, `retry.issues[]`, `scope.inc
 
 | Source | Action |
 |--------|--------|
-| `toolkit/template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
+| `template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
 | `PROJECT.md` | Read via `ctx_read` — project vision, scope, constraints |
 | `lean-ctx knowledge` | Recall recent patterns: `ctx_knowledge recall --query "architecture"` |
 | `gitnexus` | Re-index if stale: `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` |
@@ -179,12 +179,10 @@ For each file in the plan:
 7. Write tests
 
 ### 4. Code Standards
-- Hexagonal architecture: `application/` never imports `infrastructure/`
-- Domain models: `@Builder @Getter @Setter`, zero JPA
-- Ports return nullable, never `Optional<T>`
-- No `@ManyToOne`, `@OneToMany`, `@OneToOne`, `@ManyToMany`, `@JoinColumn`
-- Java 21 idioms: `String.formatted()`, `.toList()`, pattern matching, switch expressions
-- Use project utilities: `Objects.isNull()`, `ObjectUtils.defaultIfNull()`, `ValidationUtils.requireNonNull()`
+- Follow project conventions per AGENTS.md
+- Clean code: meaningful names, single responsibility, testable
+- No magic strings or numbers — use constants
+- Handle nulls and edge cases explicitly
 
 ### 5. Test Standards
 - Write tests alongside code, not after
@@ -210,7 +208,7 @@ Before moving on from any non-trivial code (branches, cross-service calls, irrev
 - Code is in a hot path or transaction
 
 ### 6. Before Moving On
-- Run `lean-ctx ctx_shell` `mvn spotless:apply` before reporting done (once at end, not after each file)
+- Run project formatting commands before reporting done (once at end, not after each file)
 - Remove debug code, TODOs, commented-out code
 - Check imports — no fully qualified names
 
@@ -233,7 +231,7 @@ For huge/massive tasks, follow the `executing-plans` or `subagent-driven-develop
 
 ### Checkpoint Protocol
 After each task:
-- Run `mvn spotless:apply` + `mvn compile` on affected modules
+- Run project formatting and build commands on modified files
 - Verify no regressions
 - Report progress back to orchestrator
 

@@ -1,49 +1,69 @@
 # Workflow State Engine
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 **Contract-driven state machine orchestration engine for AI agent workflows.**
 
-Extracted from the Goods Price Comparison Service toolkit — a reusable orchestration framework that drives multi-agent collaboration through a shared JSON envelope contract.
+State machine: `INIT -> PLAN -> PLAN_SCORED -> EXECUTE -> EXECUTE_SCORED -> REVIEW -> REVIEW_SCORED -> COMPLETE`
 
-## What It Is
+Single source of truth for all AI agents. The canonical agent instruction file is [`agent.md`](agent.md) which serves as `instructions[0]` for every agent.
 
-A state machine orchestrator that:
+## Overview
 
-- Drives agents through `INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE`
-- Uses a **shared JSON envelope** (`contract.json`) as the single source of truth for state, decisions, and outputs
-- Scores every agent output through a **three-tier scoring pipeline** (rule-based checks → LLM-as-judge → combined verdict)
-- Handles retries, blockades, and escalation automatically
-- Tracks metrics, lessons learned, and cross-session knowledge
+This is a reusable orchestration toolkit for AI agents. It codifies agent collaboration into a state machine, ensuring every output is scored, every decision is tracked, and every session learns from the last.
 
-## Architecture
-
-```
-agents/     → 11 agent instruction files (tech-lead, developer, quality-analyst, etc.)
-skills/     → 32 skill directories (java-developer, gitnexus, spec-driven-development, etc.)
-template/   → contract.json, superpowers-contract.json, state.md
-rules/      → rules.json (state machine, scoring thresholds)
-doc/        → workflow.md, project.md, gap analysis
-usage/      → 15 tool usage guides (lean-ctx, gitnexus, firecrawl, postgres, etc.)
-config/     → Plugin configuration (vibeguard, opencode-skillful)
-```
+- **Shared JSON envelope** (`template/contract.json`) — single source of truth for state, decisions, outputs, scoring
+- **State machine** — 8 states + BLOCKED: agents transition via the envelope with gates and escalation
+- **Scoring pipeline** — three-tier: rule-based checks -> LLM-as-judge -> combined verdict
+- **Agent delegation** — orchestrator delegates to system-analyst, developer, quality-analyst
+- **Cross-session learning** — lessons and patterns persist via `lean-ctx ctx_knowledge`
 
 ## Quick Start
 
 ```bash
-# Bootstrap a new project with the orchestration template
+# Copy toolkit to your project
+mkdir -p your-project/.opencode
 cp -r agents/ skills/ template/ rules/ usage/ your-project/.opencode/
 cp agent.md your-project/AGENTS.md
+
+# Bootstrap symlinks
+bash setup.sh
+
+# Run orchestration
+lean-ctx ctx_knowledge recall --key orchestration-contract --mode exact
+```
+
+## Architecture
+
+```
+agents/     -> 11 agent instruction files
+skills/     -> 35 skill directories
+template/   -> contract.json, state.md, superpowers-contract.json
+rules/      -> rules.json (state machine, scoring)
+usage/      -> 15 tool usage guides
+doc/        -> workflow.md, project.md
+config/     -> Plugin configs
 ```
 
 ## State Machine
 
 ```
-INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
-                  ↓              ↓               ↓              ↓
-              BLOCKED ← ← ← ← RETRY ← ← ← ← (score < 50 or attempts >= 3)
+INIT -> PLAN -> PLAN_SCORED -> EXECUTE -> EXECUTE_SCORED -> REVIEW -> REVIEW_SCORED -> COMPLETE
+
+Any phase -> BLOCKED (score < 50 or retry >= 3)
 ```
 
-See [doc/workflow.md](doc/workflow.md) for the full state machine, scoring pipeline, and validation rules.
+Transitions require `score >= 70` for: PLAN_SCORED->EXECUTE, EXECUTE_SCORED->REVIEW, REVIEW_SCORED->COMPLETE.
+
+## Scoring Pipeline
+
+| Tier | Method | Verdict |
+|------|--------|---------|
+| 1 | Rule-based checks (start 100, deduct for violations) | If < 70 skip Tier 2 |
+| 2 | LLM-as-judge (requirements, governance, completeness, edge cases) | 0-100 |
+| 3 | Combined: < 50 = BLOCKED, 50-69 = RETRY (max 3), >= 70 = PASS | Final |
 
 ## License
 
-MIT
+MIT (c) 2026 Rizki Rachman

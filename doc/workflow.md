@@ -1,7 +1,7 @@
 # Orchestration Contract & State Machine
 
-> **Contract template**: `toolkit/template/contract.json`
-> **State machine rules**: `toolkit/rules/rules.json`
+> **Contract template**: `template/contract.json`
+> **State machine rules**: `rules/rules.json`
 
 The orchestration contract is the shared JSON envelope that tracks every task from start to finish. It's the single source of truth for what phase we're in, decisions made, scoring results, and retry state.
 
@@ -186,12 +186,12 @@ When state becomes BLOCKED:
 
 ## Toolkit Integration Map
 
-How every piece of `toolkit/` connects in the workflow:
+How every piece of the toolkit connects in the workflow:
 
 ### Agent Pipeline
 
 ```
-                     toolkit/agent.md (instructions[0])
+                     agent.md (instructions[0])
                            │
                  ┌─────────┼─────────────┐
                  ▼         ▼             ▼
@@ -200,23 +200,24 @@ How every piece of `toolkit/` connects in the workflow:
                  │         │             │           │
                  └─────────┴─────────────┴───────────┘
                            │
-                    toolkit/usage/*.md
+                    usage/*.md
                     (guides loaded as needed)
 ```
 
 ### Folder → Workflow Mapping
 
+```
+
 ```text
-toolkit/
-├── agent.md         → Instructions[0] — loaded by EVERY agent at session start
-├── agents/          → Agent definitions loaded by opencode.json
-├── skills/          → Loaded on-demand via skill({name: "skill-name"})
-├── usage/           → Loaded on-demand when agent encounters an unfamiliar tool
-├── template/        → contract.json loaded at INIT phase
-│   └── contract.json → Shared envelope, persisted via lean-ctx ctx_knowledge
-├── rules/           → rules.json — state machine transitions + scoring thresholds
-├── config/          → Plugin config files referenced by opencode.json
-└── doc/             → Planning/reporting documents (never loaded automatically)
+├── agent.md                → Instructions[0] — loaded by EVERY agent at session start
+├── agents/                 → Agent definitions loaded by opencode.json
+├── skills/                 → Loaded on-demand via skill({name: "skill-name"})
+├── usage/                  → Loaded on-demand when agent encounters an unfamiliar tool
+├── template/               → contract.json loaded at INIT phase
+│   └── contract.json       → Shared envelope, persisted via lean-ctx ctx_knowledge
+├── rules/                  → rules.json — state machine transitions + scoring thresholds
+├── config/                 → Plugin config files referenced by opencode.json
+└── doc/                    → Planning/reporting documents (never loaded automatically)
 ```
 
 ### Tool Selection by Phase
@@ -237,7 +238,7 @@ toolkit/
 1. User request
        │
 2. tech-lead creates contract envelope
-       │  (toolkit/template/contract.json → lean-ctx knowledge)
+       │  (template/contract.json → lean-ctx knowledge)
        ▼
 3. Envelope stored: lean-ctx ctx_knowledge remember key="orchestration-contract"
        │
@@ -245,8 +246,8 @@ toolkit/
        │
 5. Subagent reads envelope: lean-ctx ctx_knowledge recall --query "orchestration-contract"
        │
-6. Subagent uses toolkit/usage/<tool>.md for tool guidance
-   Subagent loads toolkit/skills/<name>/SKILL.md for skill instructions
+6. Subagent uses usage/<tool>.md for tool guidance
+   Subagent loads skills/<name>/SKILL.md for skill instructions
        │
 7. Subagent returns result
        │
@@ -272,10 +273,10 @@ Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
 | Concept | Definition | Configured In | Loaded By |
 |---|---|---|---|
-| Envelope | Shared session state | `toolkit/template/contract.json` | lean-ctx knowledge recall |
-| State machine | Legal transitions | `toolkit/rules/rules.json` | tech-lead (enforced in prompt) |
-| Scoring | PASS/RETRY/BLOCKED | `toolkit/rules/rules.json` | tech-lead (scoring pipeline) |
-| Agents | Role definitions | `opencode.json` + `toolkit/agents/*.md` | OpenCode at startup |
-| Skills | Extensible behaviors | `toolkit/skills/*/SKILL.md` | On-demand via skill() tool |
+| Envelope | Shared session state | `template/contract.json` | lean-ctx knowledge recall |
+| State machine | Legal transitions | `rules/rules.json` | tech-lead (enforced in prompt) |
+| Scoring | PASS/RETRY/BLOCKED | `rules/rules.json` | tech-lead (scoring pipeline) |
+| Agents | Role definitions | `opencode.json` + `agents/*.md` | OpenCode at startup |
+| Skills | Extensible behaviors | `skills/*/SKILL.md` | On-demand via skill() tool |
 | Tools | MCP capabilities | `opencode.json` mcp section | OpenCode MCP client |
-| Usage guides | How-to references | `toolkit/usage/*.md` | On-demand via read/lean-ctx
+| Usage guides | How-to references | `usage/*.md` | On-demand via read/lean-ctx

@@ -21,17 +21,17 @@ permission:
 ## Permissions
 - Read: All project files
 - Write: None (strictly read-only)
-- Execute: mvn test, mvn compile, git diff, git log, grep (read-only)
+- Execute: project build commands, git diff, git log, grep (read-only)
 - Cannot: Edit files, spawn subagents, push to git
 
 ## ⛔ PRE-FLIGHT GATE — DO NOT SKIP
-1. **Load contract**: `lean-ctx ctx_knowledge recall --query "orchestration-contract"`
+1. **Load contract**: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    → Extract: `requirements.*`, `governance.*`, `decisions.*`
    → If empty → create from `contract.json` template
 2. **Validate state**: Must be one of: INIT, PLAN, PLAN_SCORED
    → Expected states: `["INIT", "PLAN", "PLAN_SCORED"]` (per rules.json agent_states)
    → If wrong state → STOP, report "Contract state is ${state}, expected one of: INIT, PLAN, PLAN_SCORED"
-3. **Read rules.json**: `.opencode/rules/rules.json`
+3. **Read rules**: `rules/rules.json`
    → Check architecture-related rules
 4. **Use ctx_shell for shell commands**: Use `lean-ctx ctx_shell` for all shell commands. `bash` is denied in `opencode.json` — triggers permission prompts and blocks automation.
 
@@ -66,7 +66,7 @@ You are a **strategic technical advisor**. You provide guidance on architecture 
 The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
 
 ### At Session Start (before any work)
-1. **READ** — Load the envelope: `lean-ctx ctx_knowledge recall --query "orchestration-contract"`
+1. **READ** — Load the envelope: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    - If found: extract `requirements.*`, `decisions.*`, `governance.*`, `retry.issues[]`
    - If NOT found (running standalone): Create a fresh envelope:
      - Read `.opencode/orchestration/contract.json` as base
@@ -93,14 +93,14 @@ Execute these steps in order BEFORE any analysis, tool call, or output.
 
 ### 1. Load Orchestration Envelope
 ```lean-ctx
-lean-ctx ctx_knowledge recall --query "orchestration-contract"
+lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"
 ```
 
 ### 2. Sync Latest Memory State
 
 | Source | Action |
 |--------|--------|
-| `toolkit/template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
+| `template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
 | `PROJECT.md` | Read via `ctx_read` — project vision, scope, constraints |
 | `AGENTS.md` | Read via `ctx_read` — project conventions |
 | `docs/ARCHITECTURE_HYBRID.md` | Read via `ctx_read` — architecture reference |
@@ -192,7 +192,7 @@ After completing your work, run these steps **in order** before declaring done:
 | 1. Impact verification | `gitnexus_impact({target, direction: "upstream"})` | Verify blast radius matches expectations. If HIGH/CRITICAL, note this in output |
 | 2. Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) | Verify only expected files changed — no unintended side effects |
 | 3. Knowledge persistence | `lean-ctx ctx_knowledge remember` | Persist any gotchas, patterns, or decisions discovered during the task (categories: `architecture`, `gotchas`, `conventions`) |
-| 4. toolkit/template/state.md update | `lean-ctx ctx_edit` on `toolkit/template/state.md` | Append completed work, update Current Focus, update Known Blockers |
+| 4. template/state.md update | `lean-ctx ctx_edit` on `template/state.md` | Append completed work, update Current Focus, update Known Blockers |
 | 5. Session save | `ctx_session save` | Persist conversation state for resumption across opencode restarts |
 
 **Exceptions**: Documentation-only changes may skip steps 1, 2, and 4.

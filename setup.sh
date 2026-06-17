@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# toolkit/setup.sh — Regenerate all .opencode/ symlinks + root reference symlinks
-# Run once on fresh clone: bash toolkit/setup.sh
+# setup.sh — Create .opencode/ symlinks for flat project structure
+# Run once on fresh clone: bash setup.sh
 set -euo pipefail
 
 # ── Pre-flight checks ──────────────────────────────────────────
@@ -37,7 +37,7 @@ fi
 # opencode-skillful plugin config (optional, not a hard dependency)
 if [ ! -f "$(dirname "$0")/config/opencode-skillful.json" ]; then
   echo "INFO: opencode-skillful.json not found — skill plugin not configured."
-  echo "  Create at toolkit/config/opencode-skillful.json if needed."
+  echo "  Create at config/opencode-skillful.json if needed."
 fi
 
 if [ "$FAILED" -eq 1 ]; then
@@ -48,35 +48,18 @@ echo "Pre-flight checks passed."
 # ── End pre-flight checks ──────────────────────────────────────
 
 cd "$(git rev-parse --show-toplevel)"
-echo "Creating .opencode/ -> toolkit/ symlinks..."
+echo "Creating .opencode/ symlinks..."
+mkdir -p .opencode
 
-# Core symlinks (6)
-ln -sfn ../toolkit/agents      .opencode/agents
-ln -sfn ../toolkit/skills      .opencode/skills
-ln -sfn ../toolkit/rules       .opencode/rules
-ln -sfn ../toolkit/template    .opencode/orchestration
-ln -sfn ../toolkit/doc/planning .opencode/planning
-ln -sfn ../toolkit/doc/reports  .opencode/reports
-
-# Usage & config symlinks (2)
-ln -sfn ../toolkit/usage        .opencode/usage
-ln -sfn ../toolkit/config       .opencode/config
-
-# Root reference symlinks (3 — point to existing toolkit files)
-ln -sfn toolkit/template/state.md STATE.md
-ln -sfn toolkit/doc/project.md    PROJECT.md
-ln -sfn toolkit/agent.md          AGENTS.md
-
-# Custom tools symlink (1)
-mkdir -p .opencode/tools
-ln -sf ../../toolkit/tools/request-transform.ts .opencode/tools/request-transform.ts
-
-# Custom plugins directory + symlink (registered in opencode.json plugin config)
-mkdir -p toolkit/plugins
-ln -sfn ../toolkit/plugins .opencode/plugins
-
-# Plugin config symlinks (1)
-ln -sfn toolkit/config/opencode-skillful.json .opencode-skillful.json
+ln -sfn ../agents   .opencode/agents
+ln -sfn ../skills   .opencode/skills
+ln -sfn ../plugins  .opencode/plugins
+ln -sfn ../rules    .opencode/rules
+ln -sfn ../template .opencode/orchestration
+ln -sfn ../doc      .opencode/planning
+ln -sfn ../usage    .opencode/usage
+ln -sfn ../config   .opencode/config
+ln -sfn ../agent.md .opencode/AGENTS.md
 
 # ── Post-install validation ────────────────────────────────────
 echo "Validating symlinks..."
@@ -84,19 +67,15 @@ VALIDATION_FAILED=0
 
 # Expected symlinks: target -> source
 declare -A SYMLINKS=(
-  [".opencode/agents"]="../toolkit/agents"
-  [".opencode/skills"]="../toolkit/skills"
-  [".opencode/rules"]="../toolkit/rules"
-  [".opencode/orchestration"]="../toolkit/template"
-  [".opencode/planning"]="../toolkit/doc/planning"
-  [".opencode/reports"]="../toolkit/doc/reports"
-  [".opencode/usage"]="../toolkit/usage"
-  [".opencode/config"]="../toolkit/config"
-  ["STATE.md"]="toolkit/template/state.md"
-  ["PROJECT.md"]="toolkit/doc/project.md"
-  ["AGENTS.md"]="toolkit/agent.md"
-  [".opencode/plugins"]="../toolkit/plugins"
-  [".opencode-skillful.json"]="toolkit/config/opencode-skillful.json"
+  [".opencode/agents"]="../agents"
+  [".opencode/skills"]="../skills"
+  [".opencode/plugins"]="../plugins"
+  [".opencode/rules"]="../rules"
+  [".opencode/orchestration"]="../template"
+  [".opencode/planning"]="../doc"
+  [".opencode/usage"]="../usage"
+  [".opencode/config"]="../config"
+  [".opencode/AGENTS.md"]="../agent.md"
 )
 
 for target in "${!SYMLINKS[@]}"; do
@@ -121,13 +100,13 @@ if [ "$VALIDATION_FAILED" -eq 1 ]; then
   echo ""
   echo "WARNING: Some symlinks are incorrect or missing. Re-run setup.sh or fix manually."
   echo "Expected layout:"
-  echo "  .opencode/agents        -> ../toolkit/agents"
-  echo "  .opencode/skills        -> ../toolkit/skills"
-  echo "  .opencode/rules         -> ../toolkit/rules"
-  echo "  .opencode/orchestration -> ../toolkit/template"
-  echo "  STATE.md                -> toolkit/template/state.md"
-  echo "  PROJECT.md              -> toolkit/doc/project.md"
-  echo "  AGENTS.md               -> toolkit/agent.md"
+  echo "  .opencode/agents        -> ../agents"
+  echo "  .opencode/skills        -> ../skills"
+  echo "  .opencode/rules         -> ../rules"
+  echo "  .opencode/orchestration -> ../template"
+  echo "  STATE.md                -> template/state.md"
+  echo "  PROJECT.md              -> doc/project.md"
+  echo "  AGENTS.md               -> ../agent.md"
   exit 1
 fi
 

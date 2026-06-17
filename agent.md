@@ -1,6 +1,8 @@
-# Goods Price Comparison Service — Agent Toolkit
+# Workflow State Engine — Orchestration Toolkit
 
-**Java 21 + Spring Boot 3.4 · Hexagonal architecture per service · Event-driven between services**
+**Contract-driven state machine orchestration engine for AI agent workflows.**
+
+State machine: `INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE`
 
 Single source of truth for all AI agents. Reference skills and usage guides for depth. This file is `instructions[0]` — loaded by every agent at session start.
 
@@ -8,110 +10,104 @@ Single source of truth for all AI agents. Reference skills and usage guides for 
 
 ## 1. Project Overview
 
-### Stack
-- **Java 21** — records, sealed classes, pattern matching, text blocks, `List.of()`, `Stream.toList()`
-- **Spring Boot 3.4** — `@Async`, `@TransactionalEventListener`, `@Service`, `@Component`
-- **Maven** — multi-module structure (single-module currently, 8 service packages)
-- **Build gates**: Spotless (Google Java Style), SpotBugs, PMD CPD, ArchUnit (7 rules)
-- **Test**: JUnit 5, H2 in-memory (`@ActiveProfiles("test")`), Flyway disabled in tests
-- **External dep**: `goods-price-comparison-api:1.3.0` from GitHub Packages (requires `~/.m2/settings.xml` with GitHub token)
+### Core Concepts
 
-### Architecture (Hexagonal)
+| Concept | Description |
+|---------|-------------|
+| **Shared JSON Envelope** | `template/contract.json` — single source of truth for state, decisions, outputs, scoring |
+| **State Machine** | 8 states + BLOCKED: agents transition through the workflow via the envelope |
+| **Scoring Pipeline** | Three-tier scoring after every delegation (rule checks → LLM-as-judge → combined verdict) |
+| **Agent Delegation** | Orchestrator delegates to specialized agents (system-analyst, developer, quality-analyst) |
+| **Cross-Session Learning** | Lessons, patterns, gotchas persisted via `ctx_knowledge` |
+
+### State Machine Transitions
+
 ```
-application/          (pure Java — no Spring/JPA)
-├── domain/model/     — @Builder @Getter @Setter, zero JPA
-├── domain/service/   — implements *InPort
-├── port/in/          — driving ports (*InPort)
-├── port/out/         — driven ports (*RepositoryPort, *EventOutPort)
-└── exception/        — domain exceptions
-
-infrastructure/       (adapters)
-├── adapter/web/      — REST controllers, DTO mappers
-├── adapter/persistence/ — JPA entities, repositories, entity mappers
-├── adapter/event/    — event publishers/listeners
-└── handler/event/    — @Async @TransactionalEventListener handlers
-```
-- 8 service domains: `receipt`, `price`, `product`, `store`, `llm`, `shopping`, `alert`, `system`
-- Each owns its tables. No cross-service table queries.
-- Events via Spring `ApplicationEvent` + `@Async` + `@TransactionalEventListener(AFTER_COMMIT)`
-
-### Build & Verify
-```bash
-mvn spotless:apply               # Format (Google Java Style)
-mvn test                         # Tests + ArchUnit only
-mvn verify                       # Full gate: tests + ArchUnit + Spotless + SpotBugs + PMD CPD
-mvn verify -P security-check     # + OWASP dependency scan
-./scripts/check-conventions.sh   # Custom conventions
+INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
+                              ↘                ↘                ↘
+                          BLOCKED (score < 50 or retry ≥ 3)
+                                ↘
+                          User intervention → retry with guidance
 ```
 
-### Data Shapes
-| Shape | Package | Type | Annotations |
-|-------|---------|------|-------------|
-| API DTO | `infrastructure/adapter/web/dto/` | `record` | Jackson if needed |
-| Domain Model | `application/domain/model/` | class | `@Builder @Getter @Setter` |
-| JPA Entity | `infrastructure/adapter/persistence/entity/` | class | `@Entity @Table` |
-| Port Interface | `application/port/in\|out/` | interface | none |
-| Domain Service | `application/domain/service/` | class | `@Service` |
-| Repository | `infrastructure/adapter/persistence/` | class | `@Component` |
+| Transition | Gate | Condition |
+|-----------|------|-----------|
+| INIT → PLAN | Session created | Always |
+| PLAN → PLAN_SCORED | Plan produced | Always |
+| PLAN_SCORED → EXECUTE | Spec gate | Score ≥ 70 |
+| EXECUTE → EXECUTE_SCORED | Implementation done | Always |
+| EXECUTE_SCORED → REVIEW | Code review | Score ≥ 70 |
+| REVIEW → REVIEW_SCORED | Review done | Always |
+| REVIEW_SCORED → COMPLETE | All gates pass | Score ≥ 70 |
+| Any → BLOCKED | Escalation | Score < 50 or retry ≥ 3 |
 
-### Writing Order (Mandatory)
-1. Port interface (`*InPort`, `*RepositoryPort`)
-2. Domain service (implements `*InPort`)
-3. Mapper (domain ↔ DTO, domain ↔ entity)
-4. Adapter (orchestration via ports + mappers)
-5. Constants (`AppConstants`, `ErrorCodes`, `ErrorMessageConstants`)
-6. Events (`*EventOutPort`, `*EventAdapter`, handler)
-7. Tests (unit + ArchUnit)
+### Scoring Pipeline (Three-Tier)
+
+1. **Tier 1 — Rule-Based Checks**: Schema valid (-15), permissions violated (-40), blast radius HIGH (-40), writing order wrong (-15), required fields missing (-15). Subtotal ≥ 70 → Tier 2.
+2. **Tier 2 — LLM-as-Judge**: Scores 0-100 on requirements fulfillment (0-40), governance compliance (0-30), completeness (0-20), edge cases (0-10).
+3. **Tier 3 — Combined Verdict**: PASS (≥70), RETRY (50-69, max 3 attempts), BLOCKED (<50).
+
+### Architecture
+
+```
+agents/     → 11 agent instruction files (tech-lead, developer, quality-analyst, etc.)
+skills/     → 35 skill directories (system-analyst, writing-plans, spec-driven-dev, etc.)
+template/   → contract.json, superpowers-contract.json, state.md
+rules/      → rules.json (state machine transitions, scoring thresholds)
+doc/        → workflow.md, project.md, gap analysis, state-history.md
+usage/      → 15 tool usage guides (lean-ctx, gitnexus, firecrawl, etc.)
+config/     → Plugin configs (vibeguard, opencode-skillful)
+```
 
 ---
 
-## 2. Toolkit Architecture
+## 2. Framework Architecture
 
-### Why `toolkit/`?
+### Root-Level Structure
 
-AI agents scatter config across `.opencode/`, `.claude/`, `CLAUDE.md`, `AGENTS.md`, `STATE.md`. `toolkit/` solves this by keeping **everything in one place**.
+This project keeps its toolkit at the project root for direct access. No nested `toolkit/` directory:
 
-### How Symlinks Work
 ```
-.opencode/                toolkit/             (source of truth)
-   ├── agents ──symlink──► agents/             11 agent .md files
-   ├── skills ──symlink──► skills/             27 skill directories
-   ├── rules ──symlink──► rules/               rules.json (state machine)
-   ├── orchestration ─symlink─► template/      contract.json, superpowers-contract.json, state.md
-   ├── planning ──symlink──► doc/planning/     Planning docs
-   ├── reports ──symlink──► doc/reports/       Analysis reports
-   ├── usage ──symlink──► toolkit/usage/       14 tool usage guides
-   └── config ──symlink──► toolkit/config/     Plugin configs
+.opencode/                  (symlinks resolve to root-level source)
+   ├── agents/ ──symlink──► agents/         11 agent .md files
+   ├── skills/ ──symlink──► skills/         35 skill directories
+   ├── rules/  ──symlink──► rules/          rules.json (state machine)
+   ├── orchestration/symlink──► template/   contract.json, superpowers-contract.json, state.md
+   ├── planning/symlink──► doc/planning/    Planning docs
+   ├── reports/ ──symlink──► doc/reports/   Analysis reports
+   ├── usage/   ──symlink──► usage/         15 tool usage guides
+   └── config/  ──symlink──► config/        Plugin configs
 ```
-You reference `.opencode/` paths — OpenCode resolves symlinks to `toolkit/`.
 
-> Symlink diagram also documented in [README.md §"How it works"](../README.md#how-it-works).
+You reference `.opencode/` paths — OpenCode resolves symlinks to root-level source.
 
 ### Directory Tree
+
 ```
-toolkit/
 ├── agent.md           ← THIS FILE (instructions[0])
-├── README.md          ← Toolkit overview (diagram, badges)
+├── AGENTS.md          ← GitNexus code intelligence (loaded at session start)
+├── README.md          ← Project overview (diagram, badges)
 ├── agents/            ← 11 agent instruction files
 ├── config/            ← Plugin configs (vibeguard, opencode-skillful)
-├── doc/               ← Planning docs, project.md, gap analyses
+├── doc/               ← Planning docs, workflow.md, gap analyses
 ├── rules/             ← rules.json (state machine, scoring)
-├── skills/            ← 27 skill directories (java-developer, gitnexus/, etc.)
+├── skills/            ← 35 skill directories (java-developer, gitnexus/, spec-driven-dev, etc.)
 ├── template/          ← contract.json, superpowers-contract.json, state.md
-├── usage/             ← 14 tool usage guides (one per tool group)
-└── setup.sh           ← Bootstrap: creates all .opencode/ → toolkit/ symlinks
+├── usage/             ← 15 tool usage guides (one per tool group)
+└── setup.sh           ← Bootstrap: creates all .opencode/ → root-level symlinks
 ```
 
 ### Fresh Clone Setup
+
 ```bash
-bash toolkit/setup.sh    # Creates all symlinks
+bash setup.sh    # Creates all .opencode/ → root-level symlinks
 ```
 
 ---
 
 ## 3. Agent Reference — 11 Agents
 
-> Full agent instruction files at `toolkit/agents/` (symlinked to `.opencode/agents/`). Each file defines role, MCPs, skills, and post-flight protocol.
+> Full agent instruction files at `agents/` (symlinked to `.opencode/agents/`). Each file defines role, MCPs, skills, and post-flight protocol.
 
 ### Orchestrator
 
@@ -161,13 +157,13 @@ bash toolkit/setup.sh    # Creates all symlinks
 
 ### Agent State Machine
 
-See [`toolkit/doc/workflow.md`](./doc/workflow.md) for the canonical state machine, scoring pipeline, gates, and validation rules.
+See [`doc/workflow.md`](./doc/workflow.md) for the canonical state machine, scoring pipeline, gates, and validation rules.
 
 ---
 
 ## 4. Tool Usage Reference
 
-Full how-to guides live in `toolkit/usage/` (15 guides: lean-ctx, gitnexus, firecrawl, postgres, etc.). Load them on demand via `lean-ctx ctx_read --path "toolkit/usage/<tool>.md"`.
+Full how-to guides live in `usage/` (15 guides: lean-ctx, gitnexus, firecrawl, postgres, etc.). Load them on demand via `lean-ctx ctx_read --path "usage/<tool>.md"`.
 
 ### 4.1 Quick Reference
 
@@ -231,17 +227,17 @@ Full how-to guides live in `toolkit/usage/` (15 guides: lean-ctx, gitnexus, fire
 3. If HIGH/CRITICAL → warn user before proceeding
 ```
 
-### Implementation (Spec-Driven Development — SDD)
+### Orchestration Flow (Spec-Driven Development — SDD)
 
-1. Write port interface (`*InPort`, `*RepositoryPort`) — defines the contract
-2. Write domain service — implements `*InPort`, pure logic
-3. Write mapper — converts between layers
-4. Write adapter — orchestrates ports + mappers
-5. Write constants — no magic strings
-6. Write events — `*EventOutPort` → `*EventAdapter` → handler
-7. Write tests — unit + ArchUnit
+1. **Discuss phase** — 5-lens check: Business, System, Dev, QA, DevOps. Clarify requirements.
+2. **Plan phase** — Delegate to @system-analyst: impact analysis, edge cases, implementation plan.
+3. **Spec gate** (if >3 files, cross-service, or >30 min) — Write GWT-format specs. Cross-examine via DDD.
+4. **Execute phase** — Delegate to @developer: implement plan step by step, write tests alongside code.
+5. **Review phase** — Delegate to @quality-analyst: code quality, security, performance, DevOps operability.
+6. **Verify loop** — Run build commands, check conventions.
+7. **Ship** — Resolve issues, confirm deploy safety, run post-flight protocol.
 
-Use **Doubt-Driven Development (DDD)** when uncertain: delegate to `@explorer` to validate assumptions before committing to a design. Skill: `doubt-driven-development`.
+Use **Doubt-Driven Development (DDD)** when uncertain: spawn a fresh-context adversarial reviewer to cross-examine non-trivial decisions before they stand.
 
 ### Before Commit (Post-Flight Protocol)
 
@@ -258,7 +254,7 @@ Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
 ### Complex Tasks (Orchestration Template)
 
-See [orchestration-template skill](../skills/orchestration-template/SKILL.md) and [`toolkit/doc/workflow.md`](./doc/workflow.md) for the full orchestration protocol.
+See [orchestration-template skill](.opencode/skills/orchestration-template/SKILL.md) and [`doc/workflow.md`](./doc/workflow.md) for the full orchestration protocol.
 
 ---
 
@@ -281,24 +277,6 @@ See [orchestration-template skill](../skills/orchestration-template/SKILL.md) an
 - **Always use `lean-ctx ctx_shell`** — never `bash` or `snip` (both denied in permissions)
 - `bash` and `snip` trigger permission prompts and block automation
 
-### Architecture Rules (Enforced by ArchUnit)
-1. `application/` MUST NOT import `infrastructure/`
-2. Domain models: `@Builder @Getter @Setter` only — zero JPA annotations
-3. Ports return **nullable**, never `Optional<T>`
-4. **NO** `@ManyToOne`, `@OneToMany`, `@OneToOne`, `@ManyToMany`, `@JoinColumn` — FKs are primitives
-5. Domain services: `@Service` annotation
-6. Repository adapters: `@Component` annotation
-7. Events fire only after transaction commit (`@TransactionalEventListener(AFTER_COMMIT)`)
-
-### Formatting
-- **Always run `mvn spotless:apply`** before committing — Google Java Style enforced
-
-### Exception Handling
-- Domain services: throw `NotFoundException` (static factories) — never return `null`
-- Web adapters: throw `IllegalArgumentException` for invalid inputs
-- Mappers: only acceptable `return null` (for null input safety)
-- `GlobalExceptionHandler`: `NotFoundException` → 404, `IllegalArgumentException` → 400, else → 500
-
 ### Communication
 - Explain tradeoffs, not just decisions
 - Admit unknowns. Be token-efficient: concise, no filler, no full-file dumps
@@ -308,7 +286,7 @@ See [orchestration-template skill](../skills/orchestration-template/SKILL.md) an
 
 ## 7. Skills Reference
 
-All skills at `.opencode/skills/` (symlinked from `toolkit/skills/`). Use `/skill <name>` for deep dives. Each skill directory contains a `SKILL.md` with full guidance.
+All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>` for deep dives. Each skill directory contains a `SKILL.md` with full guidance.
 
 | Skill | When to Load |
 |-------|-------------|
@@ -344,7 +322,7 @@ All skills at `.opencode/skills/` (symlinked from `toolkit/skills/`). Use `/skil
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **goods-price-comparison-service** (4928 symbols, 10961 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **workflow-state-engine** (1501 symbols, 1493 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `bash scripts/gitnexus-analyze.sh` from the project root.
 
@@ -367,10 +345,10 @@ This project is indexed by GitNexus as **goods-price-comparison-service** (4928 
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/goods-price-comparison-service/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/goods-price-comparison-service/clusters` | All functional areas |
-| `gitnexus://repo/goods-price-comparison-service/processes` | All execution flows |
-| `gitnexus://repo/goods-price-comparison-service/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/workflow-state-engine/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/workflow-state-engine/clusters` | All functional areas |
+| `gitnexus://repo/workflow-state-engine/processes` | All execution flows |
+| `gitnexus://repo/workflow-state-engine/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 
