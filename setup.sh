@@ -122,7 +122,7 @@ if [ "$VALIDATION_FAILED" -eq 1 ]; then
   echo "  .opencode/skills        -> ../skills"
   echo "  .opencode/rules         -> ../rules"
   echo "  .opencode/orchestration -> ../template"
-  echo "  STATE.md                -> template/state.md"
+  echo "  STATE.md                -> contract/state.md"
   echo "  PROJECT.md              -> doc/project.md"
   echo "  AGENTS.md               -> ../agent.md"
   exit 1

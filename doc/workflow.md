@@ -2,7 +2,7 @@
 
 # Orchestration Contract & State Machine
 
-> **Contract template**: `template/contract.json`
+> **Contract template**: `contract/contract.json`
 > **State machine rules**: `rules/rules.json`
 
 The orchestration contract is the shared JSON envelope that tracks every task from start to finish. It's the single source of truth for what phase we're in, decisions made, scoring results, and retry state.
@@ -297,9 +297,9 @@ Agents **source their governance rules** from this file. The orchestrator (tech-
 
 ## JSON Schema
 
-Reference: `template/contract.schema.json`
+Reference: `contract/contract.schema.json`
 
-The envelope (`template/contract.json`) has a canonical JSON Schema at `template/contract.schema.json`. This schema:
+The envelope (`contract/contract.json`) has a canonical JSON Schema at `contract/contract.schema.json`. This schema:
 
 - Defines the required structure for all envelope fields (state, scope, decisions, scoring, retry, metrics)
 - Specifies valid state values and transitions
@@ -327,7 +327,7 @@ Two scripts maintain code quality and architecture conventions. Both are integra
 ### 1. `scripts/check-conventions.sh`
 
 Validates project-wide conventions including:
-- JSON Schema compliance of `template/contract.json`
+- JSON Schema compliance of `contract/contract.json`
 - File and directory structure conventions
 - Naming patterns and project layout rules
 - Scoring pipeline configuration consistency
@@ -451,7 +451,7 @@ How every piece of the toolkit connects in the workflow:
 1. User request
        │
 2. tech-lead creates contract envelope
-       │  (template/contract.json → lean-ctx knowledge)
+       │  (contract/contract.json → lean-ctx knowledge)
        ▼
 3. Envelope stored: lean-ctx ctx_knowledge remember key="orchestration-contract"
        │
@@ -488,7 +488,7 @@ Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
 | Concept | Definition | Configured In | Loaded By |
 |---|---|---|---|
-| Envelope | Shared session state | `template/contract.json` | lean-ctx knowledge recall |
+| Envelope | Shared session state | `contract/contract.json` | lean-ctx knowledge recall |
 | State machine | Legal transitions | `rules/rules.json` | tech-lead (enforced in prompt) |
 | Scoring | PASS/RETRY/BLOCKED | `rules/rules.json` | tech-lead (scoring pipeline) |
 | Agents | Role definitions | `opencode.json` + `agents/*.md` | OpenCode at startup |

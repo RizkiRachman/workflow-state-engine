@@ -72,7 +72,7 @@ After completing work, run these steps **in order**:
 | 1 | Impact verification | `gitnexus_impact({target, direction: "upstream"})` — confirm blast radius matches expectations. If HIGH/CRITICAL, note in output. |
 | 2 | Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) — verify only expected files changed, no unintended side effects. |
 | 3 | Knowledge persistence | `lean-ctx ctx_knowledge remember` — persist gotchas, patterns, decisions (categories: `architecture`, `gotchas`, `conventions`). |
-| 4 | STATE.md update | `lean-ctx ctx_edit` on `template/state.md` — append completed work, update Current Focus, update Known Blockers. |
+| 4 | STATE.md update | `lean-ctx ctx_edit` on `contract/state.md` — append completed work, update Current Focus, update Known Blockers. |
 | 5 | Session save | `ctx_session save` — persist conversation state for resumption across opencode restarts. |
 
 **Exceptions:** Documentation-only changes may skip steps 1, 2, and 4. Config-only changes skip 1, 2.

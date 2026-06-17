@@ -62,11 +62,11 @@ OPTIONS
 CHECKS
   1. Agent contract.json path consistency
      Verifies all agent .md files reference .opencode/orchestration/contract.json
-     instead of template/contract.json.
+     instead of contract/contract.json.
 
   2. JSON Schema validation
-     Verifies template/contract.schema.json exists and validates
-     template/contract.json against it using jq (Draft 2020-12).
+     Verifies contract/contract.schema.json exists and validates
+     contract/contract.json against it using jq (Draft 2020-12).
 
   3. Forbidden patterns
      Scans agent files for FQN patterns (src/main/java/), push-to-main/master
@@ -77,7 +77,7 @@ CHECKS
      Otherwise skips with info.
 
   5. State.md sync check
-     Verifies template/state.md contains Current Focus and Known Blockers sections.
+     Verifies contract/state.md contains Current Focus and Known Blockers sections.
 
 EXIT CODES
   0   All checks pass
@@ -129,7 +129,7 @@ log_verbose() {
 check_agent_paths() {
     echo "---"
     echo "Check 1: Agent contract.json path consistency"
-    echo "  Verifying no agent .md file references template/contract.json"
+    echo "  Verifying no agent .md file references contract/contract.json"
     echo "  (should use .opencode/orchestration/contract.json)"
 
     local violations=0
@@ -144,7 +144,7 @@ check_agent_paths() {
         local basename_f
         basename_f="$(basename "$f")"
         if grep -q 'template/contract\.json' "$f" 2>/dev/null; then
-            log_fail "$basename_f references template/contract.json (should use .opencode/orchestration/contract.json)"
+            log_fail "$basename_f references contract/contract.json (should use .opencode/orchestration/contract.json)"
             violations=$((violations + 1))
 
             if [[ "$VERBOSE" == true ]]; then
@@ -166,26 +166,26 @@ check_json_schema() {
     echo "---"
     echo "Check 2: JSON Schema validation"
 
-    local schema_file="$PROJECT_ROOT/template/contract.schema.json"
-    local contract_file="$PROJECT_ROOT/template/contract.json"
+    local schema_file="$PROJECT_ROOT/contract/contract.schema.json"
+    local contract_file="$PROJECT_ROOT/contract/contract.json"
 
     if [[ ! -f "$schema_file" ]]; then
-        log_fail "template/contract.schema.json does not exist"
+        log_fail "contract/contract.schema.json does not exist"
         if [[ "$VERBOSE" == true ]]; then
-            echo "  -> Create a JSON Schema (Draft 2020-12) at template/contract.schema.json"
+            echo "  -> Create a JSON Schema (Draft 2020-12) at contract/contract.schema.json"
             echo "  -> Reference: https://json-schema.org/specification.html"
         fi
         return
     fi
 
     if [[ ! -f "$contract_file" ]]; then
-        log_fail "template/contract.json does not exist — cannot validate"
+        log_fail "contract/contract.json does not exist — cannot validate"
         return
     fi
 
     # Check it's valid JSON
     if ! jq empty "$schema_file" 2>/dev/null; then
-        log_fail "template/contract.schema.json is not valid JSON"
+        log_fail "contract/contract.schema.json is not valid JSON"
         if [[ "$VERBOSE" == true ]]; then
             jq empty "$schema_file" 2>&1 | sed 's/^/    -> /'
         fi
@@ -194,7 +194,7 @@ check_json_schema() {
 
     # Check it has required JSON Schema fields (Draft 2020-12 uses $schema)
     if ! jq -e 'has("$schema")' "$schema_file" >/dev/null 2>&1; then
-        log_fail "template/contract.schema.json missing \$schema keyword (not a valid JSON Schema)"
+        log_fail "contract/contract.schema.json missing \$schema keyword (not a valid JSON Schema)"
         return
     fi
 
@@ -202,9 +202,9 @@ check_json_schema() {
     schema_id="$(jq -r '."$schema" // empty' "$schema_file" 2>/dev/null)"
 
     if [[ -z "$schema_id" ]]; then
-        log_info "template/contract.schema.json has empty \$schema field"
+        log_info "contract/contract.schema.json has empty \$schema field"
     elif [[ "$schema_id" != "https://json-schema.org/draft/2020-12/schema" ]]; then
-        log_info "template/contract.schema.json \$schema is '$schema_id' (not Draft 2020-12)"
+        log_info "contract/contract.schema.json \$schema is '$schema_id' (not Draft 2020-12)"
     fi
 
     # Validate contract.json against schema (no --argfile needed)
@@ -217,9 +217,9 @@ check_json_schema() {
         ' "$schema_file" "$contract_file" 2>/dev/null)
 
         if [[ -z "$unknown_keys" || "$unknown_keys" == "[]" ]]; then
-            log_pass "template/contract.schema.json exists and validates contract.json"
+            log_pass "contract/contract.schema.json exists and validates contract.json"
         else
-            log_fail "template/contract.json does not validate against template/contract.schema.json"
+            log_fail "contract/contract.json does not validate against contract/contract.schema.json"
             if [[ "$VERBOSE" == true ]]; then
                 local clean_keys
                 clean_keys=$(echo "$unknown_keys" | tr -d '[]" \n')
@@ -242,11 +242,11 @@ check_json_schema() {
             if [[ -n "$unknown_keys" && "$unknown_keys" != "[]" ]]; then
                 log_fail "contract.json has properties not defined in schema: $unknown_keys"
             else
-                log_pass "template/contract.schema.json exists and validates contract.json"
+                log_pass "contract/contract.schema.json exists and validates contract.json"
             fi
         else
-            log_info "template/contract.schema.json has no 'properties' — cannot deep validate"
-            log_pass "template/contract.schema.json exists as valid JSON Schema"
+            log_info "contract/contract.schema.json has no 'properties' — cannot deep validate"
+            log_pass "contract/contract.schema.json exists as valid JSON Schema"
         fi
     fi
 }
@@ -423,12 +423,12 @@ check_archunit() {
 # ── Check 5: State.md sync ─────────────────────────────────────────────────
 check_state_md() {
     echo "---"
-    echo "Check 5: template/state.md sync check"
+    echo "Check 5: contract/state.md sync check"
 
-    local state_file="$PROJECT_ROOT/template/state.md"
+    local state_file="$PROJECT_ROOT/contract/state.md"
 
     if [[ ! -f "$state_file" ]]; then
-        log_fail "template/state.md does not exist"
+        log_fail "contract/state.md does not exist"
         return
     fi
 
@@ -438,7 +438,7 @@ check_state_md() {
     if grep -qi '^##\s*Current Focus' "$state_file" >/dev/null 2>&1; then
         log_verbose "Found 'Current Focus' section"
     else
-        log_fail "template/state.md missing 'Current Focus' section"
+        log_fail "contract/state.md missing 'Current Focus' section"
         violations=$((violations + 1))
     fi
 
@@ -446,7 +446,7 @@ check_state_md() {
     if grep -qi '^##\s*Known Blockers' "$state_file" >/dev/null 2>&1; then
         log_verbose "Found 'Known Blockers' section"
     else
-        log_fail "template/state.md missing 'Known Blockers' section"
+        log_fail "contract/state.md missing 'Known Blockers' section"
         violations=$((violations + 1))
     fi
 
@@ -473,7 +473,7 @@ check_state_md() {
     fi
 
     if [[ "$violations" -eq 0 ]]; then
-        log_pass "template/state.md has Current Focus and Known Blockers (both populated)"
+        log_pass "contract/state.md has Current Focus and Known Blockers (both populated)"
     fi
 }
 

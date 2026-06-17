@@ -119,7 +119,7 @@ Export the audit log for external visualization:
 
 ```bash
 # Export current audit_log as JSONL
-lean-ctx ctx_shell 'node -e "console.log(JSON.stringify(require(\"./template/contract.json\").audit_log, null, 2))"'
+lean-ctx ctx_shell 'node -e "console.log(JSON.stringify(require(\"./contract/contract.json\").audit_log, null, 2))"'
 
 # Feed into graphviz for a transition diagram (requires graphviz CLI)
 # Each entry: prev_state -> new_state [label="triggered_by: reason"]

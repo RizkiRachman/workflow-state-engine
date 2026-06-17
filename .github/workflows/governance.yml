@@ -84,27 +84,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate template/contract.json is valid JSON
+      - name: Validate contract/contract.json is valid JSON
         id: contract-json
         run: |
-          if python3 -m json.tool template/contract.json > /dev/null 2>&1; then
+          if python3 -m json.tool contract/contract.json > /dev/null 2>&1; then
             echo "status=pass" >> "$GITHUB_OUTPUT"
-            echo "✓ template/contract.json is valid JSON"
+            echo "✓ contract/contract.json is valid JSON"
           else
             echo "status=fail" >> "$GITHUB_OUTPUT"
-            echo "✗ template/contract.json is NOT valid JSON"
+            echo "✗ contract/contract.json is NOT valid JSON"
             exit 1
           fi
 
       - name: Validate contract.schema.json is valid JSON
         id: schema-json
         run: |
-          if python3 -m json.tool template/contract.schema.json > /dev/null 2>&1; then
+          if python3 -m json.tool contract/contract.schema.json > /dev/null 2>&1; then
             echo "status=pass" >> "$GITHUB_OUTPUT"
-            echo "✓ template/contract.schema.json is valid JSON"
+            echo "✓ contract/contract.schema.json is valid JSON"
           else
             echo "status=fail" >> "$GITHUB_OUTPUT"
-            echo "✗ template/contract.schema.json is NOT valid JSON"
+            echo "✗ contract/contract.schema.json is NOT valid JSON"
             exit 1
           fi
 
@@ -116,7 +116,7 @@ jobs:
           # Extract required top-level keys from schema
           REQUIRED_KEYS=$(python3 -c "
 import json
-with open('template/contract.schema.json') as f:
+with open('contract/contract.schema.json') as f:
     schema = json.load(f)
 required = schema.get('required', [])
 for k in required:
@@ -127,7 +127,7 @@ for k in required:
           for key in $REQUIRED_KEYS; do
             if python3 -c "
 import json
-with open('template/contract.json') as f:
+with open('contract/contract.json') as f:
     doc = json.load(f)
 assert '$key' in doc, 'Missing required key: $key'
 " 2>/dev/null; then
@@ -170,8 +170,8 @@ assert '$key' in doc, 'Missing required key: $key'
         with:
           name: schema-validation-results
           path: |
-            template/contract.json
-            template/contract.schema.json
+            contract/contract.json
+            contract/contract.schema.json
             config/*.json
           retention-days: 7
           overwrite: true

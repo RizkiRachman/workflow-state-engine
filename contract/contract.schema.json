@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "template/contract.schema.json",
+  "$id": "contract/contract.schema.json",
   "title": "Workflow State Engine — Contract Schema",
-  "description": "Validates the shared orchestration envelope (template/contract.json). This Draft 2020-12 schema enforces the state machine transitions, scoring pipeline, governance, and audit trail for AI agent workflow orchestration.",
+  "description": "Validates the shared orchestration envelope (contract/contract.json). This Draft 2020-12 schema enforces the state machine transitions, scoring pipeline, governance, and audit trail for AI agent workflow orchestration.",
   "type": "object",
   "additionalProperties": true,
   "required": [

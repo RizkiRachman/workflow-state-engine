@@ -77,7 +77,7 @@ If found → extract `requirements.*`, `decisions.*`, `governance.*`. If not fou
 
 | Source | Action |
 |--------|--------|
-| `template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
+| `contract/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
 | `PROJECT.md` | Read via `ctx_read` — project vision, scope, constraints |
 | `lean-ctx knowledge` | Recall relevant patterns: `ctx_knowledge recall --query "architecture"` |
 
@@ -144,7 +144,7 @@ After completing your work, run these steps **in order** before declaring done:
 | 1. Impact verification | `gitnexus_impact({target, direction: "upstream"})` | Verify blast radius matches expectations. If HIGH/CRITICAL, note this in output |
 | 2. Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) | Verify only expected files changed — no unintended side effects |
 | 3. Knowledge persistence | `lean-ctx ctx_knowledge remember` | Persist any gotchas, patterns, or decisions discovered during the task (categories: `architecture`, `gotchas`, `conventions`) |
-| 4. template/state.md update | `lean-ctx ctx_edit` on `template/state.md` | Append completed work, update Current Focus, update Known Blockers |
+| 4. contract/state.md update | `lean-ctx ctx_edit` on `contract/state.md` | Append completed work, update Current Focus, update Known Blockers |
 | 5. Session save | `ctx_session save` | Persist conversation state for resumption across opencode restarts |
 
 **Exceptions**: Documentation-only changes may skip steps 1, 2, and 4.

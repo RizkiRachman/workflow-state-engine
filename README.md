@@ -41,7 +41,7 @@ Single source of truth for all AI agents. The canonical agent instruction file i
 This is a reusable orchestration toolkit for AI coding agents. It codifies agent collaboration into an 8-state state machine, ensuring:
 
 - **Every output is scored** via a three-tier pipeline (rule checks → LLM-as-judge → combined verdict)
-- **Every decision is tracked** in the shared JSON envelope (`template/contract.json`)
+- **Every decision is tracked** in the shared JSON envelope (`contract/contract.json`)
 - **Every session learns** from the last — lessons and patterns persist cross-session via `lean-ctx ctx_knowledge`
 - **Every delegation is gated** — agents only transition if scoring thresholds are met
 
@@ -207,7 +207,7 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 ├── agent.md           ← Orchestrator instructions (instructions[0])
 ├── agents/            ← 11 agent instruction files
 ├── skills/            ← 36 skill directories + package.json per skill
-├── template/          ← Shared JSON envelope, state.md, superpowers contract
+├── contract/          ← Shared JSON envelope, state.md, superpowers contract
 ├── rules/             ← State machine transitions, scoring thresholds
 ├── usage/             ← 15 tool usage guides
 ├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
@@ -280,7 +280,7 @@ Three-tier scoring runs after every delegation:
 - [x] Ponytail debt scanning (scripts/scan-ponytail-debt.sh — ponytail:, TODO, FIXME, HACK markers)
 - [x] Session archival (scripts/archive-sessions.sh — days-based cleanup with dry-run/restore)
 - [x] Shared governance document (agents/_governance.md — contract protocol, permissions, frugality, post-flight)
-- [x] JSON Schema enforcement (template/contract.schema.json — Draft 2020-12, $defs, numeric constraints, valid states)
+- [x] JSON Schema enforcement (contract/contract.schema.json — Draft 2020-12, $defs, numeric constraints, valid states)
 - [x] CI/CD governance pipeline (.github/workflows/governance.yml — conventions, schema, toolkit validation)
 - [x] Token budget enforcement (token_budget in contract.json + TOKEN_001-004 in rules.json)
 - [x] Skillful configuration catalog (config/opencode-skillful.json — 56 skills across 7 categories)

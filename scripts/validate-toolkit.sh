@@ -49,15 +49,15 @@ Options:
 
 Checks performed:
   1. Required directories exist
-     Verifies agents/, skills/, template/, config/, scripts/, doc/,
+     Verifies agents/, skills/, contract/, config/, scripts/, doc/,
      rules/, usage/, .opencode/ all have expected contents.
   2. Symlinks in .opencode/ resolve correctly
      Verifies .opencode/agents -> agents/, .opencode/skills -> skills/,
-     .opencode/rules -> rules/, .opencode/orchestration -> template/,
+     .opencode/rules -> rules/, .opencode/orchestration -> contract/,
      .opencode/reports -> doc/reports/, .opencode/usage -> usage/,
      .opencode/config -> config/, .opencode/planning -> doc/planning/.
   3. Contract file integrity
-     Verifies template/contract.json and template/contract.schema.json
+     Verifies contract/contract.json and contract/contract.schema.json
      are valid JSON and contract.json validates against the schema.
   4. Agent file consistency
      Verifies each .md file in agents/ has a proper heading.
@@ -148,22 +148,22 @@ check_required_dirs() {
         fi
     fi
 
-    # template/ — contract.json, contract.schema.json, state.md
-    dir="$PROJECT_ROOT/template"
+    # contract/ — contract.json, contract.schema.json, state.md
+    dir="$PROJECT_ROOT/contract"
     if [[ ! -d "$dir" ]]; then
-        log_fail "template/ directory does not exist"
+        log_fail "contract/ directory does not exist"
         violations=$((violations + 1))
     else
         local t_violations=0
         for f in contract.json contract.schema.json state.md; do
             if [[ ! -f "$dir/$f" ]]; then
-                log_fail "template/$f is missing"
+                log_fail "contract/$f is missing"
                 t_violations=$((t_violations + 1))
                 violations=$((violations + 1))
             fi
         done
         if [[ "$t_violations" -eq 0 ]]; then
-            log_pass "template/ has all required files (contract.json, contract.schema.json, state.md)"
+            log_pass "contract/ has all required files (contract.json, contract.schema.json, state.md)"
         fi
     fi
 
@@ -277,7 +277,7 @@ check_opencode_symlinks() {
         ["agents"]="agents"
         ["skills"]="skills"
         ["rules"]="rules"
-        ["orchestration"]="template"
+        ["orchestration"]="contract"
         ["usage"]="usage"
         ["config"]="config"
         ["planning"]="doc/planning"
@@ -334,19 +334,19 @@ check_contract_integrity() {
     echo "Check 3: Contract file integrity"
 
     local violations=0
-    local contract_file="$PROJECT_ROOT/template/contract.json"
-    local schema_file="$PROJECT_ROOT/template/contract.schema.json"
+    local contract_file="$PROJECT_ROOT/contract/contract.json"
+    local schema_file="$PROJECT_ROOT/contract/contract.schema.json"
 
     # Check contract.json is valid JSON
     if [[ ! -f "$contract_file" ]]; then
-        log_fail "template/contract.json does not exist"
+        log_fail "contract/contract.json does not exist"
         violations=$((violations + 1))
     else
         if command -v jq &>/dev/null; then
             if jq empty "$contract_file" 2>/dev/null; then
-                log_pass "template/contract.json is valid JSON"
+                log_pass "contract/contract.json is valid JSON"
             else
-                log_fail "template/contract.json is not valid JSON"
+                log_fail "contract/contract.json is not valid JSON"
                 if [[ "$VERBOSE" == true ]]; then
                     jq empty "$contract_file" 2>&1 | sed 's/^/    -> /'
                 fi
@@ -354,9 +354,9 @@ check_contract_integrity() {
             fi
         elif command -v python3 &>/dev/null; then
             if python3 -m json.tool "$contract_file" &>/dev/null; then
-                log_pass "template/contract.json is valid JSON"
+                log_pass "contract/contract.json is valid JSON"
             else
-                log_fail "template/contract.json is not valid JSON"
+                log_fail "contract/contract.json is not valid JSON"
                 if [[ "$VERBOSE" == true ]]; then
                     python3 -m json.tool "$contract_file" 2>&1 | sed 's/^/    -> /'
                 fi
@@ -369,14 +369,14 @@ check_contract_integrity() {
 
     # Check contract.schema.json is valid JSON
     if [[ ! -f "$schema_file" ]]; then
-        log_fail "template/contract.schema.json does not exist"
+        log_fail "contract/contract.schema.json does not exist"
         violations=$((violations + 1))
     else
         if command -v jq &>/dev/null; then
             if jq empty "$schema_file" 2>/dev/null; then
-                log_pass "template/contract.schema.json is valid JSON"
+                log_pass "contract/contract.schema.json is valid JSON"
             else
-                log_fail "template/contract.schema.json is not valid JSON"
+                log_fail "contract/contract.schema.json is not valid JSON"
                 if [[ "$VERBOSE" == true ]]; then
                     jq empty "$schema_file" 2>&1 | sed 's/^/    -> /'
                 fi
@@ -384,9 +384,9 @@ check_contract_integrity() {
             fi
         elif command -v python3 &>/dev/null; then
             if python3 -m json.tool "$schema_file" &>/dev/null; then
-                log_pass "template/contract.schema.json is valid JSON"
+                log_pass "contract/contract.schema.json is valid JSON"
             else
-                log_fail "template/contract.schema.json is not valid JSON"
+                log_fail "contract/contract.schema.json is not valid JSON"
                 violations=$((violations + 1))
             fi
         else
@@ -600,13 +600,13 @@ check_cross_references() {
             if [[ -f "$resolved" ]] || [[ -d "$resolved" ]]; then
                 log_verbose "  _governance.md: '$path' -> OK"
             else
-                # Try without .opencode/ prefix (some paths use template/ instead)
+                # Try without .opencode/ prefix (some paths use contract/ instead)
                 local alt_resolved="$PROJECT_ROOT/${path#.opencode/orchestration/}"
                 if [[ "$path" == ".opencode/orchestration/"* ]]; then
-                    # Map .opencode/orchestration/ -> template/
-                    alt_resolved="$PROJECT_ROOT/template/${path#.opencode/orchestration/}"
+                    # Map .opencode/orchestration/ -> contract/
+                    alt_resolved="$PROJECT_ROOT/contract/${path#.opencode/orchestration/}"
                     if [[ -f "$alt_resolved" ]] || [[ -d "$alt_resolved" ]]; then
-                        log_verbose "  _governance.md: '$path' -> OK (via template/)"
+                        log_verbose "  _governance.md: '$path' -> OK (via contract/)"
                         continue
                     fi
                 fi

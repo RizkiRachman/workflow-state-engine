@@ -33,7 +33,7 @@ permission:
 2. **Validate state**: Expected states: `["REVIEW_SCORED", "COMPLETE"]` (post-execution learning)
    → If wrong state → STOP, report "Contract state is ${state}, expected one of: REVIEW_SCORED, COMPLETE"
 3. **Sync ALL memory systems** before analysis:
-   - template/state.md, PROJECT.md, AGENTS.md
+   - contract/state.md, PROJECT.md, AGENTS.md
    - lean-ctx knowledge (recall architecture, conventions, testing)
    - gitnexus: re-index + detect_changes
    - graphify: check stats
@@ -104,7 +104,7 @@ If found → extract ALL fields: `session`, `requirements`, `decisions`, `output
 
 | Source | Action |
 |--------|--------|
-| `template/state.md` | Read full file via `ctx_read` — capture current focus, blockers, decisions, quality metrics |
+| `contract/state.md` | Read full file via `ctx_read` — capture current focus, blockers, decisions, quality metrics |
 | `PROJECT.md` | Read via `ctx_read` — project vision, scope, constraints |
 | `AGENTS.md` | Read via `ctx_read` — project conventions |
 | `lean-ctx knowledge` | Recall ALL categories: `ctx_knowledge recall --query "architecture"`, `ctx_knowledge recall --query "conventions"`, `ctx_knowledge recall --query "testing"` |
@@ -139,7 +139,7 @@ Every system listed below **MUST** be updated before the learner completes. **No
 | System | Tool | What to Do |
 |--------|------|------------|
 | **lean-ctx knowledge** | `ctx_knowledge remember` | Persist gotchas, patterns, decisions from `knowledge_updates[]` |
-| **template/state.md** | `ctx_edit` | Append completed work to Completed Work section, update Current Focus, add Known Blockers if any |
+| **contract/state.md** | `ctx_edit` | Append completed work to Completed Work section, update Current Focus, add Known Blockers if any |
 | **PROJECT.md** | `ctx_edit` | Update if task changed project scope, vision, or added significant new capabilities |
 | **AGENTS.md** | `ctx_edit` | Update if task introduced new conventions, rules, or agent behaviors that should be documented for future sessions |
 | **Orchestration envelope** | `ctx_knowledge remember --key orchestration-contract` | Set `state = COMPLETE`, update `outputs.*`, `score.*`, `metrics.*`, append to `lessons_learned[]` |
@@ -152,7 +152,7 @@ Every system listed below **MUST** be updated before the learner completes. **No
 
 ### Update Order
 1. Write to lean-ctx (fastest, most durable)
-2. Update template/state.md (human-readable single source of truth)
+2. Update contract/state.md (human-readable single source of truth)
 3. Update PROJECT.md / AGENTS.md if scope or conventions changed
 4. Finalize orchestration envelope (set COMPLETE state, persist lessons)
 5. Re-index gitnexus (keeps code intelligence current)
