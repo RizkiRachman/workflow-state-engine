@@ -1,12 +1,31 @@
+<!-- omit from toc -->
 # Model Fallback Plugin
 
 **Auto failover between LLM models on API error or rate-limit.** Keeps agents running when the primary model is unavailable — the fallback chain is transparent to the agent.
 
 ---
 
+[![Model Fallback Plugin][modelfallback-shield]][modelfallback-url] [![GitHub][github-shield]][github-url]
+
+<a id="readme-top"></a>
+
+## Table of Contents
+- [What It Does](#what-it-does)
+- [How It Works](#how-it-works)
+- [Configuration](#configuration)
+- [When It Triggers](#when-it-triggers)
+- [Model Priority](#model-priority)
+- [Best Practices](#best-practices)
+- [Troubleshooting](#troubleshooting)
+- [See Also](#see-also)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## What It Does
 
 When OpenCode gets an API error, rate-limit, or timeout from the primary LLM, the Model Fallback plugin automatically retries the request against the next model in the configured chain. The agent sees no interruption — the response arrives as if the primary model handled it.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## How It Works
 
@@ -18,6 +37,8 @@ Primary model → Fallback model (1st) → Fallback model (2nd) → ... → Erro
 - The switch is transparent: the agent does not know a fallback occurred.
 - If **all models** in the chain fail, the error propagates to the agent as normal.
 - Used for both chat completions and streaming requests.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Configuration
 
@@ -56,6 +77,8 @@ File: `.opencode/opencode-model-fallback.jsonc`
 | `timeoutMs` | Request timeout per model in milliseconds |
 | `maxRetries` | Retries **per model** before moving to next fallback |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## When It Triggers
 
 The plugin activates on any of these errors from the current model:
@@ -67,6 +90,8 @@ The plugin activates on any of these errors from the current model:
 
 It does **not** trigger on content moderation refusals, tool-call errors, or agent-level logic failures — those are passed through.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Model Priority
 
 Models are tried in **declared order**. The first entry in `models[]` is the primary. Subsequent entries are fallbacks tried in sequence. There is no scoring, no adaptive routing — strict failover chain only.
@@ -77,6 +102,8 @@ Models are tried in **declared order**. The first entry in `models[]` is the pri
 3. gpt-4o-mini    (second fallback — used when both above fail)
 ```
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Best Practices
 
 1. **Always configure at least one fallback.** A single model is a single point of failure — rate limits and outages happen.
@@ -84,6 +111,8 @@ Models are tried in **declared order**. The first entry in `models[]` is the pri
 3. **Set `maxRetries` to 1–2.** Too many retries per model delays fallback unnecessarily.
 4. **Keep `timeoutMs` reasonable.** 30–60 seconds gives the model enough time without holding up the agent indefinitely.
 5. **Test failover behavior.** Temporarily set an invalid API key on the primary model and verify the fallback kicks in.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Troubleshooting
 
@@ -95,7 +124,16 @@ Models are tried in **declared order**. The first entry in `models[]` is the pri
 | Fallback not configured | Only one model in `models[]` | Add at least one fallback entry |
 | Config not found | File missing or at wrong path | Confirm `.opencode/opencode-model-fallback.jsonc` exists |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## See Also
 
 - Model Fallback plugin README in `~/.config/opencode/plugins/model-fallback/`
 - OpenCode provider configuration in `opencode.json`
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+[modelfallback-shield]: https://img.shields.io/badge/Model%20Fallback-插件-blue?style=for-the-badge
+[modelfallback-url]: #
+[github-shield]: https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github
+[github-url]: #

@@ -1,9 +1,22 @@
+<!-- omit from toc -->
 # Postgres MCP Usage Guide
 
 > **MCP**: `@yawlabs/postgres-mcp` in opencode.json | **Connection**: `$PG_MCP_URL`
 >
 
 > **Purpose**: Database inspection, schema review, query analysis, and performance tuning.
+
+[![PostgreSQL MCP][postgres-shield]][postgres-url] [![Docs][docs-shield]][docs-url]
+
+<a id="readme-top"></a>
+
+## Table of Contents
+- [Tools by Category](#tools-by-category)
+- [When to Use (by Agent Role)](#when-to-use-by-agent-role)
+- [Usage Patterns](#usage-patterns)
+- [Safety Notes](#safety-notes)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Tools by Category
 
@@ -48,6 +61,8 @@
 | `pg_replication_status` | Replication slots, connected replicas, WAL position |
 | `pg_kill` | Cancel (SIGINT) or terminate (SIGTERM) a backend by PID |
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## When to Use (by Agent Role)
 
 | Agent | Postgres Tools | Use Case |
@@ -57,6 +72,8 @@
 | **developer** | `describe_table`, `readonly` | Understand schema before writing data access code |
 | **system-analyst** | `describe_table`, `search_columns` | Impact analysis — which tables/columns are affected by a change |
 | **All others** | No postgres access needed | Delegate DB review to quality-analyst |
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Usage Patterns
 
@@ -100,10 +117,20 @@ pg_health()
 // Returns: version, db_size, connections, active queries, table count
 
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Safety Notes
 
 - All agents have `read`/`edit`/`grep`/`bash` blocked. Postgres tools are read-capable via `pg_readonly` (guaranteed read-only).
 - Use `pg_readonly` for all analysis queries unless you explicitly need to write (requires env ALLOW_WRITES=1).
 
 - Large result sets are truncated to 1000 rows with a `truncated: true` flag.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+[postgres-shield]: https://img.shields.io/badge/PostgreSQL-MCP-336791?style=for-the-badge&logo=postgresql
+[postgres-url]: #
+[docs-shield]: https://img.shields.io/badge/DOCS-文档-blue?style=for-the-badge
+[docs-url]: #
 
