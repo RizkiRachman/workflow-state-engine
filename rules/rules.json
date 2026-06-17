@@ -50,6 +50,40 @@
     }
   },
 
+  "token_budget": {
+    "enabled": true,
+    "max_per_session": 200000,
+    "warning_threshold_pct": 80,
+    "hard_limit_pct": 95,
+    "enforcement": "strict",
+    "rules": [
+      {
+        "id": "TOKEN_001",
+        "description": "Per-session token budget must not exceed max_per_session",
+        "severity": "CRITICAL",
+        "action": "block"
+      },
+      {
+        "id": "TOKEN_002",
+        "description": "Warning emitted when usage exceeds warning_threshold_pct",
+        "severity": "WARNING",
+        "action": "warn"
+      },
+      {
+        "id": "TOKEN_003",
+        "description": "Subagent calls must not exceed max_per_subagent_call",
+        "severity": "HIGH",
+        "action": "block_retry"
+      },
+      {
+        "id": "TOKEN_004",
+        "description": "Phase budgets must not be exceeded without justification",
+        "severity": "MEDIUM",
+        "action": "flag"
+      }
+    ]
+  },
+
   "rules": [
     {
       "id": "PREFLIGHT_001",

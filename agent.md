@@ -29,7 +29,7 @@ Single source of truth for all AI agents. Reference skills and usage guides for 
 
 | Concept | Description |
 |---------|-------------|
-| **Shared JSON Envelope** | `template/contract.json` — single source of truth for state, decisions, outputs, scoring |
+| **Shared JSON Envelope** | `contract/contract.json` — single source of truth for state, decisions, outputs, scoring |
 | **State Machine** | 8 states + BLOCKED: agents transition through the workflow via the envelope |
 | **Scoring Pipeline** | Three-tier scoring after every delegation (rule checks → LLM-as-judge → combined verdict) |
 | **Agent Delegation** | Orchestrator delegates to specialized agents (system-analyst, developer, quality-analyst) |
@@ -67,7 +67,7 @@ INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVI
 ```
 agents/     → 11 agent instruction files (tech-lead, developer, quality-analyst, etc.)
 skills/     → 36 skill directories (system-analyst, writing-plans, spec-driven-dev, etc.)
-template/   → contract.json, superpowers-contract.json, state.md
+contract/   → contract.json, superpowers-contract.json, state.md
 rules/      → rules.json (state machine transitions, scoring thresholds)
 doc/        → workflow.md, project.md, gap analysis, state-history.md
 usage/      → 15 tool usage guides (lean-ctx, gitnexus, firecrawl, etc.)
@@ -89,7 +89,7 @@ This project keeps its toolkit at the project root for direct access. No nested 
    ├── agents/ ──symlink──► agents/         11 agent .md files
    ├── skills/ ──symlink──► skills/         36 skill directories
    ├── rules/  ──symlink──► rules/          rules.json (state machine)
-   ├── orchestration/symlink──► template/   contract.json, superpowers-contract.json, state.md
+   ├── orchestration/symlink──► contract/   contract.json, superpowers-contract.json, state.md
    ├── planning/symlink──► doc/planning/    Planning docs
    ├── reports/ ──symlink──► doc/reports/   Analysis reports
    ├── usage/   ──symlink──► usage/         15 tool usage guides
@@ -109,7 +109,7 @@ You reference `.opencode/` paths — OpenCode resolves symlinks to root-level so
 ├── doc/               ← Planning docs, workflow.md, gap analyses
 ├── rules/             ← rules.json (state machine, scoring)
 ├── skills/            ← 36 skill directories (java-developer, gitnexus/, spec-driven-dev, etc.)
-├── template/          ← contract.json, superpowers-contract.json, state.md
+├── contract/          ← contract.json, superpowers-contract.json, state.md
 ├── usage/             ← 15 tool usage guides (one per tool group)
 └── setup.sh           ← Bootstrap: creates all .opencode/ → root-level symlinks
 ```

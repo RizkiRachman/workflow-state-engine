@@ -1,332 +1,402 @@
 {
+  "_comment": "TEMPLATE \u2014 copy to opencode.json and configure. Set your own model/provider (remove provider section if not using Sumopod). Fill in MCP paths/keys: mcp.lean-ctx.command, mcp.lean-ctx.environment.LEAN_CTX_DATA_DIR, mcp.firecrawl.environment.FIRECRAWL_API_KEY",
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "tech-lead",
-  "model": "sumopod/deepseek-v4-flash",
-  "small_model": "sumopod/deepseek-v4-flash",
+  "model": "YOUR_MODEL_ID",
+  "small_model": "YOUR_MODEL_ID",
   "instructions": [
     "agent.md",
-    "n_m/@morphllm/opencode-morph-plugin/instructions/morph-tools.md"
+    "node_modules/@morphllm/opencode-morph-plugin/instructions/morph-tools.md"
   ],
-  "provider": {
-    "npm": "@ai-sdk/openai-compatible",
-    "name": "Sumopod AI",
-    "config": {
-      "baseURL": "https://ai.sumopod.com/v1",
-      "apiKey": "YOUR_SUMOPOD_API_KEY",
-      "websearch_cited": {
-        "model": "deepseek-v4-flash"
-      }
-    }
-  },
-  "models": {
-    "deepseek-v4-flash": {
-      "name": "DeepSeek V4 Flash",
-      "config": {
-        "reasoningEffort": "high",
-        "textVerbosity": "low",
-        "setCacheKey": true
-      }
-    }
-  },
-  "plugins": [
-    "@morphllm/opencode-morph-plugin",     // OPTIONAL: enhances agent capabilities
-    "@razroo/opencode-model-fallback",     // OPTIONAL: enhances agent capabilities
-    "@tarquinen/opencode-dcp",             // OPTIONAL: enhances agent capabilities
-    "opencode-notify",                     // OPTIONAL: enhances agent capabilities
-    "opencode-vibeguard",                  // OPTIONAL: enhances agent capabilities
-    "opencode-websearch-cited",            // OPTIONAL: enhances agent capabilities
-    "opencode-worktree",                   // OPTIONAL: enhances agent capabilities
-    "./.opencode/plugins/auto-wrap.ts",    // OPTIONAL: enhances agent capabilities
-    "./.opencode/plugins/ponytail.mjs"     // OPTIONAL: enhances agent capabilities
+  "plugin": [
+    "@morphllm/opencode-morph-plugin",
+    "@razroo/opencode-model-fallback",
+    "@tarquinen/opencode-dcp",
+    "opencode-notify",
+    "opencode-vibeguard",
+    "opencode-websearch-cited",
+    "opencode-worktree",
+    "./.opencode/plugins/auto-wrap.ts",
+    ".opencode/plugins/ponytail.mjs"
   ],
   "compaction": {
+    "auto": true,
+    "prune": true,
     "reserved": 8000
   },
-  "agents": {
+  "agent": {
     "tech-lead": {
       "mode": "primary",
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 50,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "lean-ctx_*": "allow",
-        "gitnexus_impact": "allow",
-        "gitnexus_query": "allow",
-        "gitnexus_context": "allow",
-        "gitnexus_detect_changes": "allow",
-        "gitnexus_rename": "allow",
-        "gitnexus_route_map": "allow",
-        "gitnexus_shape_check": "allow",
-        "graphify_*": "allow",
-        "firecrawl_*": "allow",
-        "webfetch": "allow",
-        "question": "allow"
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny",
+        "skill": "allow"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "system-analyst": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 80,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "task": { "*": "deny" },
+        "skill": "allow",
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
         "gitnexus_rename": "deny",
         "write": "deny",
         "glob": "deny",
+        "list": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny",
         "memory_*": "deny",
         "context7_*": "deny",
         "firecrawl_*": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "developer": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 100,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "lean-ctx_*": "allow",
-        "gitnexus_impact": "allow",
-        "gitnexus_query": "allow",
-        "gitnexus_context": "allow",
-        "gitnexus_detect_changes": "allow",
-        "gitnexus_rename": "allow",
-        "morph_edit": "allow",
-        "question": "allow",
+        "skill": "allow",
         "memory_*": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny",
         "morph_edit": "deny",
         "firecrawl_*": "deny",
         "context7_*": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "quality-analyst": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 80,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "task": { "*": "deny" },
+        "skill": "allow",
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
         "gitnexus_rename": "deny",
+        "write": "deny",
+        "glob": "deny",
+        "list": "deny",
         "memory_*": "deny",
-        "context7_*": "deny"
+        "context7_*": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "developer-explorer": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 30,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "task": { "*": "deny" },
+        "skill": "allow",
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
         "gitnexus_rename": "deny",
+        "write": "deny",
+        "glob": "deny",
+        "list": "deny",
+        "grep": "deny",
         "memory_*": "deny",
         "context7_*": "deny",
-        "firecrawl_*": "deny"
+        "firecrawl_*": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "bash": "deny",
+        "snip": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "developer-librarian": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 30,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "task": { "*": "deny" },
+        "skill": "allow",
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
+        "write": "deny",
+        "glob": "deny",
+        "list": "deny",
         "memory_*": "deny",
         "graphify_*": "deny",
-        "gitnexus_*": "deny"
+        "gitnexus_*": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "software-architect": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 60,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "task": { "*": "deny" },
+        "skill": "allow",
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
         "gitnexus_rename": "deny",
+        "write": "deny",
+        "glob": "deny",
+        "list": "deny",
         "memory_*": "deny",
-        "context7_*": "deny"
+        "context7_*": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "developer-fixer": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 40,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "lean-ctx_*": "allow",
-        "gitnexus_impact": "allow",
-        "gitnexus_query": "allow",
-        "gitnexus_context": "allow",
-        "gitnexus_detect_changes": "allow",
-        "morph_edit": "allow",
-        "question": "allow",
+        "skill": "allow",
         "memory_*": "deny",
         "context7_*": "deny",
         "graphify_*": "deny",
         "firecrawl_*": "deny",
-        "morph_edit": "deny"
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny",
+        "morph_edit": "deny",
+        "task": {
+          "*": "deny"
+        }
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "quality-analyst-learner": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 40,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "task": { "*": "deny" },
+        "skill": "allow",
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
         "gitnexus_rename": "deny",
+        "write": "deny",
+        "glob": "deny",
+        "list": "deny",
         "memory_*": "deny",
         "context7_*": "deny",
-        "firecrawl_*": "deny"
+        "firecrawl_*": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "developer-observer": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0,
       "top_p": 1,
       "steps": 30,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "task": { "*": "deny" },
+        "skill": "allow",
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
         "gitnexus_rename": "deny",
+        "write": "deny",
+        "glob": "deny",
+        "list": "deny",
         "memory_*": "deny",
         "context7_*": "deny",
-        "gitnexus_*": "deny"
+        "gitnexus_*": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     },
     "developer-council": {
-      "model": "sumopod/deepseek-v4-flash",
+      "model": "YOUR_MODEL_ID",
       "temperature": 0.2,
       "top_p": 1,
       "steps": 30,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
-        "task": { "*": "deny" },
+        "skill": "allow",
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
         "gitnexus_rename": "deny",
+        "write": "deny",
+        "glob": "deny",
+        "list": "deny",
         "memory_*": "deny",
         "context7_*": "deny",
-        "firecrawl_*": "deny"
+        "firecrawl_*": "deny",
+        "read": "deny",
+        "edit": "deny",
+        "grep": "deny",
+        "bash": "deny",
+        "snip": "deny"
       },
       "fallback_models": [
-        "sumopod/deepseek-v4-flash"
+        "YOUR_FALLBACK_MODEL"
       ]
     }
   },
   "permission": {
-    "default": {
-      "webfetch": "deny",
-      "lean-ctx_*": "allow"
-    }
+    "*": "allow",
+    "bash": "deny",
+    "snip": "deny",
+    "read": "deny",
+    "edit": "deny",
+    "grep": "deny",
+    "write": "deny",
+    "glob": "deny",
+    "list": "deny",
+    "webfetch": "deny",
+    "lean-ctx_*": "allow"
   },
-  "mcpServers": {
-    // MANDATORY: all agents rely on this — codebase exploration, context, queries
+  "mcp": {
     "context7": {
       "type": "local",
-      "cmd": [
+      "command": [
+        "npx",
+        "-y",
         "@upstash/context7-mcp"
       ]
-      // OPTIONAL: docs lookup for librarian agent only
     },
-    // MANDATORY: all agents rely on this — impact analysis, code query, safe rename
     "gitnexus": {
       "type": "local",
-      "cmd": [
-        "gitnexus"
+      "command": [
+        "npx",
+        "gitnexus",
+        "mcp"
       ]
     },
-    // MANDATORY: all agents rely on this — file I/O, shell, knowledge, sessions
     "lean-ctx": {
       "type": "local",
-      "cmd": [
-        "lean-ctx"
+      "command": [
+        "/path/to/lean-ctx"
       ],
       "enabled": true,
-      "env": {
+      "environment": {
         "LEAN_CTX_DATA_DIR": "$HOME/.lean-ctx"
       }
     },
-    // RECOMMENDED: adds web search/scraping
     "firecrawl": {
       "type": "local",
-      "cmd": [
+      "command": [
+        "npx",
+        "-y",
         "firecrawl-mcp"
       ],
-      "env": {
+      "environment": {
         "FIRECRAWL_API_KEY": "YOUR_FIRECRAWL_API_KEY"
       }
     }

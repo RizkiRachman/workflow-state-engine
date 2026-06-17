@@ -2,7 +2,7 @@
 
 # Orchestration Contract & State Machine
 
-> **Contract template**: `template/contract.json`
+> **Contract template**: `contract/contract.json`
 > **State machine rules**: `rules/rules.json`
 
 The orchestration contract is the shared JSON envelope that tracks every task from start to finish. It's the single source of truth for what phase we're in, decisions made, scoring results, and retry state.
@@ -22,6 +22,11 @@ The orchestration contract is the shared JSON envelope that tracks every task fr
 8. [Workflow Lifecycle](#workflow-lifecycle)
 9. [Toolkit Integration Map](#toolkit-integration-map)
 10. [Post-Flight Protocol (Before Commit)](#post-flight-protocol-before-commit)
+11. [GitNexus Execution Flows](#gitnexus-execution-flows)
+12. [Audit-Observability](#audit-observability)
+13. [Governance](#governance)
+14. [JSON Schema](#json-schema)
+15. [Conventions Checking](#conventions-checking)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -210,6 +215,142 @@ See `usage/ponytail.md` for full reference, or `agent.md §5` for the 6-rung lad
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## GitNexus Execution Flows
+
+GitNexus indexes the codebase as a knowledge graph. Current index stats:
+
+| Metric | Value |
+|--------|-------|
+| Symbols indexed | 1501 |
+| Relationships | 1493 |
+| Execution flows (processes) | 0 |
+
+> **0 execution flows**: GitNexus auto-detects execution flows when entry points are annotated. Currently no flows are registered. All orchestration paths (INIT→PLAN→PLAN_SCORED→EXECUTE→EXECUTE_SCORED→REVIEW→REVIEW_SCORED→COMPLETE) are identified in this document but not yet mapped as GitNexus processes.
+
+### Future Work
+
+Add GitNexus execution flow annotations to key orchestration paths:
+- **Orchestration lifecycle flow**: INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
+- **Scoring pipeline flow**: Delegation → Tier 1 rules → Tier 2 LLM judge → Tier 3 combined verdict → state transition
+- **Escalation flow**: BLOCKED → persist → user intervention → resume with retry guidance
+
+When flows are annotated, use `gitnexus_query({query: "orchestration flow"})` to retrieve the full step-by-step trace, or read `gitnexus://repo/workflow-state-engine/process/{name}` for a specific flow.
+
+See `.opencode/skills/gitnexus/` for GitNexus usage guides.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Audit-Observability
+
+Reference: `skills/audit-observability/SKILL.md`
+
+The audit-observability skill monitors and audits the orchestration system across three pillars:
+
+### 1. State Contract Transitions
+
+Tracks every envelope state change: `INIT → PLAN → PLAN_SCORED → ... → COMPLETE` or `BLOCKED`. Records:
+- Transition timestamps and duration
+- Score at transition time
+- Which agent triggered the transition
+- Escalation events and retry count
+
+Useful for detecting stalled workflows, infinite retry loops, or unexpected state regressions.
+
+### 2. Score Analytics
+
+Aggregates scoring pipeline results over time:
+- Tier 1 (rule-based) subtotals per phase
+- Tier 2 (LLM-as-judge) scores and rationales
+- Combined verdict distribution (PASS / RETRY / BLOCKED)
+- Score trends — are scores improving, degrading, or oscillating?
+- Blast radius penalty frequency
+
+### 3. Cross-Service/Component Consistency Enforcement
+
+Validates that all services, agents, and components adhere to the shared contract:
+- Envelope schema compliance across all agents
+- Uniform scoring criteria application
+- Consistent state machine rule interpretation
+- Contract field naming and type consistency
+
+Load the skill on demand: `skill({name: "audit-observability"})`.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Governance
+
+Reference: `agents/_governance.md`
+
+The shared governance document (`agents/_governance.md`) defines the rules, constraints, and conventions that ALL agents must follow. It is the single source of truth for:
+
+- **Permission boundaries** — what each agent role may and may not do
+- **Communication rules** — token efficiency, trade-off transparency, admission of unknowns
+- **Escalation rules** — when to escalate to the orchestrator or user
+- **Quality gates** — minimum scoring thresholds, validation criteria
+- **Safety constraints** — never push to main, never force push, never edit without impact analysis
+
+Agents **source their governance rules** from this file. The orchestrator (tech-lead) enforces governance compliance during scoring via the governance portion of the Tier 2 LLM-as-Judge evaluation (0-30 points).
+
+> **Implementation note**: When adding a new agent, add a governance section to `agents/_governance.md` with the agent-specific rules, then reference it in the agent's instruction file.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## JSON Schema
+
+Reference: `contract/contract.schema.json`
+
+The envelope (`contract/contract.json`) has a canonical JSON Schema at `contract/contract.schema.json`. This schema:
+
+- Defines the required structure for all envelope fields (state, scope, decisions, scoring, retry, metrics)
+- Specifies valid state values and transitions
+- Enforces type constraints (string, number, array, object)
+- Documents field descriptions and optional/required status
+
+### Validation
+
+The script `scripts/check-conventions.sh` validates the envelope against this schema:
+
+```bash
+scripts/check-conventions.sh validate-contract
+```
+
+This check runs automatically in CI. A schema validation failure causes a Tier 1 scoring deduction of 15 points.
+
+All agents should validate their envelope mutations against the schema before persisting. The orchestrator enforces schema compliance at every transition.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Conventions Checking
+
+Two scripts maintain code quality and architecture conventions. Both are integrated into CI.
+
+### 1. `scripts/check-conventions.sh`
+
+Validates project-wide conventions including:
+- JSON Schema compliance of `contract/contract.json`
+- File and directory structure conventions
+- Naming patterns and project layout rules
+- Scoring pipeline configuration consistency
+
+```bash
+scripts/check-conventions.sh
+```
+
+### 2. `scripts/scan-ponytail-debt.sh`
+
+Scans the codebase for `ponytail:` debt comments and generates a technical debt report. For each shortcut found, it reports:
+- File and line number
+- Ceiling (what limit the shortcut imposes)
+- Upgrade path (how to fix it properly)
+
+```bash
+scripts/scan-ponytail-debt.sh
+```
+
+This feeds into the SIMPLICITY_001 scoring rule — unresolved ponytail debt with no documented upgrade path may trigger an `over_engineering_deduction` in Tier 1 scoring.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Workflow Lifecycle
 
 ```
@@ -310,7 +451,7 @@ How every piece of the toolkit connects in the workflow:
 1. User request
        │
 2. tech-lead creates contract envelope
-       │  (template/contract.json → lean-ctx knowledge)
+       │  (contract/contract.json → lean-ctx knowledge)
        ▼
 3. Envelope stored: lean-ctx ctx_knowledge remember key="orchestration-contract"
        │
@@ -347,7 +488,7 @@ Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
 | Concept | Definition | Configured In | Loaded By |
 |---|---|---|---|
-| Envelope | Shared session state | `template/contract.json` | lean-ctx knowledge recall |
+| Envelope | Shared session state | `contract/contract.json` | lean-ctx knowledge recall |
 | State machine | Legal transitions | `rules/rules.json` | tech-lead (enforced in prompt) |
 | Scoring | PASS/RETRY/BLOCKED | `rules/rules.json` | tech-lead (scoring pipeline) |
 | Agents | Role definitions | `opencode.json` + `agents/*.md` | OpenCode at startup |

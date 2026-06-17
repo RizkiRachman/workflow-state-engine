@@ -93,7 +93,7 @@ If found → extract `decisions.*`, `governance.*`, `retry.issues[]`, `scope.inc
 
 | Source | Action |
 |--------|--------|
-| `template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
+| `contract/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
 | `PROJECT.md` | Read via `ctx_read` — project vision, scope, constraints |
 | `lean-ctx knowledge` | Recall recent patterns: `ctx_knowledge recall --query "architecture"` |
 | `gitnexus` | Re-index if stale: `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` |

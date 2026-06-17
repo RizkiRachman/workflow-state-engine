@@ -42,13 +42,13 @@ You are the **council** — multi-LLM consensus engine. You run several councill
 
 ## Orchestration Envelope — Session Protocol
 
-The orchestrator uses a **shared JSON envelope** (`template/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
+The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
 
 ### At Session Start (before any work)
 1. **READ** — Load the envelope: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    - If found: extract `requirements.*`, `decisions.*`, `governance.*` — these are your analysis inputs
    - If NOT found (run standalone): Create a fresh envelope:
-     - Read `template/contract.json` as base
+     - Read `.opencode/orchestration/contract.json` as base
      - Populate `session.task_id` (short slug like `"developer-council-standalone-<date>"`), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract val <base JSON with populated fields>`
 2. **UPDATE** — After completing analysis, persist results:
@@ -77,7 +77,7 @@ If found → extract `requirements.*`, `decisions.*`, `governance.*`. If not fou
 
 | Source | Action |
 |--------|--------|
-| `template/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
+| `contract/state.md` | Read via `ctx_read` — current focus, blockers, decisions |
 | `PROJECT.md` | Read via `ctx_read` — project vision, scope, constraints |
 | `lean-ctx knowledge` | Recall relevant patterns: `ctx_knowledge recall --query "architecture"` |
 
@@ -144,7 +144,7 @@ After completing your work, run these steps **in order** before declaring done:
 | 1. Impact verification | `gitnexus_impact({target, direction: "upstream"})` | Verify blast radius matches expectations. If HIGH/CRITICAL, note this in output |
 | 2. Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) | Verify only expected files changed — no unintended side effects |
 | 3. Knowledge persistence | `lean-ctx ctx_knowledge remember` | Persist any gotchas, patterns, or decisions discovered during the task (categories: `architecture`, `gotchas`, `conventions`) |
-| 4. template/state.md update | `lean-ctx ctx_edit` on `template/state.md` | Append completed work, update Current Focus, update Known Blockers |
+| 4. contract/state.md update | `lean-ctx ctx_edit` on `contract/state.md` | Append completed work, update Current Focus, update Known Blockers |
 | 5. Session save | `ctx_session save` | Persist conversation state for resumption across opencode restarts |
 
 **Exceptions**: Documentation-only changes may skip steps 1, 2, and 4.
