@@ -1,7 +1,7 @@
 {
-  "contract_version": "1.1.0",
+  "contract_version": "1.2.0",
   "created_at": "2026-06-11T02:39:44Z",
-  "last_updated": "2026-06-15T20:30:00Z",
+  "last_updated": "2026-06-17T12:00:00Z",
 
   "summary": "Superpowers & MCP Contract — central registry of all plugins, skills, and MCP tools available to agents in this project.",
 
@@ -146,6 +146,12 @@
       "purpose": "Act on review feedback with technical rigor",
       "when_to_use": "When receiving code review feedback, before implementing suggestions",
       "skill_command": "/skill receiving-code-review"
+    },
+    {
+      "name": "audit-observability",
+      "purpose": "State contract audit trail, orchestration observability, score analytics, and cross-service consistency enforcement",
+      "when_to_use": "Before and after every state transition, during scoring analysis, and when detecting drift across services",
+      "skill_command": "/skill audit-observability"
     }
   ],
 
@@ -265,7 +271,7 @@
   },
 
   "agent_to_skill_mapping": {
-    "tech-lead": ["orchestration-template", "verification-before-completion", "humanizer", "firecrawl"],
+    "tech-lead": ["orchestration-template", "verification-before-completion", "humanizer", "firecrawl", "audit-observability"],
     "system-analyst": ["brainstorming", "writing-plans", "system-analyst", "business-analyst", "java-developer", "software-developer", "humanizer", "firecrawl", "firecrawl-search", "firecrawl-deep-research"],
     "developer": ["subagent-driven-development", "executing-plans", "test-driven-development", "java-developer", "software-developer", "qa-expert", "token-optimize", "humanizer", "firecrawl", "firecrawl-scrape", "firecrawl-build-scrape", "firecrawl-build-search"],
     "quality-analyst": ["requesting-code-review", "receiving-code-review", "qa-expert", "security-expert", "devops-expert", "java-developer", "software-developer", "humanizer", "firecrawl", "firecrawl-qa"],

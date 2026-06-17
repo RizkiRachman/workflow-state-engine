@@ -1,6 +1,7 @@
 {
   "state": "INIT",
   "contract_version": "0.8.0",
+  "state_machine_version": "0.8.0",
   "session": {
     "task_id": "",
     "branch": "",
@@ -98,7 +99,9 @@
     "cost_tokens": 0,
     "elapsed_ms": 0,
     "agents_used": [],
-    "phases_completed": []
+    "phases_completed": [],
+    "phase_durations": {}
   },
-  "lessons_learned": []
+  "lessons_learned": [],
+  "audit_log": []
 }

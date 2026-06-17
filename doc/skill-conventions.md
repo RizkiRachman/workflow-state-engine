@@ -32,6 +32,14 @@ Each skill is compatible with these agents depending on the target:
 | Cline | `.clinerules/<name>.md` |
 | GitHub Copilot | `.github/copilot-instructions.md` (merged) |
 
+### Skill-to-Agent Mapping
+
+Specific skills and their primary agent assignments:
+
+| Skill | Primary Agent | Purpose |
+|-------|--------------|---------|
+| `audit-observability` | `tech-lead` | State contract audit trail, orchestration observability, score analytics, cross-service consistency enforcement |
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Publishing

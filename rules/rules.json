@@ -225,6 +225,27 @@
       "description": "Code simplicity/frugality check: reject unnecessary abstractions, unused deps, over-engineered patterns, YAGNI violations",
       "condition": "code_has_unnecessary_abstraction",
       "message": "⚠️ SIMPLICITY: Unnecessary abstraction detected — ponytail ladder skipped? Check: (1) Could stdlib replace this? (2) Is every abstraction justified? (3) Could any file be eliminated?"
+    },
+    {
+      "id": "AUDIT_001",
+      "severity": "CRITICAL",
+      "description": "State transition audit — if a state transition completes without appending to audit_log, deduct -15 from score",
+      "condition": "transition_without_audit_log_append",
+      "message": "⛔ AUDIT FAILED: State transition detected without corresponding audit_log entry. Append {timestamp, prev_state, new_state, triggered_by, transition_reason, scoring_snapshot} before persisting."
+    },
+    {
+      "id": "AUDIT_002",
+      "severity": "HIGH",
+      "description": "Stalled phase detection — if >5 transitions without state change, advisory warning",
+      "condition": "more_than_5_transitions_same_state",
+      "message": "⚠️ AUDIT ADVISORY: Detected >5 consecutive transitions without state change. Phase may be stalled. Investigate before continuing."
+    },
+    {
+      "id": "AUDIT_003",
+      "severity": "CRITICAL",
+      "description": "Score regression — if score drops >20pts between adjacent audit entries in the same phase, deduct -15",
+      "condition": "score_drop_exceeds_20pts_same_phase",
+      "message": "⛔ REGRESSION DETECTED: Score dropped >20 points between adjacent audit entries in the same phase. Investigate root cause immediately."
     }
   ],
   
