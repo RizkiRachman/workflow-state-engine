@@ -1,11 +1,11 @@
 {
-  "state": "COMPLETE",
+  "state": "INIT",
   "contract_version": "0.8.0",
   "state_machine_version": "0.8.0",
   "session": {
-    "task_id": "arch-enforcement",
-    "branch": "feature/20260617-architecture-enforcement-analysis",
-    "created_at": "2026-06-18T00:00:00Z",
+    "task_id": "your-task-id",
+    "branch": "feature/your-feature-branch",
+    "created_at": "2026-01-01T00:00:00Z",
     "archived_at": null
   },
   "scope": {
@@ -16,13 +16,22 @@
     "max_parallel_agents": 1
   },
   "requirements": {
-    "goal": "",
-    "acceptance_criteria": [],
-    "constraints": []
+    "goal": "Describe what you are building in one sentence",
+    "acceptance_criteria": [
+      "AC 1: System does X",
+      "AC 2: Tests pass"
+    ],
+    "constraints": [
+      "Must follow hexagonal architecture",
+      "No new external dependencies"
+    ]
   },
   "decisions": {
     "approved_architecture": null,
-    "coding_standard": [],
+    "coding_standard": [
+      "Hexagonal architecture",
+      "Port \u2192 Service \u2192 Adapter"
+    ],
     "rejected_approaches": [],
     "adr_log": []
   },
@@ -32,19 +41,19 @@
     "applicable_skills": [],
     "rules_references": [
       {
-        "source": "AGENTS.md",
+        "src": "AGENTS.md",
         "sections": [
           "all"
         ]
       },
       {
-        "source": ".opencode/rules/rules.json",
+        "src": ".opencode/rules/rules.json",
         "sections": [
           "all"
         ]
       }
     ],
-    "current_guidance": "All 12 architecture enforcement gaps closed. Ready for ship.",
+    "current_guidance": "Describe current focus and guidance for the active agent",
     "permissions": {
       "do": [],
       "dont": [
@@ -77,34 +86,26 @@
     "architecture": null,
     "code_changes": [],
     "test_results": null,
-    "agent_reports": [
-      "System-analyst plan: 90/100",
-      "Developer-council re-score: 90/100",
-      "Quality-analyst review: PASS (85/100)"
-    ],
-    "score_summary": "COMPLETE: Combined 85/100 PASS. All 12 gaps closed."
+    "agent_reports": [],
+    "score_summary": null
   },
   "score": {
     "rules": {
-      "pass": 5,
+      "pass": 0,
       "fail": 0,
       "deduction": 0,
-      "subtotal": 100
+      "subtotal": 0
     },
     "judge": {
-      "score": 85,
-      "rationale": "Quality-analyst review: PASS. 0 CRITICAL, 0 HIGH, 2 MEDIUM (false positives in check-conventions, additionalProperties in schema), 6 LOW/INFO. All 12 gaps verified. 23 files reviewed (8 create + 15 modify).",
-      "missing_items": [
-        "Add timeout guard to mvn in check-conventions.sh",
-        "Add config/*.json to CI artifact paths",
-        "Consider additionalProperties: false on schema"
-      ]
+      "score": 0,
+      "rationale": "",
+      "missing_items": []
     },
-    "combined": 85,
-    "verdict": "PASS"
+    "combined": 0,
+    "verdict": "INIT"
   },
   "retry": {
-    "current_phase": "execute",
+    "current_phase": null,
     "attempt": 0,
     "max_attempts": 3,
     "score_threshold": 70,
@@ -128,59 +129,12 @@
     "phase_usage": {}
   },
   "metrics": {
-    "cost_tokens": 475000,
-    "elapsed_ms": 32000000,
-    "agents_used": [
-      "system-analyst",
-      "developer-fixer",
-      "developer-council",
-      "quality-analyst",
-      "quality-analyst-learner"
-    ],
-    "phases_completed": [
-      "PLAN",
-      "PLAN_SCORED",
-      "EXECUTE",
-      "EXECUTE_SCORED",
-      "REVIEW_SCORED",
-      "COMPLETE"
-    ],
-    "phase_durations": {
-      "plan": 120000,
-      "execute": 1800000
-    }
+    "cost_tokens": 0,
+    "elapsed_ms": 0,
+    "agents_used": [],
+    "phases_completed": [],
+    "phase_durations": {}
   },
-  "lessons_learned": [
-    "Parallel wave-based execution (P0\u2192P3) exploited file-disjoint workstreams \u2014 ~40% time savings vs sequential",
-    "Schema-first approach: JSON Schema written before validation tools \u2014 caught jq --argfile compat issue early",
-    "Shared governance include pattern (agents/_governance.md) eliminates duplicate blocks across 11 agent files",
-    "check-conventions.sh produces 2/5 false positives on doc path examples \u2014 needs context-aware detection",
-    "Schema additionalProperties: true is intentional trade-off for extensibility but needs strict-mode check"
-  ],
-  "audit_log": [
-    {
-      "timestamp": "2026-06-18T00:00:00Z",
-      "event": "STATE_TRANSITION",
-      "from": "EXECUTE_SCORED",
-      "to": "REVIEW",
-      "agent": "tech-lead",
-      "reason": "Delegating to quality-analyst for code review of all 23 files"
-    },
-    {
-      "timestamp": "2026-06-18T00:00:00Z",
-      "event": "STATE_TRANSITION",
-      "from": "REVIEW",
-      "to": "REVIEW_SCORED",
-      "agent": "tech-lead",
-      "reason": "Quality-analyst verdict: PASS (85/100). 0 critical, 0 high findings."
-    },
-    {
-      "timestamp": "2026-06-18T00:00:00Z",
-      "event": "STATE_TRANSITION",
-      "from": "REVIEW_SCORED",
-      "to": "COMPLETE",
-      "agent": "tech-lead",
-      "reason": "Score 85 >= 70. All 12 architecture enforcement gaps closed and reviewed."
-    }
-  ]
+  "lessons_learned": [],
+  "audit_log": []
 }
