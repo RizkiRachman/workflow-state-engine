@@ -622,7 +622,7 @@ lens_git_hooks() {
 
     local expected_hooks_dir="$PROJECT_DIR/.githooks"
 
-    if [[ "$hooks_path" == ".githooks" ]]; then
+    if [[ "$hooks_path" == ".githooks" || "$hooks_path" == ".githooks/" ]]; then
         score=$((score + 3))
         details+=("hooksPath set to .githooks/ (+3)")
     else
@@ -858,7 +858,9 @@ do_fix() {
     # Fix 1: Set hooksPath
     local current_hooks
     current_hooks=$(git config core.hooksPath 2>/dev/null || echo "")
-    if [[ "$current_hooks" != ".githooks" ]]; then
+    local tmp_hooks
+    tmp_hooks=$(echo "$current_hooks" | sed 's:/*$::')
+    if [[ "$tmp_hooks" != ".githooks" ]]; then
         if git config core.hooksPath .githooks 2>/dev/null; then
             log_info "  ✅ Set core.hooksPath → .githooks/"
             fixes_applied=$((fixes_applied + 1))

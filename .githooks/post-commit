@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
 # Auto re-index gitnexus after code changes
 if [[ -f "scripts/gitnexus-analyze.sh" ]]; then
     bash scripts/gitnexus-analyze.sh 2>/dev/null || echo "⚠ gitnexus re-index skipped (non-zero exit)"
+fi
+# Verify agent states are in sync
+if [[ -f "scripts/sync-agent-states.sh" ]]; then
+    bash scripts/sync-agent-states.sh 2>/dev/null || true
 fi
 exit 0
