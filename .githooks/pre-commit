@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-
 # Don't block main/master branches
 if [[ "$BRANCH" == "main" || "$BRANCH" == "master" ]]; then
     exit 0
 fi
-
-# Validate contract if it exists for this branch
+# Validate contract if it exists for this br
 CONTRACT_FILE="session/$BRANCH/contract.json"
 if [[ -f "$CONTRACT_FILE" ]]; then
     if [[ -f "scripts/validate-contract.sh" ]]; then
         bash scripts/validate-contract.sh --file "$CONTRACT_FILE" --score
-        EXIT_CODE=$?
+        local EXIT_CODE=$?
         if [[ $EXIT_CODE -eq 2 ]]; then
             echo "⛔ PRE-COMMIT BLOCKED: Contract is BLOCKED (score < 50). Fix contract before committing."
             echo "   Run: scripts/self-repair.sh --dry-run to assess restoration options."
             exit 1
         fi
+    fi
+fi
+# Sync agent states: verify agents/*.md match rules.json agent_states
+if [[ -f "scripts/sync-agent-states.sh" ]]; then
+    if ! bash scripts/sync-agent-states.sh 2>/dev/null; then
+        echo "⚠️  PRE-COMMIT: Agent states drift detected. Run scripts/sync-agent-states.sh to fix."
     fi
 fi
 exit 0

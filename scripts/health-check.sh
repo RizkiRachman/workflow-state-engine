@@ -622,7 +622,7 @@ lens_git_hooks() {
 
     local expected_hooks_dir="$PROJECT_DIR/.githooks"
 
-    if [[ "$hooks_path" == ".githooks" ]]; then
+    if [[ "$hooks_path" == ".githooks" || "$hooks_path" == ".githooks/" ]]; then
         score=$((score + 3))
         details+=("hooksPath set to .githooks/ (+3)")
     else
@@ -819,27 +819,32 @@ lens_architecture_baseline() {
         return
     fi
 
-    local diff=$((current_score - last_score))
+    local current_pct=0
+    if [[ "$total_max" -gt 0 ]]; then
+        current_pct=$((current_score * 100 / total_max))
+    fi
+
+    local diff=$((current_pct - last_score))
     local abs_diff=${diff#-}
 
     if [[ "$diff" -ge 0 ]]; then
         # Stable or improving
         if [[ "$abs_diff" -le 2 ]]; then
-            record_lens "architecture_baseline" "$max_score" "$max_score" "pass" "Score stable (${last_score}→${current_score}, Δ${diff})"
+            record_lens "architecture_baseline" "$max_score" "$max_score" "pass" "Score stable (${last_score}→${current_pct}%, Δ${diff})"
         else
-            record_lens "architecture_baseline" "$max_score" "$max_score" "pass" "Score improving (${last_score}→${current_score}, Δ+${diff})"
+            record_lens "architecture_baseline" "$max_score" "$max_score" "pass" "Score improving (${last_score}→${current_pct}%, Δ+${diff})"
         fi
     elif [[ "$abs_diff" -le 5 ]]; then
         # Warning: drop 1-5 pts
         local partial_score=$((max_score * 7 / 10))
-        record_lens "architecture_baseline" "$partial_score" "$max_score" "warning" "Score dropped ${abs_diff}pt (${last_score}→${current_score})"
+        record_lens "architecture_baseline" "$partial_score" "$max_score" "warning" "Score dropped ${abs_diff}pt (${last_score}→${current_pct}%)"
     elif [[ "$abs_diff" -le 10 ]]; then
         # Warning: drop 5-10 pts
         local partial_score=$((max_score * 5 / 10))
-        record_lens "architecture_baseline" "$partial_score" "$max_score" "warning" "Score dropped ${abs_diff}pt (${last_score}→${current_score})"
+        record_lens "architecture_baseline" "$partial_score" "$max_score" "warning" "Score dropped ${abs_diff}pt (${last_score}→${current_pct}%)"
     else
         # Critical: drop >10 pts
-        record_lens "architecture_baseline" 0 "$max_score" "fail" "Score dropped ${abs_diff}pt (${last_score}→${current_score}) — regression detected"
+        record_lens "architecture_baseline" 0 "$max_score" "fail" "Score dropped ${abs_diff}pt (${last_score}→${current_pct}%) — regression detected"
     fi
 }
 
@@ -853,7 +858,9 @@ do_fix() {
     # Fix 1: Set hooksPath
     local current_hooks
     current_hooks=$(git config core.hooksPath 2>/dev/null || echo "")
-    if [[ "$current_hooks" != ".githooks" ]]; then
+    local tmp_hooks
+    tmp_hooks=$(echo "$current_hooks" | sed 's:/*$::')
+    if [[ "$tmp_hooks" != ".githooks" ]]; then
         if git config core.hooksPath .githooks 2>/dev/null; then
             log_info "  ✅ Set core.hooksPath → .githooks/"
             fixes_applied=$((fixes_applied + 1))
