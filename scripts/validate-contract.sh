@@ -2,7 +2,7 @@
 # =============================================================================
 # validate-contract.sh — Envelope Integrity & Transition Validator
 #
-# Validates a contract.json (or contract.template.json) against:
+# Validates a session/{branch}/contract.json (or contract.template.json) against:
 #   1. JSON validity
 #   2. Schema-required field presence (top-level + nested subsections)
 #   3. State machine enum validity
@@ -10,7 +10,7 @@
 #
 # Usage:
 #   ./scripts/validate-contract.sh [--file path] [--rules path] [--prev-state STATE]
-#   ./scripts/validate-contract.sh            # auto-detect contract.json → template
+#   ./scripts/validate-contract.sh            # auto-detect session/{branch}/contract.json → template
 #   ./scripts/validate-contract.sh --verbose  # detailed field-level reporting
 #   ./scripts/validate-contract.sh --score    # output numeric score for CI
 #
@@ -67,7 +67,13 @@ log_verbose() { [[ "$VERBOSE" == true ]] && echo "  $1"; }
 
 # --- Auto-detect contract file ---------------------------------------------
 detect_contract_file() {
-    local candidates=(
+    local candidates=()
+    local br
+    br=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+    if [[ -n "$br" && "$br" != "HEAD" ]]; then
+        candidates+=("$PROJECT_DIR/session/$br/contract.json")
+    fi
+    candidates+=(
         "$PROJECT_DIR/contract/contract.json"
         "$PROJECT_DIR/contract/contract.template.json"
     )

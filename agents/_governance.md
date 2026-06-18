@@ -124,7 +124,7 @@ After completing work, run these steps **in order**:
 | 1 | Impact verification | `gitnexus_impact({target, direction: "upstream"})` — confirm blast radius matches expectations. If HIGH/CRITICAL, note in output. |
 | 2 | Change detection | `gitnexus_detect_changes()` (or `{scope: "all"}` for staged+unstaged) — verify only expected files changed, no unintended side effects. |
 | 3 | Knowledge persistence | `lean-ctx ctx_knowledge remember` — persist gotchas, patterns, decisions (categories: `architecture`, `gotchas`, `conventions`). |
-| 4 | STATE.md update | `lean-ctx ctx_edit` on `contract/state.md` — append completed work, update Current Focus, update Known Blockers. |
+| 4 | STATE.md update | `lean-ctx ctx_edit` on `session/{branch}/state.md` — append completed work, update Current Focus, update Known Blockers. |
 | 5 | Session save (complete) | Run **Save Session Protocol** — persist envelope → update state.md → archive snapshot → save conversation → re-index gitnexus → re-index graphify |
 
 **Exceptions:** Documentation-only changes may skip steps 1, 2, and 4. Config-only changes skip 1, 2.
@@ -137,7 +137,7 @@ When the user says "save session" or a phase completes, save to **ALL** systems:
 # 1. Persist orchestration envelope to lean-ctx knowledge
 lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
 
-# 2. Update contract/state.md — append completed work items
+# 2. Update session/{branch}/state.md — append completed work items
 
 # 3. Archive snapshot to session/ (contract files + state log + index)
 bash scripts/snapshot-contract.sh --snapshot-only

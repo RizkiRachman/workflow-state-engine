@@ -30,7 +30,7 @@ Single source of truth for all AI agents. Reference skills and usage guides for 
 
 | Concept | Description |
 |---------|-------------|
-| **Shared JSON Envelope** | `contract/contract.json` — single source of truth for state, decisions, outputs, scoring |
+| **Shared JSON Envelope** | `session/{branch}/contract.json` — single source of truth for state, decisions, outputs, scoring |
 | **State Machine** | 8 states + BLOCKED: agents transition through the workflow via the envelope |
 | **Scoring Pipeline** | Three-tier scoring after every delegation (rule checks → LLM-as-judge → combined verdict) |
 | **Agent Delegation** | Orchestrator delegates to specialized agents (system-analyst, developer, quality-analyst) |
@@ -90,7 +90,7 @@ This project keeps its toolkit at the project root for direct access. No nested 
    ├── agents/ ──symlink──► agents/         11 agent .md files
    ├── skills/ ──symlink──► skills/         36 skill directories
    ├── rules/  ──symlink──► rules/          rules.json (state machine)
-   ├── orchestration/ ──symlink──► contract/   contract.json, superpowers-contract.json, state.md
+   ├── orchestration/ ──symlink──► contract/   contract.template.json, contract.schema.json, state.template.md, superpowers-contract.json
    ├── planning/ ──symlink──► doc/planning/    Planning docs
    ├── reports/ ──symlink──► doc/reports/   Analysis reports
    ├── usage/   ──symlink──► usage/         15 tool usage guides
@@ -110,7 +110,7 @@ You reference `.opencode/` paths — OpenCode resolves symlinks to root-level so
 ├── doc/               ← Planning docs, workflow.md, gap analyses
 ├── rules/             ← rules.json (state machine, scoring)
 ├── skills/            ← 36 skill directories (java-developer, gitnexus/, spec-driven-dev, etc.)
-├── contract/          ← contract.json, superpowers-contract.json, state.md
+├── contract/          ← contract.template.json, contract.schema.json, state.template.md, superpowers-contract.json
 ├── usage/             ← 15 tool usage guides (one per tool group)
 └── setup.sh           ← Bootstrap: creates all .opencode/ → root-level symlinks
 ```
@@ -284,7 +284,7 @@ Use **Doubt-Driven Development (DDD)** when uncertain: spawn a fresh-context adv
 
 | # | Step | Tool |
 |---|------|------|
-| **0** | Validate contract | `bash scripts/validate-contract.sh --file contract/contract.json --score` |
+| **0** | Validate contract | `bash scripts/validate-contract.sh --file session/{branch}/contract.json --score` |
 | 1 | Impact verify | `gitnexus_impact` |
 | 2 | Change detect | `gitnexus_detect_changes` |
 | 3 | Knowledge persist | `lean-ctx ctx_knowledge remember` |
@@ -292,9 +292,9 @@ Use **Doubt-Driven Development (DDD)** when uncertain: spawn a fresh-context adv
 | 5 | STATE.md | `ctx_edit` |
 | 6 | Session save (complete) | See **Save Session Protocol** below
 
-**Pre-flight**: `bash scripts/validate-contract.sh --file contract/contract.json --score` (score < 70 = BLOCKED)
+**Pre-flight**: `bash scripts/validate-contract.sh --file session/{branch}/contract.json --score` (score < 70 = BLOCKED)
 **Parallel conflict check**: `bash scripts/detect-parallel-conflicts.sh --file1 /tmp/a.txt --file2 /tmp/b.txt`
-**Atomic persist**: `bash scripts/persist-contract.sh --file contract/contract.json --inject-score 85` |
+**Atomic persist**: `bash scripts/persist-contract.sh --file session/{branch}/contract.json --inject-score 85` |
 
 Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
@@ -306,7 +306,7 @@ When the user says "save session" or a phase completes, save to **ALL** systems:
 # 1. Persist orchestration envelope to lean-ctx knowledge
 lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
 
-# 2. Update contract/state.md — append completed work items
+# 2. Update session/{branch}/state.md — append completed work items
 
 # 3. Archive snapshot to session/ (contract files + state log + index)
 bash scripts/snapshot-contract.sh --snapshot-only
@@ -346,7 +346,7 @@ session/
 | Event | Action |
 |-------|--------|
 | **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from snapshot; if no, init fresh from `contract/` templates |
-| **State transition** | Update `contract/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
+| **State transition** | Update `session/{branch}/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
 | **Session end** (COMPLETE/BLOCKED) | Final snapshot → append summary to `session/state.md` → update `session/index.md` |
 | **Branch switch** | Snapshot current → checkout new → load `session/NEW/` if exists |
 

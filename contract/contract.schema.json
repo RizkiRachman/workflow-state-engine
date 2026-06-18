@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "contract/contract.schema.json",
   "title": "Workflow State Engine — Contract Schema",
-  "description": "Validates the shared orchestration envelope (contract/contract.json). This Draft 2020-12 schema enforces the state machine transitions, scoring pipeline, governance, and audit trail for AI agent workflow orchestration.",
+  "description": "Validates the shared orchestration envelope (session/{branch}/contract.json). This Draft 2020-12 schema enforces the state machine transitions, scoring pipeline, governance, and audit trail for AI agent workflow orchestration.",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -27,7 +27,17 @@
     "state": {
       "description": "Current state machine state. Transitions: INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE. Any → BLOCKED on escalation.",
       "type": "string",
-      "enum": ["INIT", "PLAN", "PLAN_SCORED", "EXECUTE", "EXECUTE_SCORED", "REVIEW", "REVIEW_SCORED", "COMPLETE", "BLOCKED"]
+      "enum": [
+        "INIT",
+        "PLAN",
+        "PLAN_SCORED",
+        "EXECUTE",
+        "EXECUTE_SCORED",
+        "REVIEW",
+        "REVIEW_SCORED",
+        "COMPLETE",
+        "BLOCKED"
+      ]
     },
     "contract_version": {
       "description": "Semantic version of the contract schema structure.",
@@ -42,7 +52,12 @@
     "session": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["task_id", "branch", "created_at", "archived_at"],
+      "required": [
+        "task_id",
+        "branch",
+        "created_at",
+        "archived_at"
+      ],
       "properties": {
         "task_id": {
           "description": "Unique identifier for this task session (e.g. 'developer-fixer-standalone-20260617').",
@@ -59,7 +74,10 @@
         },
         "archived_at": {
           "description": "ISO 8601 timestamp when this session was archived (null if active).",
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date-time"
         }
       }
@@ -67,17 +85,27 @@
     "scope": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["included", "excluded", "boundary", "parallel_eligible", "max_parallel_agents"],
+      "required": [
+        "included",
+        "excluded",
+        "boundary",
+        "parallel_eligible",
+        "max_parallel_agents"
+      ],
       "properties": {
         "included": {
           "description": "File paths, directories, or patterns that are in scope for this task.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "excluded": {
           "description": "File paths, directories, or patterns explicitly excluded from scope.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "boundary": {
           "description": "Root boundary for scope evaluation (e.g. 'project-root').",
@@ -98,7 +126,11 @@
     "requirements": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["goal", "acceptance_criteria", "constraints"],
+      "required": [
+        "goal",
+        "acceptance_criteria",
+        "constraints"
+      ],
       "properties": {
         "goal": {
           "description": "High-level goal statement for this session/task.",
@@ -107,45 +139,71 @@
         "acceptance_criteria": {
           "description": "List of specific, testable acceptance criteria.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "constraints": {
           "description": "List of constraints (technical, time, resource, etc.).",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
     "decisions": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["approved_architecture", "coding_standard", "rejected_approaches", "adr_log"],
+      "required": [
+        "approved_architecture",
+        "coding_standard",
+        "rejected_approaches",
+        "adr_log"
+      ],
       "properties": {
         "approved_architecture": {
           "description": "Approved architectural approach, or null if not yet decided.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "coding_standard": {
           "description": "Coding conventions and standards to follow.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "rejected_approaches": {
           "description": "Approaches considered and rejected, with rationale.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "adr_log": {
           "description": "Architecture Decision Record entries.",
           "type": "array",
-          "items": { "$ref": "#/$defs/adr_entry" }
+          "items": {
+            "$ref": "#/$defs/adr_entry"
+          }
         }
       }
     },
     "governance": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["active_agent", "mode", "applicable_skills", "rules_references", "current_guidance", "permissions", "previous_blockers"],
+      "required": [
+        "active_agent",
+        "mode",
+        "applicable_skills",
+        "rules_references",
+        "current_guidance",
+        "permissions",
+        "previous_blockers"
+      ],
       "properties": {
         "active_agent": {
           "description": "The currently active agent role (e.g. 'developer', 'quality-analyst').",
@@ -154,12 +212,18 @@
         "mode": {
           "description": "Operating mode of the active agent.",
           "type": "string",
-          "enum": ["task-execution", "spec", "review"]
+          "enum": [
+            "task-execution",
+            "spec",
+            "review"
+          ]
         },
         "applicable_skills": {
           "description": "Names of applicable skills to be loaded for this task.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "rules_references": {
           "description": "References to rule files/sections governing this session.",
@@ -167,12 +231,19 @@
           "items": {
             "type": "object",
             "additionalProperties": true,
-            "required": ["source", "sections"],
+            "required": [
+              "source",
+              "sections"
+            ],
             "properties": {
-              "source": { "type": "string" },
+              "source": {
+                "type": "string"
+              },
               "sections": {
                 "type": "array",
-                "items": { "type": "string" }
+                "items": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -184,32 +255,47 @@
         "permissions": {
           "type": "object",
           "additionalProperties": true,
-          "required": ["do", "dont", "allowed_execution"],
+          "required": [
+            "do",
+            "dont",
+            "allowed_execution"
+          ],
           "properties": {
             "do": {
               "description": "Actions that are explicitly permitted for the active agent.",
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             },
             "dont": {
               "description": "Actions that are explicitly forbidden for the active agent.",
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             },
             "allowed_execution": {
               "type": "object",
               "additionalProperties": true,
-              "required": ["tools", "denied"],
+              "required": [
+                "tools",
+                "denied"
+              ],
               "properties": {
                 "tools": {
                   "description": "Allowed execution tools (e.g. 'lean-ctx_*', 'ctx_shell').",
                   "type": "array",
-                  "items": { "type": "string" }
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "denied": {
                   "description": "Explicitly denied execution tools (e.g. 'bash', 'snip').",
                   "type": "array",
-                  "items": { "type": "string" }
+                  "items": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -218,19 +304,28 @@
         "previous_blockers": {
           "description": "Previously encountered blockers that were resolved.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
     "validation": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["block_on", "rule_overrides"],
+      "required": [
+        "block_on",
+        "rule_overrides"
+      ],
       "properties": {
         "block_on": {
           "type": "object",
           "additionalProperties": true,
-          "required": ["max_test_failures", "max_score_drop", "max_compile_errors"],
+          "required": [
+            "max_test_failures",
+            "max_score_drop",
+            "max_compile_errors"
+          ],
           "properties": {
             "max_test_failures": {
               "description": "Maximum allowed test failures before blocking (0-10).",
@@ -262,24 +357,42 @@
     "outputs": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["plan", "architecture", "code_changes", "test_results", "agent_reports", "score_summary"],
+      "required": [
+        "plan",
+        "architecture",
+        "code_changes",
+        "test_results",
+        "agent_reports",
+        "score_summary"
+      ],
       "properties": {
         "plan": {
           "description": "Implementation plan produced by system-analyst or planner, or null if not yet produced.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "architecture": {
           "description": "Architecture documentation output, or null if not yet produced.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "code_changes": {
           "description": "List of code changes made during this session.",
           "type": "array",
-          "items": { "$ref": "#/$defs/code_change" }
+          "items": {
+            "$ref": "#/$defs/code_change"
+          }
         },
         "test_results": {
           "description": "Aggregate test results, or null if not yet run.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "agent_reports": {
           "description": "Reports produced by agents during execution.",
@@ -288,14 +401,21 @@
             "type": "object",
             "additionalProperties": true,
             "properties": {
-              "agent": { "type": "string" },
-              "report": { "type": "string" }
+              "agent": {
+                "type": "string"
+              },
+              "report": {
+                "type": "string"
+              }
             }
           }
         },
         "score_summary": {
           "description": "Summary of scoring results, or null if not yet scored.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
@@ -303,12 +423,22 @@
       "description": "Three-tier scoring pipeline: rule checks → LLM-as-judge → combined verdict.",
       "type": "object",
       "additionalProperties": true,
-      "required": ["rules", "judge", "combined", "verdict"],
+      "required": [
+        "rules",
+        "judge",
+        "combined",
+        "verdict"
+      ],
       "properties": {
         "rules": {
           "type": "object",
           "additionalProperties": true,
-          "required": ["pass", "fail", "deduction", "subtotal"],
+          "required": [
+            "pass",
+            "fail",
+            "deduction",
+            "subtotal"
+          ],
           "properties": {
             "pass": {
               "description": "Number of passing rule-based checks.",
@@ -337,7 +467,11 @@
           "description": "LLM-as-judge evaluation (tier 2).",
           "type": "object",
           "additionalProperties": true,
-          "required": ["score", "rationale", "missing_items"],
+          "required": [
+            "score",
+            "rationale",
+            "missing_items"
+          ],
           "properties": {
             "score": {
               "description": "Judge score from 0-100.",
@@ -352,7 +486,9 @@
             "missing_items": {
               "description": "Items identified as missing or inadequate by the judge.",
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -365,18 +501,35 @@
         "verdict": {
           "description": "Combined verdict. INIT for unscored, PASS (≥70), RETRY (50-69), BLOCKED (<50 or max retries).",
           "type": "string",
-          "enum": ["INIT", "PASS", "RETRY", "BLOCKED"]
+          "enum": [
+            "INIT",
+            "PASS",
+            "RETRY",
+            "BLOCKED"
+          ]
         }
       }
     },
     "retry": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["current_phase", "attempt", "max_attempts", "score_threshold", "escalation_threshold", "issues", "phase_issues", "escalation_trace"],
+      "required": [
+        "current_phase",
+        "attempt",
+        "max_attempts",
+        "score_threshold",
+        "escalation_threshold",
+        "issues",
+        "phase_issues",
+        "escalation_trace"
+      ],
       "properties": {
         "current_phase": {
           "description": "Current retry phase name, or null if no retry in progress.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "attempt": {
           "description": "Current attempt number (0 = first attempt).",
@@ -404,24 +557,36 @@
         "issues": {
           "description": "Issues encountered (legacy field, overlaps with phase_issues).",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "phase_issues": {
           "description": "Issues encountered during the current phase.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "escalation_trace": {
           "description": "Trace of escalation decisions made during retries.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
     "metrics": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["cost_tokens", "elapsed_ms", "agents_used", "phases_completed", "phase_durations"],
+      "required": [
+        "cost_tokens",
+        "elapsed_ms",
+        "agents_used",
+        "phases_completed",
+        "phase_durations"
+      ],
       "properties": {
         "cost_tokens": {
           "description": "Total token cost incurred during this session.",
@@ -436,12 +601,16 @@
         "agents_used": {
           "description": "Names of agents that were used in this session.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "phases_completed": {
           "description": "Phases/states that have been completed.",
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "phase_durations": {
           "description": "Duration per phase in milliseconds, keyed by phase name.",
@@ -457,7 +626,15 @@
       "description": "Token budget enforcement settings for this session.",
       "type": "object",
       "additionalProperties": true,
-      "required": ["max_per_session", "warning_threshold", "hard_limit", "max_per_phase", "max_per_subagent_call", "current_session_usage", "phase_usage"],
+      "required": [
+        "max_per_session",
+        "warning_threshold",
+        "hard_limit",
+        "max_per_phase",
+        "max_per_subagent_call",
+        "current_session_usage",
+        "phase_usage"
+      ],
       "properties": {
         "max_per_session": {
           "description": "Maximum tokens allowed per session.",
@@ -507,12 +684,16 @@
     "lessons_learned": {
       "description": "Cross-session lessons, gotchas, and patterns discovered during execution.",
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "string"
+      }
     },
     "audit_log": {
       "description": "Append-only log of state machine transitions and scoring snapshots.",
       "type": "array",
-      "items": { "$ref": "#/$defs/audit_entry" }
+      "items": {
+        "$ref": "#/$defs/audit_entry"
+      }
     }
   },
   "$defs": {
@@ -525,10 +706,7 @@
           "description": "ADR identifier (e.g. 'ADR-001').",
           "type": "string"
         },
-        "title": {
-          "description": "Short title of the decision.",
-          "type": "string"
-        },
+        "title": "Short title of the decision.",
         "status": {
           "description": "Decision status (proposed, accepted, deprecated, superseded).",
           "type": "string"
@@ -564,7 +742,11 @@
         "action": {
           "description": "Type of change.",
           "type": "string",
-          "enum": ["created", "modified", "deleted"]
+          "enum": [
+            "created",
+            "modified",
+            "deleted"
+          ]
         },
         "lines_added": {
           "description": "Number of lines added.",
@@ -586,7 +768,13 @@
       "description": "A single state machine transition audit entry.",
       "type": "object",
       "additionalProperties": true,
-      "required": ["timestamp", "prev_state", "new_state", "triggered_by", "transition_reason"],
+      "required": [
+        "timestamp",
+        "prev_state",
+        "new_state",
+        "triggered_by",
+        "transition_reason"
+      ],
       "properties": {
         "timestamp": {
           "description": "ISO 8601 timestamp of the transition.",
@@ -612,8 +800,12 @@
         "scoring_snapshot": {
           "description": "Snapshot of the score object at the time of transition (nullable).",
           "oneOf": [
-            { "type": "null" },
-            { "$ref": "#/$defs/scoring_snapshot" }
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/scoring_snapshot"
+            }
           ]
         }
       }
@@ -644,7 +836,12 @@
         "verdict": {
           "description": "Verdict at snapshot time.",
           "type": "string",
-          "enum": ["INIT", "PASS", "RETRY", "BLOCKED"]
+          "enum": [
+            "INIT",
+            "PASS",
+            "RETRY",
+            "BLOCKED"
+          ]
         }
       }
     }

@@ -9,7 +9,7 @@
 #   ./scripts/persist-contract.sh --file path [--score] [--validate] [--verbose]
 #
 # Options:
-#   --file PATH    Target file (default: $PROJECT_DIR/contract/contract.json)
+#   --file PATH    Target file (default: $PROJECT_DIR/session/$br/contract.json, branch-derived)
 #   --score N      Score value to inject before writing (optional)
 #   --validate     Run validate-contract.sh on the file after write
 #   --verbose      Verbose output
@@ -24,7 +24,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-CONTRACT_FILE="$PROJECT_DIR/contract/contract.json"
+# Dynamic branch-based default: live state is at session/{branch}/contract.json
+br=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+if [[ "$br" == "HEAD" ]]; then br="main"; fi
+CONTRACT_FILE="$PROJECT_DIR/session/$br/contract.json"
 SCORE=""
 RUN_VALIDATE=false
 VERBOSE=false
@@ -42,7 +45,7 @@ Usage: $(basename "$0") [OPTIONS]
 Atomically persist a contract envelope using temp-file + rename.
 
 Options:
-  --file PATH    Target file (default: $PROJECT_DIR/contract/contract.json)
+  --file PATH    Target file (default: $PROJECT_DIR/session/$br/contract.json)
   --score N      Score value to inject before writing
   --validate     Run validate-contract.sh on the file after write
   --verbose      Verbose output

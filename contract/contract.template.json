@@ -7,7 +7,8 @@
     "task_id": "",
     "br": "",
     "archived_at": null,
-    "created_at": ""
+    "created_at": "",
+    "branch": ""
   },
   "requirements": {
     "goal": "",
@@ -16,14 +17,14 @@
   },
   "decisions": {
     "approved_architecture": null,
-    "coding_standard": "",
+    "coding_standard": [],
     "rejected_approaches": [],
     "adr_log": [],
     "ddd_performed": false
   },
   "governance": {
     "active_agent": "",
-    "mode": "task-exec",
+    "mode": "spec",
     "rules_references": [],
     "applicable_skills": [],
     "cur_guidance": "",
@@ -34,10 +35,27 @@
         "tools": [],
         "denied": []
       },
-      "read_only_fields": ["score", "retry", "metrics", "audit_log", "governance"],
-      "writeable_fields": ["outputs", "decisions", "session", "state"]
+      "read_only_fields": [
+        "score",
+        "retry",
+        "metrics",
+        "audit_log",
+        "governance"
+      ],
+      "writeable_fields": [
+        "outputs",
+        "decisions",
+        "session",
+        "state"
+      ],
+      "allowed_execution": {
+        "denied": [],
+        "tools": []
+      }
     },
-    "prev_blockers": []
+    "prev_blockers": [],
+    "current_guidance": "",
+    "previous_blockers": []
   },
   "score": {
     "rules": {
@@ -46,9 +64,13 @@
       "deduction": 0,
       "subtotal": 0
     },
-    "judge": {},
+    "judge": {
+      "score": 0,
+      "rationale": "",
+      "missing_items": []
+    },
     "combined": 0,
-    "verdict": ""
+    "verdict": "INIT"
   },
   "retry": {
     "attempt": 0,
@@ -58,7 +80,8 @@
     "cur_phase": "",
     "issues": [],
     "phase_issues": [],
-    "escalation_trace": []
+    "escalation_trace": [],
+    "current_phase": null
   },
   "outputs": {
     "plan": null,
@@ -82,7 +105,9 @@
     "max_per_phase": {},
     "max_per_subagent_call": 50000,
     "cur_session_usage": 0,
-    "phase_usage": {}
+    "phase_usage": {},
+    "warning_threshold": 0,
+    "current_session_usage": 0
   },
   "scope": {
     "included": [],
@@ -104,5 +129,6 @@
     "build_verified": false
   },
   "lessons_learned": [],
-  "audit_log": []
+  "audit_log": [],
+  "contract_version": "0.7.0"
 }
