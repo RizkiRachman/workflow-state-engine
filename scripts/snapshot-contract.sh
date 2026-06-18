@@ -476,6 +476,14 @@ main() {
                 cp "$PROJECT_ROOT/contract/state.template.md" "$session_dir/state.md"
                 log_verbose "Copied: state.template.md → $session_dir/state.md"
             fi
+            if [[ -f "$PROJECT_ROOT/contract/contract.schema.json" ]]; then
+                cp "$PROJECT_ROOT/contract/contract.schema.json" "$session_dir/contract.schema.json"
+                log_verbose "Copied: contract.schema.json → $session_dir/contract.schema.json"
+            fi
+            if [[ -f "$PROJECT_ROOT/contract/superpowers-contract.json" ]]; then
+                cp "$PROJECT_ROOT/contract/superpowers-contract.json" "$session_dir/superpowers-contract.json"
+                log_verbose "Copied: superpowers-contract.json → $session_dir/superpowers-contract.json"
+            fi
             log_info "Initialized session state for branch $branch"
         fi
     fi

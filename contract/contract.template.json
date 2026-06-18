@@ -5,10 +5,9 @@
   "state": "INIT",
   "session": {
     "task_id": "",
-    "br": "",
+    "branch": "",
     "archived_at": null,
-    "created_at": "",
-    "branch": ""
+    "created_at": ""
   },
   "requirements": {
     "goal": "",

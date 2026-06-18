@@ -223,8 +223,8 @@ GitNexus indexes the codebase as a knowledge graph. Current index stats:
 
 | Metric | Value |
 |--------|-------|
-| Symbols indexed | 1501 |
-| Relationships | 1493 |
+| Symbols indexed | 1675 |
+| Relationships | 1666 |
 | Execution flows (processes) | 0 |
 
 > **0 execution flows**: GitNexus auto-detects execution flows when entry points are annotated. Currently no flows are registered. All orchestration paths (INIT→PLAN→PLAN_SCORED→EXECUTE→EXECUTE_SCORED→REVIEW→REVIEW_SCORED→COMPLETE) are identified in this document but not yet mapped as GitNexus processes.
@@ -310,10 +310,10 @@ The envelope (`session/{branch}/contract.json`) has a canonical JSON Schema at `
 
 ### Validation
 
-The script `scripts/check-conventions.sh` validates the envelope against this schema:
+The script `scripts/validate-contract.sh` validates the envelope against this schema:
 
 ```bash
-scripts/check-conventions.sh validate-contract
+bash scripts/validate-contract.sh --file session/{branch}/contract.json --score
 ```
 
 This check runs automatically in CI. A schema validation failure causes a Tier 1 scoring deduction of 15 points.

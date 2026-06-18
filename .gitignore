@@ -22,6 +22,8 @@ Thumbs.db
 
 # Environment (secrets — never commit)
 .env
+# Workspace export files — often contain API keys (never commit)
+*Workspace*
 
 # General
 *.log
