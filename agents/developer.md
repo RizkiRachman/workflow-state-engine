@@ -282,3 +282,44 @@ The orchestrator will score on:
 - **Edge cases (0-10)**: Tested nulls, errors, boundaries?
 
 Score ≥70 required. Below 50 → BLOCKED.
+
+## 🚀 Post-Flight Protocol (MANDATORY)
+
+After completing work, run these steps **in order** before notifying the orchestrator:
+
+| # | Step | Tool |
+|---|------|------|
+| 0 | Validate contract | `bash scripts/validate-contract.sh --file session/{branch}/contract.json --rules rules/rules.json --score` |
+| 1 | Impact verify | `gitnexus_impact({target: "symbol", direction: "upstream"})` — confirm blast radius |
+| 2 | Change detect | `gitnexus_detect_changes()` — verify changes only affect expected symbols |
+| 3 | Knowledge persist | `lean-ctx ctx_knowledge remember` with key findings |
+| 4 | Graphify sync | `lean-ctx ctx_shell bash scripts/gitnexus-analyze.sh` |
+| 5 | STATE.md | Update session/state.md Current Focus and Completed |
+| 6 | Session save | Run **Save Session Protocol**: persist envelope → update state.md → archive snapshot → save conversation → re-index gitnexus → re-index graphify |
+
+**Exceptions:** Documentation-only changes may skip steps 0, 2, 4. Config-only changes skip 1, 2.
+
+### Save Session Protocol
+
+When the orchestrator says "save session" or a phase completes, run all 6 steps:
+
+```bash
+# 1. Persist orchestration envelope to lean-ctx knowledge
+lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
+
+# 2. Update session/{branch}/state.md — append completed work items
+
+# 3. Archive snapshot to session/ (contract files + state log + index)
+bash scripts/snapshot-contract.sh --snapshot-only
+
+# 4. Save conversation context (survives OpenCode restart)
+lean-ctx ctx_session save
+
+# 5. Re-index GitNexus code intelligence
+bash scripts/gitnexus-analyze.sh
+
+# 6. Re-index Graphify knowledge graph (if graphify-out/ exists)
+graphify --update 2>/dev/null || true
+```
+
+**One-shot alias**: `save session` = all 6 steps above.

@@ -151,6 +151,8 @@ Tier 3 — Combined Verdict
 | Compile errors | > 1 | BLOCKED |
 | Code-reviewer verdict | BLOCK | BLOCKED |
 
+> These threshold values are configured in `rules/rules.json` under `scoring.validation_gates`. If you need to adjust thresholds, modify `rules/rules.json` — this document reflects the current defaults.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## DDD Gate (Doubt-Driven Development)

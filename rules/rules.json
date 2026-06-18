@@ -157,14 +157,7 @@
       "action": "BLOCK",
       "message": "⛔ SHELL VIOLATION: Use lean-ctx ctx_shell for shell commands. bash is denied in opencode.json — triggers permission prompts and blocks automation."
     },
-    {
-      "id": "SHELL_002",
-      "severity": "CRITICAL",
-      "description": "Agent MUST use lean-ctx ctx_shell for all shell commands. Native bash/snip triggers permission prompts and blocks automation.",
-      "condition": "agent_used_bash_instead_of_ctx_shell",
-      "action": "BLOCK",
-      "message": "⛔ SHELL VIOLATION: Native bash/snip detected. Use lean-ctx ctx_shell instead — it compresses output and avoids permission prompts."
-    },
+
     {
       "id": "LEARN_001",
       "severity": "HIGH",
