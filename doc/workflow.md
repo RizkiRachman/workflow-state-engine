@@ -118,10 +118,12 @@ The envelope is stored in lean-ctx knowledge as `orchestration-contract`.
 ```
 Tier 1 — Rule-Based Checks (tool calls, no LLM)
   Start at 100. Deduct:
-  - Schema valid?        -15
-  - Permissions violated? -40
-  - Blast radius safe?    -40 if HIGH/CRITICAL
-  - Required fields?      -15
+  - Schema valid?          -15
+  - Permissions violated?  -40
+  - Blast radius safe?     -40 if HIGH/CRITICAL
+  - Writing order correct? -15 if wrong
+  - Over-engineering?      -15 if YAGNI violated
+  - Required fields?       -15
 
   If subtotal < 70 → skip Tier 2, use subtotal as combined
 
