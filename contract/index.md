@@ -1,3 +1,62 @@
+# Contract — Workflow State Engine
+
+## Overview
+
+The `contract/` directory is the single source of truth for the Workflow State Engine's orchestration protocol. It is divided into **definition files** (committed schemas and templates that define the contract structure) and **runtime state files** (gitignored, mutated every session). `index.md` is the ONE committed definition file — it embeds all schemas, templates, and rules that govern the orchestration envelope.
+
+## Folder Contract
+
+- `index.md` — **COMMITTED**. Single definition file. Rules, schemas, templates. This file.
+- `contract.json` — **GITIGNORED**. Runtime state envelope. Mutates every session.
+- `state.md` — **GITIGNORED**. Runtime state log. Mutates every session.
+- *(No separate schema files — all definitions embedded inline above)*
+
+## State Machine
+
+```
+INIT -> PLAN -> PLAN_SCORED -> EXECUTE -> EXECUTE_SCORED -> REVIEW -> REVIEW_SCORED -> COMPLETE
+
+Any -> BLOCKED (score < 50 or retry >= 3)
+```
+
+### Transitions
+
+| Transition | Gate | Condition |
+|---|---|---|
+| INIT → PLAN | Session created | Always |
+| PLAN → PLAN_SCORED | Plan produced | Always |
+| PLAN_SCORED → EXECUTE | Spec gate | Score ≥ 70 |
+| EXECUTE → EXECUTE_SCORED | Implementation done | Always |
+| EXECUTE_SCORED → REVIEW | Code review | Score ≥ 70 |
+| REVIEW → REVIEW_SCORED | Review done | Always |
+| REVIEW_SCORED → COMPLETE | All gates pass | Score ≥ 70 |
+| Any → BLOCKED | Escalation | Score < 50 or retry ≥ 3 |
+
+## Scoring Pipeline (Three-Tier)
+
+### Tier 1 — Rule-Based Checks
+- Schema validation failed (-15)
+- Permissions violated (-40)
+- Blast radius HIGH (-40)
+- Writing order wrong (-15)
+- Required fields missing (-15)
+- Subtotal ≥ 70 → proceed to Tier 2
+
+### Tier 2 — LLM-as-Judge
+Scores 0-100 on:
+- Requirements fulfillment (0-40)
+- Governance compliance (0-30)
+- Completeness (0-20)
+- Edge cases (0-10)
+
+### Tier 3 — Combined Verdict
+- **PASS** (≥ 70): Transition to next state
+- **RETRY** (50-69, max 3 attempts): Retry with guidance
+- **BLOCKED** (< 50): Human intervention required
+
+## Contract Schema
+
+```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "contract/contract.schema.json",
@@ -41,7 +100,6 @@
     },
     "session": {
       "type": "object",
-      "additionalProperties": true,
       "required": ["task_id", "branch", "created_at", "archived_at"],
       "properties": {
         "task_id": {
@@ -54,19 +112,16 @@
         },
         "created_at": {
           "description": "ISO 8601 timestamp when this session was created.",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "archived_at": {
           "description": "ISO 8601 timestamp when this session was archived (null if active).",
-          "type": ["string", "null"],
-          "format": "date-time"
+          "type": ["string", "null"]
         }
       }
     },
     "scope": {
       "type": "object",
-      "additionalProperties": true,
       "required": ["included", "excluded", "boundary", "parallel_eligible", "max_parallel_agents"],
       "properties": {
         "included": {
@@ -97,7 +152,6 @@
     },
     "requirements": {
       "type": "object",
-      "additionalProperties": true,
       "required": ["goal", "acceptance_criteria", "constraints"],
       "properties": {
         "goal": {
@@ -118,7 +172,6 @@
     },
     "decisions": {
       "type": "object",
-      "additionalProperties": true,
       "required": ["approved_architecture", "coding_standard", "rejected_approaches", "adr_log"],
       "properties": {
         "approved_architecture": {
@@ -127,8 +180,7 @@
         },
         "coding_standard": {
           "description": "Coding conventions and standards to follow.",
-          "type": "array",
-          "items": { "type": "string" }
+          "type": ["string", "null"]
         },
         "rejected_approaches": {
           "description": "Approaches considered and rejected, with rationale.",
@@ -144,8 +196,7 @@
     },
     "governance": {
       "type": "object",
-      "additionalProperties": true,
-      "required": ["active_agent", "mode", "applicable_skills", "rules_references", "current_guidance", "permissions", "previous_blockers"],
+      "required": ["active_agent", "mode", "applicable_skills", "rules_references", "current_guidance", "permissions", "prev_blockers"],
       "properties": {
         "active_agent": {
           "description": "The currently active agent role (e.g. 'developer', 'quality-analyst').",
@@ -154,7 +205,7 @@
         "mode": {
           "description": "Operating mode of the active agent.",
           "type": "string",
-          "enum": ["task-execution", "spec", "review"]
+          "enum": ["task-exec", "spec", "review"]
         },
         "applicable_skills": {
           "description": "Names of applicable skills to be loaded for this task.",
@@ -166,7 +217,6 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true,
             "required": ["source", "sections"],
             "properties": {
               "source": { "type": "string" },
@@ -179,12 +229,8 @@
         },
         "current_guidance": {
           "description": "Current execution guidance or directive from the orchestrator.",
-          "type": "string"
-        },
-        "permissions": {
           "type": "object",
-          "additionalProperties": true,
-          "required": ["do", "dont", "allowed_execution"],
+          "required": ["do", "dont", "allowed_exec"],
           "properties": {
             "do": {
               "description": "Actions that are explicitly permitted for the active agent.",
@@ -196,9 +242,8 @@
               "type": "array",
               "items": { "type": "string" }
             },
-            "allowed_execution": {
+            "allowed_exec": {
               "type": "object",
-              "additionalProperties": true,
               "required": ["tools", "denied"],
               "properties": {
                 "tools": {
@@ -215,7 +260,14 @@
             }
           }
         },
-        "previous_blockers": {
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "read": { "type": "array", "items": { "type": "string" } },
+            "write": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "prev_blockers": {
           "description": "Previously encountered blockers that were resolved.",
           "type": "array",
           "items": { "type": "string" }
@@ -224,12 +276,10 @@
     },
     "validation": {
       "type": "object",
-      "additionalProperties": true,
       "required": ["block_on", "rule_overrides"],
       "properties": {
         "block_on": {
           "type": "object",
-          "additionalProperties": true,
           "required": ["max_test_failures", "max_score_drop", "max_compile_errors"],
           "properties": {
             "max_test_failures": {
@@ -254,14 +304,12 @@
         },
         "rule_overrides": {
           "description": "Overrides for specific validation rules. Free-form object.",
-          "type": "object",
-          "additionalProperties": true
+          "type": "object"
         }
       }
     },
     "outputs": {
       "type": "object",
-      "additionalProperties": true,
       "required": ["plan", "architecture", "code_changes", "test_results", "agent_reports", "score_summary"],
       "properties": {
         "plan": {
@@ -286,7 +334,6 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": true,
             "properties": {
               "agent": { "type": "string" },
               "report": { "type": "string" }
@@ -302,13 +349,12 @@
     "score": {
       "description": "Three-tier scoring pipeline: rule checks → LLM-as-judge → combined verdict.",
       "type": "object",
-      "additionalProperties": true,
       "required": ["rules", "judge", "combined", "verdict"],
       "properties": {
         "rules": {
+          "description": "Rule-based scoring results (tier 1).",
           "type": "object",
-          "additionalProperties": true,
-          "required": ["pass", "fail", "deduction", "subtotal"],
+          "required": ["pass", "fail", "deductions", "subtotal"],
           "properties": {
             "pass": {
               "description": "Number of passing rule-based checks.",
@@ -320,7 +366,7 @@
               "type": "integer",
               "minimum": 0
             },
-            "deduction": {
+            "deductions": {
               "description": "Total deduction from failed checks.",
               "type": "integer",
               "minimum": 0
@@ -336,7 +382,6 @@
         "judge": {
           "description": "LLM-as-judge evaluation (tier 2).",
           "type": "object",
-          "additionalProperties": true,
           "required": ["score", "rationale", "missing_items"],
           "properties": {
             "score": {
@@ -371,7 +416,6 @@
     },
     "retry": {
       "type": "object",
-      "additionalProperties": true,
       "required": ["current_phase", "attempt", "max_attempts", "score_threshold", "escalation_threshold", "issues", "phase_issues", "escalation_trace"],
       "properties": {
         "current_phase": {
@@ -420,7 +464,6 @@
     },
     "metrics": {
       "type": "object",
-      "additionalProperties": true,
       "required": ["cost_tokens", "elapsed_ms", "agents_used", "phases_completed", "phase_durations"],
       "properties": {
         "cost_tokens": {
@@ -446,17 +489,13 @@
         "phase_durations": {
           "description": "Duration per phase in milliseconds, keyed by phase name.",
           "type": "object",
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
+          "additionalProperties": { "type": "integer", "minimum": 0 }
         }
       }
     },
     "token_budget": {
       "description": "Token budget enforcement settings for this session.",
       "type": "object",
-      "additionalProperties": true,
       "required": ["max_per_session", "warning_threshold", "hard_limit", "max_per_phase", "max_per_subagent_call", "current_session_usage", "phase_usage"],
       "properties": {
         "max_per_session": {
@@ -479,10 +518,7 @@
         "max_per_phase": {
           "description": "Per-phase token budgets, keyed by phase name.",
           "type": "object",
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
+          "additionalProperties": { "type": "integer", "minimum": 0 }
         },
         "max_per_subagent_call": {
           "description": "Maximum tokens per subagent delegation.",
@@ -497,17 +533,22 @@
         "phase_usage": {
           "description": "Current per-phase token usage, keyed by phase name.",
           "type": "object",
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
+          "additionalProperties": { "type": "integer", "minimum": 0 }
         }
       }
     },
     "lessons_learned": {
       "description": "Cross-session lessons, gotchas, and patterns discovered during execution.",
       "type": "array",
-      "items": { "type": "string" }
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string" },
+          "key": { "type": "string" },
+          "value": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "warning", "info"] }
+        }
+      }
     },
     "audit_log": {
       "description": "Append-only log of state machine transitions and scoring snapshots.",
@@ -519,7 +560,6 @@
     "adr_entry": {
       "description": "An Architecture Decision Record entry.",
       "type": "object",
-      "additionalProperties": true,
       "properties": {
         "id": {
           "description": "ADR identifier (e.g. 'ADR-001').",
@@ -547,15 +587,13 @@
         },
         "date": {
           "description": "ISO 8601 date of the decision.",
-          "type": "string",
-          "format": "date"
+          "type": "string"
         }
       }
     },
     "code_change": {
       "description": "A single code change entry (file created, modified, or deleted).",
       "type": "object",
-      "additionalProperties": true,
       "properties": {
         "file": {
           "description": "Path of the changed file.",
@@ -585,13 +623,11 @@
     "audit_entry": {
       "description": "A single state machine transition audit entry.",
       "type": "object",
-      "additionalProperties": true,
       "required": ["timestamp", "prev_state", "new_state", "triggered_by", "transition_reason"],
       "properties": {
         "timestamp": {
           "description": "ISO 8601 timestamp of the transition.",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "prev_state": {
           "description": "Previous state before the transition.",
@@ -609,11 +645,11 @@
           "description": "Reason or justification for the transition.",
           "type": "string"
         },
-        "scoring_snapshot": {
+        "score_snapshot": {
           "description": "Snapshot of the score object at the time of transition (nullable).",
-          "oneOf": [
-            { "type": "null" },
-            { "$ref": "#/$defs/scoring_snapshot" }
+          "anyOf": [
+            { "$ref": "#/$defs/scoring_snapshot" },
+            { "type": "null" }
           ]
         }
       }
@@ -621,7 +657,6 @@
     "scoring_snapshot": {
       "description": "Snapshot of scoring state at a point in time.",
       "type": "object",
-      "additionalProperties": true,
       "properties": {
         "rules_subtotal": {
           "description": "Rule-based scoring subtotal.",
@@ -650,3 +685,243 @@
     }
   }
 }
+
+```
+
+## State Template
+
+```markdown
+# STATE — Workflow State Engine
+## Current Focus
+<!-- Current task or phase — updated each session -->
+
+## Known Blockers
+<!-- Active blockers preventing progress -->
+
+## Activity Log
+<!-- Format: [YYYY-MM-DD] **Task name**: Brief desc of what was done -->
+```
+
+## Superpowers Contract
+
+```json
+{
+  "$schema": "contract/contract.schema.json",
+  "$id": "contract/superpowers-contract.json",
+  "title": "Workflow State Engine — Superpowers Contract",
+  "description": "Registers plugin, skill, MCP server, and configuration overrides for the orchestration superpowers framework. Loaded at session start to enable extended capabilities beyond the core contract.",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "plugins",
+    "skills",
+    "mcp_servers",
+    "configuration_overrides",
+    "tool_permissions"
+  ],
+  "properties": {
+    "contract_version": {
+      "description": "Semantic version of this superpowers contract schema.",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?(\\+[a-zA-Z0-9.]+)?$"
+    },
+    "plugins": {
+      "description": "Registered plugins for the superpowers framework.",
+      "type": "object",
+      "required": ["available", "active"],
+      "properties": {
+        "available": {
+          "description": "List of all available plugins.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/plugin_entry" }
+        },
+        "active": {
+          "description": "List of currently active plugin names.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "skills": {
+      "description": "Registered skills for the superpowers framework.",
+      "type": "object",
+      "required": ["available", "active"],
+      "properties": {
+        "available": {
+          "description": "List of all available skills.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/skill_entry" }
+        },
+        "active": {
+          "description": "List of currently active skill names.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "mcp_servers": {
+      "description": "Registered MCP server configurations.",
+      "type": "object",
+      "required": ["available", "active"],
+      "properties": {
+        "available": {
+          "description": "List of all available MCP server configs.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/mcp_server_entry" }
+        },
+        "active": {
+          "description": "List of currently active MCP server names.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "configuration_overrides": {
+      "description": "Overrides for specific superpowers configuration values.",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "tool_permissions": {
+      "description": "Tool-level permission overrides for superpowers components.",
+      "type": "object",
+      "required": ["plugins", "skills", "mcp_servers"],
+      "properties": {
+        "plugins": {
+          "description": "Plugin tool permission overrides, keyed by plugin name.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "allowed_tools": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "denied_tools": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "skills": {
+          "description": "Skill tool permission overrides.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "allowed_tools": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "denied_tools": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "mcp_servers": {
+          "description": "MCP server tool permission overrides.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "allowed_tools": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "denied_tools": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "plugin_entry": {
+      "description": "A registered plugin definition.",
+      "type": "object",
+      "required": ["name", "version", "description", "enabled"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "description": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "config": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "skill_entry": {
+      "description": "A registered skill definition.",
+      "type": "object",
+      "required": ["name", "version", "description", "enabled"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "description": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "location": { "type": "string" },
+        "triggers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "mcp_server_entry": {
+      "description": "A registered MCP server configuration.",
+      "type": "object",
+      "required": ["name", "version", "command", "enabled"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "command": { "type": "string" },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "enabled": { "type": "boolean" },
+        "allowed_tools": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "denied_tools": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
+
+```
+
+## Session Lifecycle Protocol
+
+1. **Load** — Load orchestration envelope from lean-ctx knowledge
+2. **Check branch** — Never work on main/master (STOP if on main)
+3. **Create branch** — `feature/<YYYYMMDD>-<description>` if needed
+4. **Transition** — Step through states with scoring gates at each boundary
+5. **Persist** — Save envelope after every state change via `lean-ctx ctx_knowledge remember`
+6. **Snapshot** — Archive to `session/` for audit trail via `scripts/snapshot-contract.sh`
+7. **Post-flight** — Run impact analysis, detect changes, persist gotchas
+
+## Source Definitions
+
+All three embedded definitions above are defined directly in this file. No separate definition/ directory.
