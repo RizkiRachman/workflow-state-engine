@@ -213,7 +213,7 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 ├── usage/             ← 15 tool usage guides
 ├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
 ├── config/            ← Plugin configurations
-├── scripts/           ← Verification & architecture enforcement scripts (check-conventions.sh, validate-toolkit.sh, check-mcp.sh, check-plugins.sh, scan-ponytail-debt.sh, archive-sessions.sh)
+├── scripts/           ← Verification & architecture enforcement scripts (validate-contract.sh, detect-parallel-conflicts.sh, persist-contract.sh, check-conventions.sh, validate-toolkit.sh, check-mcp.sh, check-plugins.sh, scan-ponytail-debt.sh, archive-sessions.sh)
 ├── opencode.json      ← OpenCode configuration
 ├── opencode.json.template ← Redacted template with annotated MCP tiers
 └── setup.sh           ← Bootstrap: pre-flight checks + MCP/plugin verification + symlinks

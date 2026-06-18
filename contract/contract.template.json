@@ -1,9 +1,12 @@
 {
   "$schema": "../contract/contract.schema.json",
+  "version": "0.7.0",
+  "state_machine_version": "0.7.0",
   "state": "INIT",
   "session": {
     "task_id": "",
-    "branch": "",
+    "br": "",
+    "archived_at": null,
     "created_at": ""
   },
   "requirements": {
@@ -11,10 +14,30 @@
     "acceptance_criteria": [],
     "constraints": []
   },
-  "decisions": {},
+  "decisions": {
+    "approved_architecture": null,
+    "coding_standard": "",
+    "rejected_approaches": [],
+    "adr_log": [],
+    "ddd_performed": false
+  },
   "governance": {
+    "active_agent": "",
+    "mode": "task-exec",
     "rules_references": [],
-    "current_guidance": ""
+    "applicable_skills": [],
+    "cur_guidance": "",
+    "permissions": {
+      "do": [],
+      "dont": [],
+      "allowed_exec": {
+        "tools": [],
+        "denied": []
+      },
+      "read_only_fields": ["score", "retry", "metrics", "audit_log", "governance"],
+      "writeable_fields": ["outputs", "decisions", "session", "state"]
+    },
+    "prev_blockers": []
   },
   "score": {
     "rules": {
@@ -29,20 +52,46 @@
   },
   "retry": {
     "attempt": 0,
-    "current_phase": "",
-    "issues": []
+    "max_attempts": 3,
+    "score_threshold": 70,
+    "escalation_threshold": 50,
+    "cur_phase": "",
+    "issues": [],
+    "phase_issues": [],
+    "escalation_trace": []
   },
-  "outputs": {},
+  "outputs": {
+    "plan": null,
+    "architecture": null,
+    "code_changes": [],
+    "test_results": null,
+    "agent_reports": [],
+    "score_summary": null
+  },
   "metrics": {
     "cost_tokens": 0,
     "elapsed_ms": 0,
     "agents_used": [],
-    "phases_completed": []
+    "phases_completed": [],
+    "phase_durations": {}
+  },
+  "token_budget": {
+    "max_per_session": 200000,
+    "W_threshold": 0.8,
+    "hard_limit": 0.95,
+    "max_per_phase": {},
+    "max_per_subagent_call": 50000,
+    "cur_session_usage": 0,
+    "phase_usage": {}
   },
   "scope": {
     "included": [],
     "excluded": [],
-    "parallel_eligible": false
+    "boundary": "",
+    "parallel_eligible": false,
+    "max_parallel_agents": 1,
+    "shard_id": "",
+    "parallel_instances": []
   },
   "validation": {
     "block_on": {
@@ -50,7 +99,10 @@
       "max_score_drop": 30,
       "max_compile_errors": 1,
       "sdlc_stage": ""
-    }
+    },
+    "rule_overrides": {},
+    "build_verified": false
   },
-  "lessons_learned": []
+  "lessons_learned": [],
+  "audit_log": []
 }

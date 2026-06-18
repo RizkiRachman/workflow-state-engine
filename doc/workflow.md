@@ -348,6 +348,23 @@ scripts/scan-ponytail-debt.sh
 ```
 
 This feeds into the SIMPLICITY_001 scoring rule — unresolved ponytail debt with no documented upgrade path may trigger an `over_engineering_deduction` in Tier 1 scoring.
+### `scripts/validate-contract.sh`
+Seven-step envelope validation: JSON validity, required fields, state enum, nested fields, content quality, field ACL, and transition validation.
+```bash
+bash scripts/validate-contract.sh --file contract/contract.json --score
+```
+
+### `scripts/detect-parallel-conflicts.sh`
+Detects overlapping file modifications from parallel agents. Accepts file lists or unified diffs.
+```bash
+bash scripts/detect-parallel-conflicts.sh --file1 /tmp/a.txt --file2 /tmp/b.txt
+```
+
+### `scripts/persist-contract.sh`
+Atomic envelope persistence via temp-file + rename with optional score injection.
+```bash
+bash scripts/persist-contract.sh --file contract/contract.json --inject-score 85
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
