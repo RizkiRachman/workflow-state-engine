@@ -206,19 +206,22 @@ run_phase() {
     if [[ "$DRY_RUN" == true ]]; then
         log_dry "  Would run: $cmd" >&2
         log_dry "  Would save output to: $output_file" >&2
-        echo '{"dry_run":true,"phase":"'$phase'","iteration":'$iter'}' > "$output_file" 2>/dev/null || true
         echo "0 0"
         return
     fi
 
-    # Execute
+    # Execute with timeout (300s) to prevent infinite hangs
     mkdir -p "$(dirname "$output_file")"
-    if eval "$cmd" > "$output_file" 2>&1; then
+    if timeout 300 bash -c "$cmd" > "$output_file" 2>&1; then
         exit_code=0
         log_pass "  [$phase] Completed (exit=0)" >&2
     else
         exit_code=$?
-        log_fail "  [$phase] Failed (exit=$exit_code)" >&2
+        if [[ $exit_code -eq 124 ]]; then
+            log_fail "  [$phase] Timed out (300s)" >&2
+        else
+            log_fail "  [$phase] Failed (exit=$exit_code)" >&2
+        fi
     fi
 
     local end_ms
@@ -230,64 +233,98 @@ run_phase() {
 # Build the per-iteration metrics JSON
 build_metrics() {
     local iter="$1"
-    local plan_exit="$2" plan_duration="$3"
-    local exec_exit="$4" exec_duration="$5"
-    local review_exit="$6" review_duration="$7"
-    local blocked="$8"
-    local blocked_reason="$9"
+    local plan_exit="$2" plan_duration="$3" plan_score="$4" plan_verdict="$5"
+    local plan_rules="$6" plan_state_before="$7" plan_state_after="$8"
+    local exec_exit="$9" exec_duration="${10}" exec_score="${11}" exec_verdict="${12}"
+    local exec_rules="${13}" exec_state_before="${14}" exec_state_after="${15}"
+    local review_exit="${16}" review_duration="${17}" review_score="${18}" review_verdict="${19}"
+    local review_rules="${20}" review_state_before="${21}" review_state_after="${22}"
+    local blocked="${23}"
+    local blocked_reason="${24}"
+    local cc_field_access="${25}" cc_audit_entries="${26}" cc_schema_valid="${27}" cc_writing_order="${28}"
     local timestamp
     timestamp="$(get_timestamp)"
     local perm_label
     perm_label="$(get_permissions_label "$iter")"
 
-    cat <<METRICS
-{
-  "iteration": $iter,
-  "timestamp": "$timestamp",
-  "permissions_mode": "$perm_label",
-  "duration_ms": $((plan_duration + exec_duration + review_duration)),
-  "phases": {
-    "PLAN": {
-      "agent": "system-analyst",
-      "exit_code": $plan_exit,
-      "duration_ms": $plan_duration,
-      "contract_state_before": "EXECUTE",
-      "contract_state_after": "PLAN_SCORED",
-      "score_rules": {},
-      "score_combined": 0,
-      "verdict": "PASS"
-    },
-    "EXECUTE": {
-      "agent": "developer",
-      "exit_code": $exec_exit,
-      "duration_ms": $exec_duration,
-      "contract_state_before": "PLAN_SCORED",
-      "contract_state_after": "EXECUTE_SCORED",
-      "score_rules": {},
-      "score_combined": 0,
-      "verdict": "PASS"
-    },
-    "REVIEW": {
-      "agent": "quality-analyst",
-      "exit_code": $review_exit,
-      "duration_ms": $review_duration,
-      "contract_state_before": "EXECUTE_SCORED",
-      "contract_state_after": "REVIEW_SCORED",
-      "score_rules": {},
-      "score_combined": 0,
-      "verdict": "PASS"
-    }
-  },
-  "contract_compliance": {
-    "field_access_violations": 0,
-    "audit_log_entries_added": 0,
-    "schema_validation_passed": true,
-    "writing_order_violations": 0
-  },
-  "blocked": $blocked,
-  "blocked_reason": $(if [[ -n "$blocked_reason" ]]; then echo "\"$blocked_reason\""; else echo "null"; fi)
-}
-METRICS
+    jq -n \
+      --arg iteration "$iter" \
+      --arg timestamp "$timestamp" \
+      --arg perm_label "$perm_label" \
+      --argjson duration_ms "$((plan_duration + exec_duration + review_duration))" \
+      --argjson plan_exit "$plan_exit" \
+      --argjson plan_duration "$plan_duration" \
+      --argjson plan_score "$plan_score" \
+      --arg plan_verdict "$plan_verdict" \
+      --argjson plan_rules "$plan_rules" \
+      --arg plan_state_before "$plan_state_before" \
+      --arg plan_state_after "$plan_state_after" \
+      --argjson exec_exit "$exec_exit" \
+      --argjson exec_duration "$exec_duration" \
+      --argjson exec_score "$exec_score" \
+      --arg exec_verdict "$exec_verdict" \
+      --argjson exec_rules "$exec_rules" \
+      --arg exec_state_before "$exec_state_before" \
+      --arg exec_state_after "$exec_state_after" \
+      --argjson review_exit "$review_exit" \
+      --argjson review_duration "$review_duration" \
+      --argjson review_score "$review_score" \
+      --arg review_verdict "$review_verdict" \
+      --argjson review_rules "$review_rules" \
+      --arg review_state_before "$review_state_before" \
+      --arg review_state_after "$review_state_after" \
+      --argjson blocked "$blocked" \
+      --arg blocked_reason "${blocked_reason:-}" \
+      --argjson cc_field_access "$cc_field_access" \
+      --argjson cc_audit_entries "$cc_audit_entries" \
+      --argjson cc_schema_valid "$cc_schema_valid" \
+      --argjson cc_writing_order "$cc_writing_order" \
+      '{
+        "iteration": $iteration,
+        "timestamp": $timestamp,
+        "permissions_mode": $perm_label,
+        "duration_ms": $duration_ms,
+        "phases": {
+          "PLAN": {
+            "agent": "system-analyst",
+            "exit_code": $plan_exit,
+            "duration_ms": $plan_duration,
+            "contract_state_before": $plan_state_before,
+            "contract_state_after": $plan_state_after,
+            "score_rules": $plan_rules,
+            "score_combined": $plan_score,
+            "verdict": $plan_verdict
+          },
+          "EXECUTE": {
+            "agent": "developer",
+            "exit_code": $exec_exit,
+            "duration_ms": $exec_duration,
+            "contract_state_before": $exec_state_before,
+            "contract_state_after": $exec_state_after,
+            "score_rules": $exec_rules,
+            "score_combined": $exec_score,
+            "verdict": $exec_verdict
+          },
+          "REVIEW": {
+            "agent": "quality-analyst",
+            "exit_code": $review_exit,
+            "duration_ms": $review_duration,
+            "contract_state_before": $review_state_before,
+            "contract_state_after": $review_state_after,
+            "score_rules": $review_rules,
+            "score_combined": $review_score,
+            "verdict": $review_verdict
+          }
+        },
+        "contract_compliance": {
+          "field_access_violations": $cc_field_access,
+          "audit_log_entries_added": $cc_audit_entries,
+          "schema_validation_passed": $cc_schema_valid,
+          "writing_order_violations": $cc_writing_order
+        },
+        "blocked": $blocked,
+        "blocked_reason": (if $blocked_reason != "" and $blocked_reason != null then $blocked_reason else null end)
+      }'
 }
 
 # Save per-iteration metrics to JSON file
@@ -513,6 +550,8 @@ main() {
 
     local START_TIME_ITER
     START_TIME_ITER="$(get_epoch_ms)"
+    # Initialize CURRENT_ITER before loop so SIGINT handler has a valid value
+    local CURRENT_ITER=$resume_from
 
     # ---- ITERATION LOOP ----
     for ((i = resume_from; i <= total_iterations; i++)); do
@@ -536,6 +575,18 @@ main() {
         if [[ -z "$plan_exit" ]]; then plan_exit=0; fi
         if [[ -z "$plan_duration" ]]; then plan_duration=0; fi
 
+        # Extract scores from PLAN output
+        local plan_score=0 plan_verdict="PASS" plan_rules="{}"
+        local plan_state_before="EXECUTE" plan_state_after="PLAN_SCORED"
+        local plan_output_file="$PROJECT_ROOT/doc/analysis/iter-${i}/plan-output.json"
+        if [[ -f "$plan_output_file" && "$DRY_RUN" != true ]]; then
+            plan_score=$(jq -r '.score.combined // 0' "$plan_output_file" 2>/dev/null || echo 0)
+            plan_verdict=$(jq -r '.score.verdict // "PASS"' "$plan_output_file" 2>/dev/null || echo "PASS")
+            plan_rules=$(jq -c '.score.rules // {}' "$plan_output_file" 2>/dev/null || echo "{}")
+            plan_state_before=$(jq -r '.state_before // "EXECUTE"' "$plan_output_file" 2>/dev/null || echo "EXECUTE")
+            plan_state_after=$(jq -r '.state_after // "PLAN_SCORED"' "$plan_output_file" 2>/dev/null || echo "PLAN_SCORED")
+        fi
+
         local plan_blocked=false
         if [[ "$plan_exit" -ne 0 ]]; then
             plan_blocked=true
@@ -553,6 +604,18 @@ main() {
             log_info "  Skipping EXECUTE (PLAN blocked)"
         fi
 
+        # Extract scores from EXECUTE output
+        local exec_score=0 exec_verdict="PASS" exec_rules="{}"
+        local exec_state_before="PLAN_SCORED" exec_state_after="EXECUTE_SCORED"
+        local exec_output_file="$PROJECT_ROOT/doc/analysis/iter-${i}/execute-output.json"
+        if [[ -f "$exec_output_file" && "$DRY_RUN" != true ]]; then
+            exec_score=$(jq -r '.score.combined // 0' "$exec_output_file" 2>/dev/null || echo 0)
+            exec_verdict=$(jq -r '.score.verdict // "PASS"' "$exec_output_file" 2>/dev/null || echo "PASS")
+            exec_rules=$(jq -c '.score.rules // {}' "$exec_output_file" 2>/dev/null || echo "{}")
+            exec_state_before=$(jq -r '.state_before // "PLAN_SCORED"' "$exec_output_file" 2>/dev/null || echo "PLAN_SCORED")
+            exec_state_after=$(jq -r '.state_after // "EXECUTE_SCORED"' "$exec_output_file" 2>/dev/null || echo "EXECUTE_SCORED")
+        fi
+
         local exec_blocked=false
         if [[ "$exec_exit" -ne 0 ]]; then
             exec_blocked=true
@@ -568,6 +631,18 @@ main() {
             if [[ -z "$review_duration" ]]; then review_duration=0; fi
         else
             log_info "  Skipping REVIEW (EXECUTE blocked)"
+        fi
+
+        # Extract scores from REVIEW output
+        local review_score=0 review_verdict="PASS" review_rules="{}"
+        local review_state_before="EXECUTE_SCORED" review_state_after="REVIEW_SCORED"
+        local review_score_file="$PROJECT_ROOT/doc/analysis/iter-${i}/review-output.json"
+        if [[ -f "$review_score_file" && "$DRY_RUN" != true ]]; then
+            review_score=$(jq -r '.score.combined // 0' "$review_score_file" 2>/dev/null || echo 0)
+            review_verdict=$(jq -r '.score.verdict // "PASS"' "$review_score_file" 2>/dev/null || echo "PASS")
+            review_rules=$(jq -c '.score.rules // {}' "$review_score_file" 2>/dev/null || echo "{}")
+            review_state_before=$(jq -r '.state_before // "EXECUTE_SCORED"' "$review_score_file" 2>/dev/null || echo "EXECUTE_SCORED")
+            review_state_after=$(jq -r '.state_after // "REVIEW_SCORED"' "$review_score_file" 2>/dev/null || echo "REVIEW_SCORED")
         fi
 
         # ---- Determine BLOCKED status ----
@@ -592,10 +667,30 @@ main() {
             log_pass "Iteration $i completed successfully"
         fi
 
-        # Build and save metrics
-        local metrics_json
-        metrics_json=$(build_metrics "$i" "$plan_exit" "$plan_duration" "$exec_exit" "$exec_duration" "$review_exit" "$review_duration" "$blocked" "$blocked_reason")
-        save_metrics "$i" "$metrics_json"
+        # Extract contract_compliance from REVIEW output (most comprehensive)
+        local cc_field_access=0 cc_audit_entries=0 cc_schema_valid=true cc_writing_order=0
+        local cc_output_file="$PROJECT_ROOT/doc/analysis/iter-${i}/review-output.json"
+        if [[ -f "$cc_output_file" && "$DRY_RUN" != true ]]; then
+            cc_field_access=$(jq -r '.contract_compliance.field_access_violations // 0' "$cc_output_file" 2>/dev/null || echo 0)
+            cc_audit_entries=$(jq -r '.contract_compliance.audit_log_entries_added // 0' "$cc_output_file" 2>/dev/null || echo 0)
+            cc_schema_valid=$(jq -r '.contract_compliance.schema_validation_passed // true' "$cc_output_file" 2>/dev/null || echo true)
+            cc_writing_order=$(jq -r '.contract_compliance.writing_order_violations // 0' "$cc_output_file" 2>/dev/null || echo 0)
+        fi
+
+        # Build and save metrics (only in real mode — dry-run creates no files)
+        if [[ "$DRY_RUN" != true ]]; then
+            local metrics_json
+            metrics_json=$(build_metrics "$i" \
+              "$plan_exit" "$plan_duration" "$plan_score" "$plan_verdict" \
+              "$plan_rules" "$plan_state_before" "$plan_state_after" \
+              "$exec_exit" "$exec_duration" "$exec_score" "$exec_verdict" \
+              "$exec_rules" "$exec_state_before" "$exec_state_after" \
+              "$review_exit" "$review_duration" "$review_score" "$review_verdict" \
+              "$review_rules" "$review_state_before" "$review_state_after" \
+              "$blocked" "$blocked_reason" \
+              "$cc_field_access" "$cc_audit_entries" "$cc_schema_valid" "$cc_writing_order")
+            save_metrics "$i" "$metrics_json"
+        fi
 
         # Detect BLOCKED from opencode output files
         local plan_output="$PROJECT_ROOT/doc/analysis/iter-${i}/PLAN-output.json"
@@ -617,9 +712,13 @@ main() {
     END_TIME_ITER="$(get_epoch_ms)"
     local total_duration=$((END_TIME_ITER - START_TIME_ITER))
 
-    # Generate final report
+    # Generate final report (skip in dry-run mode)
     echo ""
-    generate_report
+    if [[ "$DRY_RUN" != true ]]; then
+        generate_report
+    else
+        log_dry "Skipping report generation (dry-run mode)"
+    fi
 
     # Print summary
     echo ""
