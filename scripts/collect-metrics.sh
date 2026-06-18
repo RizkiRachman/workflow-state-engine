@@ -159,9 +159,8 @@ main() {
         iterations_json+="$content"
 
         # Extract scores and metrics
-        local iter perm_mode blocked plan_score exec_score review_score duration violations
+        local perm_mode blocked plan_score exec_score review_score duration violations
 
-        iter=$(echo "$content" | jq -r '.iteration' 2>/dev/null || echo "0")
         perm_mode=$(echo "$content" | jq -r '.permissions_mode' 2>/dev/null || echo "unknown")
         blocked=$(echo "$content" | jq -r '.blocked' 2>/dev/null || echo "false")
         plan_score=$(echo "$content" | jq -r '.phases.PLAN.score_combined // 0' 2>/dev/null || echo "0")
