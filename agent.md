@@ -67,7 +67,7 @@ INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVI
 
 ```
 agents/     → 11 agent instruction files (tech-lead, developer, quality-analyst, etc.)
-skills/     → 36 skill directories (system-analyst, writing-plans, spec-driven-dev, etc.)
+skills/     → 29 skill directories (system-analyst, writing-plans, spec-driven-dev, etc.)
 contract/   → contract.json, superpowers-contract.json, state.md
 rules/      → rules.json (state machine transitions, scoring thresholds)
 doc/        → workflow.md, project.md, gap analysis, state-history.md
@@ -88,7 +88,7 @@ This project keeps its toolkit at the project root for direct access. No nested 
 ```
 .opencode/                  (symlinks resolve to root-level source)
    ├── agents/ ──symlink──► agents/         11 agent .md files
-   ├── skills/ ──symlink──► skills/         36 skill directories
+   ├── skills/ ──symlink──► skills/         29 skill directories
    ├── rules/  ──symlink──► rules/          rules.json (state machine)
    ├── orchestration/ ──symlink──► contract/   contract.template.json, contract.schema.json, state.template.md, superpowers-contract.json
    ├── planning/ ──symlink──► doc/planning/    Planning docs
@@ -109,7 +109,7 @@ You reference `.opencode/` paths — OpenCode resolves symlinks to root-level so
 ├── config/            ← Plugin configs (vibeguard, opencode-skillful)
 ├── doc/               ← Planning docs, workflow.md, gap analyses
 ├── rules/             ← rules.json (state machine, scoring)
-├── skills/            ← 36 skill directories (java-developer, gitnexus/, spec-driven-dev, etc.)
+├── skills/            ← 29 skill directories (java-developer, gitnexus/, spec-driven-dev, etc.)
 ├── contract/          ← contract.template.json, contract.schema.json, state.template.md, superpowers-contract.json
 ├── usage/             ← 15 tool usage guides (one per tool group)
 └── setup.sh           ← Bootstrap: creates all .opencode/ → root-level symlinks
@@ -445,7 +445,7 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **workflow-state-engine** (1501 symbols, 1493 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **workflow-state-engine** (1675 symbols, 1666 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `bash scripts/gitnexus-analyze.sh` from the project root.
 

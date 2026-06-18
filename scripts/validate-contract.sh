@@ -171,7 +171,7 @@ check_nested_fields() {
     local file="$1"
     local nested_checks=(
         "session:task_id"
-        "session:br"
+        "session:branch"
         "session:created_at"
         "session:archived_at"
         "requirements:goal"
