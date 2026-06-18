@@ -108,6 +108,13 @@ For every task, follow this sequence:
   - Check taxonomy tree for relevant categories
   - Use retrieval guidance for querying past decisions
 - memory persistence uses lean-ctx ctx_knowledge only
+- **Cross-session feedback**: After loading primer, query for past lessons:
+  `lean-ctx ctx_knowledge recall --query "lessons" --mode semantic`
+  - If lessons found: incorporate them into `governance.current_guidance`
+  - Key lessons to look for: recurring blockers, patterns that failed, successful approaches
+  - Deduplicate: skip lessons already in current `lessons_learned[]`
+- **Session startup drift check**: Run `scripts/drift-detect.sh` to verify knowledge ↔ file consistency
+  - If drift detected: use `scripts/self-repair.sh --dry-run` to assess without auto-overwriting
 
 ### 1. Discuss
 Run a quick 5-lens check before planning:
@@ -357,9 +364,12 @@ If state = `COMPLETE` and scoring passed:
 - Resolve any remaining issues
 - Confirm deploy safety: migrations backward-compatible, env vars documented, rollback ready
 - Run `/skill release-plan` for release process guidance (PR template, commit format, changelog)
-- **Delegate to @quality-analyst-learner** for post-execution learning analysis — pass the envelope state, git diff, and any validation results. The quality-analyst-learner will extract lessons, update knowledge artifacts, and suggest improvements
-  - The @quality-analyst-learner will extract lessons and persist them to lean-ctx ctx_knowledge
-- **Incorporate quality-analyst-learner output**: apply `knowledge_updates[]` to lean-ctx, append `lessons_learned[]` to envelope
+- **Auto-trigger @quality-analyst-learner** on COMPLETE:
+  The persist hook (`scripts/auto-persist.sh --triggered-by <agent>`) automatically detects COMPLETE state and flags for learner delegation.
+  Integration: When `state == "COMPLETE"`, the orchestrator should delegate to @quality-analyst-learner.
+  - The learner extracts lessons and persists them to lean-ctx ctx_knowledge
+  - The learner's output populates `lessons_learned[]` in the envelope
+- **Incorporate quality-analyst-learner output:** apply `knowledge_updates[]` to lean-ctx, append `lessons_learned[]` to envelope
 - Summarize what was done
 - Confirm ready for deployment
 - **Final snapshot**: `scripts/snapshot-contract.sh --summary "State: COMPLETE — task complete"`

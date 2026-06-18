@@ -41,6 +41,10 @@ permission:
    - git diff main...HEAD --stat
 4. **Read rules.json**: Check LEARN_001 (must update ALL memory systems)
 5. **Use ctx_shell for shell commands**: Use `lean-ctx ctx_shell` for all shell commands. `bash` is denied in `opencode.json` — triggers permission prompts and blocks automation.
+6. **Cross-session context**: Query for lessons from prior sessions via
+   `lean-ctx ctx_knowledge recall --query "lessons learned" --mode semantic`
+   - Compare with current contract `lessons_learned[]` to avoid duplicating knowledge
+   - Note recurring patterns across sessions for the final report
 
 ### File Read/Search Convention
 
@@ -360,3 +364,13 @@ For huge/massive tasks, enrich learning with superpowers patterns:
 - **Actionable, not philosophical**: "Be more careful" is useless. "Always run gitnexus_impact before editing a shared symbol" is actionable
 - **Be concise**: One sentence per lesson. The orchestrator will read these at session start — keep them skimmable
 - **Focus on process, not people**: Never critique skill level. Critique workflow gaps, ambiguous requirements, missing checks
+
+### Cross-Session Learning Output
+
+After analysis, update knowledge artifacts:
+1. **Persist lessons**: Use `lean-ctx ctx_knowledge remember` with category `architecture`
+   - Key: `lessons-learned-<branch>`
+   - Value: JSON of lessons, gotchas, and improvement suggestions
+2. **Knowledge updates**: Return `knowledge_updates[]` as an array of `{action, key, category, value}` objects
+   - These will be applied by the orchestrator in `agents/tech-lead.md` section 7
+3. **Deduplication**: Skip lessons already present in `contract.lessons_learned[]`

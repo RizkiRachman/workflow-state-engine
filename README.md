@@ -213,7 +213,8 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 ├── usage/             ← 15 tool usage guides
 ├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
 ├── config/            ← Plugin configurations
-├── scripts/           ← Verification & architecture enforcement scripts (validate-contract.sh, detect-parallel-conflicts.sh, persist-contract.sh, check-conventions.sh, validate-toolkit.sh, check-mcp.sh, check-plugins.sh, scan-ponytail-debt.sh, archive-sessions.sh)
+├── scripts/           ← Verification, automation & architecture enforcement scripts (validate-contract.sh, auto-persist.sh, auto-score.sh, state-guard.sh, self-repair.sh, drift-detect.sh, sdd-gate.sh, verify-knowledge.sh, install-hooks.sh, detect-parallel-conflicts.sh, persist-contract.sh, check-conventions.sh, validate-toolkit.sh, check-mcp.sh, check-plugins.sh, scan-ponytail-debt.sh, archive-sessions.sh, autonomous-runner.sh)
+├── .githooks/         ← Git hooks for pre-commit validation and post-commit re-index (pre-commit, post-commit)
 ├── opencode.json      ← OpenCode configuration
 ├── opencode.json.template ← Redacted template with annotated MCP tiers
 └── setup.sh           ← Bootstrap: pre-flight checks + MCP/plugin verification + symlinks
@@ -291,7 +292,17 @@ Three-tier scoring runs after every delegation:
 - [ ] Intensity modes for ponytail (off/lite/full/ultra)
 - [ ] Debt ledger harvesting (`/ponytail-debt` command)
 - [ ] Multi-model council consensus for high-stakes decisions
-- [ ] Parallel shard execution with conflict reconciliation
+- [x] Parallel shard execution with conflict reconciliation
+- [x] Automated contract persistence (scripts/auto-persist.sh)
+- [x] Automated 3-tier scoring pipeline (scripts/auto-score.sh)
+- [x] Agent state guard verification (scripts/state-guard.sh)
+- [x] Self-repair for corrupt contracts (scripts/self-repair.sh)
+- [x] Knowledge vs file drift detection (scripts/drift-detect.sh)
+- [x] SDD spec gate enforcement (scripts/sdd-gate.sh)
+- [x] Knowledge persistence verification (scripts/verify-knowledge.sh)
+- [x] Git hook automation (scripts/install-hooks.sh + .githooks/)
+- [x] Autonomous runner contract bridge (scripts/autonomous-runner.sh)
+- [x] Cross-session learning feedback loop (agents/tech-lead.md, quality-analyst-learner.md)
 
 See the [open issues](https://github.com/RizkiRachman/workflow-state-engine/issues) for a full list of proposed features and known issues.
 
