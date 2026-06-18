@@ -213,7 +213,7 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 ├── usage/             ← 15 tool usage guides
 ├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
 ├── config/            ← Plugin configurations
-├── scripts/           ← Verification, automation & architecture enforcement scripts (validate-contract.sh, auto-persist.sh, auto-score.sh, state-guard.sh, self-repair.sh, drift-detect.sh, sdd-gate.sh, verify-knowledge.sh, install-hooks.sh, detect-parallel-conflicts.sh, persist-contract.sh, check-conventions.sh, validate-toolkit.sh, check-mcp.sh, check-plugins.sh, scan-ponytail-debt.sh, archive-sessions.sh, autonomous-runner.sh)
+├── scripts/           ← Verification, automation & architecture enforcement scripts (validate-contract.sh, auto-persist.sh, auto-score.sh, state-guard.sh, self-repair.sh, drift-detect.sh, sdd-gate.sh, verify-knowledge.sh, health-check.sh, install-hooks.sh, detect-parallel-conflicts.sh, persist-contract.sh, check-conventions.sh, validate-toolkit.sh, check-mcp.sh, check-plugins.sh, scan-ponytail-debt.sh, archive-sessions.sh, autonomous-runner.sh)
 ├── .githooks/         ← Git hooks for pre-commit validation and post-commit re-index (pre-commit, post-commit)
 ├── opencode.json      ← OpenCode configuration
 ├── opencode.json.template ← Redacted template with annotated MCP tiers

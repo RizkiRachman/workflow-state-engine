@@ -253,6 +253,26 @@ The JSON Schema defines: required envelope structure for all fields (state, sess
 
 All agents should validate their envelope mutations against the schema before persisting. The orchestrator enforces schema compliance at every transition via Tier 1 rule checks.
 
+## E7. /gsd-health — Daily Health Check Command
+
+Copy-paste this block into any AI chat to run a full workflow architecture health check:
+
+```
+Run /gsd-health to evaluate the current workflow architecture.
+
+1. Load shared envelope — check current state, score trend, and open issues
+2. Run scripts/health-check.sh — get a scored baseline
+3. Review doc/workflow/*.md against actual scripts/*.sh — flag docs drift
+4. Check session/health-record.md for score trend (up/down/flat)
+5. Check session/state.md last 5 entries — spot recurring patterns
+6. Cross-reference rules/rules.json agent_states with actual agents/*.md — are agents in sync with rules?
+7. gitnexus_detect_changes({scope: "compare", base_ref: "main"}) — any unexpected scope creep?
+
+If health_score < 90: produce a gap analysis + fix plan (like the 15-gap campaign)
+If health_score >= 90 with declining trend: flag the top 3 risk areas
+If health_score >= 90 with stable/improving trend: confirm health, suggest 1 optimization
+```
+
 ---
 
 [workflow-shield]: https://img.shields.io/badge/Workflow-Orchestration-blue?style=for-the-badge
