@@ -25,7 +25,7 @@ VERBOSE=false
 EXIT_CODE=0
 BLOCKED_COUNT=0
 PASS_COUNT=0
-START_TIME=""
+CURRENT_ITER=1
 
 # Color output (disable if not a terminal)
 if [[ -t 1 ]]; then
@@ -193,26 +193,23 @@ run_phase() {
     local output_file="$PROJECT_ROOT/doc/analysis/iter-${iter}/${phase_lower}-output.json"
     local cmd_base="opencode run"
 
-    # Build command
-    local cmd="$cmd_base --agent $agent --format json"
-    if [[ -n "$permissions_flag" ]]; then
-        cmd="$cmd $permissions_flag"
-    fi
-    cmd="$cmd \"$prompt\""
-
     # Use stderr for log messages so stdout is clean for return value capture
     log_info "  [$phase] Agent: $agent | Iteration: $iter" >&2
 
     if [[ "$DRY_RUN" == true ]]; then
+        local cmd="$cmd_base --agent $agent --format json"
+        if [[ -n "$permissions_flag" ]]; then
+            cmd="$cmd $permissions_flag"
+        fi
         log_dry "  Would run: $cmd" >&2
         log_dry "  Would save output to: $output_file" >&2
         echo "0 0"
         return
     fi
 
-    # Execute with timeout (300s) to prevent infinite hangs
+    # Execute with timeout (300s) via stdin pipe to avoid bash -c escaping issues
     mkdir -p "$(dirname "$output_file")"
-    if timeout 300 bash -c "$cmd" > "$output_file" 2>&1; then
+    if echo "$prompt" | timeout 300 opencode run --agent "$agent" --format json ${permissions_flag} - > "$output_file" 2>&1; then
         exit_code=0
         log_pass "  [$phase] Completed (exit=0)" >&2
     else
@@ -551,7 +548,7 @@ main() {
     local START_TIME_ITER
     START_TIME_ITER="$(get_epoch_ms)"
     # Initialize CURRENT_ITER before loop so SIGINT handler has a valid value
-    local CURRENT_ITER=$resume_from
+    CURRENT_ITER=$resume_from
 
     # ---- ITERATION LOOP ----
     for ((i = resume_from; i <= total_iterations; i++)); do
@@ -577,7 +574,7 @@ main() {
 
         # Extract scores from PLAN output
         local plan_score=0 plan_verdict="PASS" plan_rules="{}"
-        local plan_state_before="EXECUTE" plan_state_after="PLAN_SCORED"
+        local plan_state_before="INIT" plan_state_after="PLAN_SCORED"
         local plan_output_file="$PROJECT_ROOT/doc/analysis/iter-${i}/plan-output.json"
         if [[ -f "$plan_output_file" && "$DRY_RUN" != true ]]; then
             plan_score=$(jq -r '.score.combined // 0' "$plan_output_file" 2>/dev/null || echo 0)
@@ -693,9 +690,9 @@ main() {
         fi
 
         # Detect BLOCKED from opencode output files
-        local plan_output="$PROJECT_ROOT/doc/analysis/iter-${i}/PLAN-output.json"
-        local exec_output="$PROJECT_ROOT/doc/analysis/iter-${i}/EXECUTE-output.json"
-        local review_output="$PROJECT_ROOT/doc/analysis/iter-${i}/REVIEW-output.json"
+        local plan_output="$PROJECT_ROOT/doc/analysis/iter-${i}/plan-output.json"
+        local exec_output="$PROJECT_ROOT/doc/analysis/iter-${i}/execute-output.json"
+        local review_output="$PROJECT_ROOT/doc/analysis/iter-${i}/review-output.json"
 
         if [[ "$(detect_blocked "$plan_output")" == "true" ]]; then
             log_info "  PLAN output indicates BLOCKED state"
@@ -732,7 +729,7 @@ main() {
 
     if [[ "$BLOCKED_COUNT" -gt 0 ]]; then
         log_info "${BLOCKED_COUNT} iteration(s) BLOCKED — review report for details"
-        exit 1
+        exit $EXIT_CODE
     fi
     exit 0
 }
