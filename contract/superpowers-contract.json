@@ -152,6 +152,12 @@
       "purpose": "State contract audit trail, orchestration observability, score analytics, and cross-service consistency enforcement",
       "when_to_use": "Before and after every state transition, during scoring analysis, and when detecting drift across services",
       "skill_command": "/skill audit-observability"
+    },
+    {
+      "name": "adaptive-solver",
+      "purpose": "Meta-cognitive uncertainty resolution — structured loop for ambiguity, low confidence, or failed attempts. Agents detect the gap, inventory skills, hypothesize, attempt, evaluate, and retry without asking the user.",
+      "when_to_use": "When encountering ambiguous input, flagging confidence (≤ 3/5), or when a tool/skill attempt produced unexpected results. Trigger before guessing or asking the user for clarification.",
+      "skill_command": "/skill adaptive-solver"
     }
   ],
 

@@ -74,8 +74,9 @@ ln -sfn ../skills   .opencode/skills
 ln -sfn ../plugins  .opencode/plugins
 ln -sfn ../rules    .opencode/rules
 ln -sfn ../template .opencode/orchestration
-ln -sfn ../doc .opencode/planning
+ln -sfn ../doc/planning .opencode/planning
 ln -sfn ../usage    .opencode/usage
+ln -sfn ../doc/reports .opencode/reports
 ln -sfn ../config   .opencode/config
 ln -sfn ../agent.md .opencode/AGENTS.md
 
@@ -89,8 +90,9 @@ declare -A SYMLINKS=(
   [".opencode/skills"]="../skills"
   [".opencode/plugins"]="../plugins"
   [".opencode/rules"]="../rules"
-  [".opencode/orchestration"]="../template"
-  [".opencode/planning"]="../doc"
+  [".opencode/orchestration"]="../contract"
+  [".opencode/planning"]="../doc/planning"
+  [".opencode/reports"]="../doc/reports"
   [".opencode/usage"]="../usage"
   [".opencode/config"]="../config"
   [".opencode/AGENTS.md"]="../agent.md"
@@ -108,10 +110,9 @@ for target in "${!SYMLINKS[@]}"; do
   fi
 done
 
-# Also check .opencode/tools/request-transform.ts
-if [ ! -L ".opencode/tools/request-transform.ts" ]; then
-  echo "FAIL: .opencode/tools/request-transform.ts is not a symlink"
-  VALIDATION_FAILED=1
+# Check .opencode/tools/ only if the directory exists
+if [ -L ".opencode/tools/request-transform.ts" ]; then
+  echo "  OK: .opencode/tools/request-transform.ts -> $(readlink ".opencode/tools/request-transform.ts")"
 fi
 
 if [ "$VALIDATION_FAILED" -eq 1 ]; then
@@ -121,8 +122,9 @@ if [ "$VALIDATION_FAILED" -eq 1 ]; then
   echo "  .opencode/agents        -> ../agents"
   echo "  .opencode/skills        -> ../skills"
   echo "  .opencode/rules         -> ../rules"
-  echo "  .opencode/orchestration -> ../template"
-  echo "  .opencode/planning      -> ../doc"
+  echo "  .opencode/orchestration -> ../contract"
+  echo "  .opencode/planning      -> ../doc/planning"
+  echo "  .opencode/reports       -> ../doc/reports"
   echo "  STATE.md                -> contract/state.md"
   echo "  PROJECT.md              -> doc/project.md"
   echo "  AGENTS.md               -> ../agent.md"

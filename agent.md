@@ -90,8 +90,8 @@ This project keeps its toolkit at the project root for direct access. No nested 
    ├── agents/ ──symlink──► agents/         11 agent .md files
    ├── skills/ ──symlink──► skills/         36 skill directories
    ├── rules/  ──symlink──► rules/          rules.json (state machine)
-   ├── orchestration/symlink──► contract/   contract.json, superpowers-contract.json, state.md
-   ├── planning/symlink──► doc/planning/    Planning docs
+   ├── orchestration/ ──symlink──► contract/   contract.json, superpowers-contract.json, state.md
+   ├── planning/ ──symlink──► doc/planning/    Planning docs
    ├── reports/ ──symlink──► doc/reports/   Analysis reports
    ├── usage/   ──symlink──► usage/         15 tool usage guides
    └── config/  ──symlink──► config/        Plugin configs
@@ -426,6 +426,7 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 | `writing-plans` | Create structured implementation plans |
 | `humanizer` | Remove AI writing patterns from output |
 | `doubt-driven-development` | Validate assumptions before committing to design |
+| `adaptive-solver` | Meta-cognitive uncertainty resolution — structured loop for ambiguity, low confidence, or failed attempts |
 | `spec-driven-development` | Write spec first, implement after |
 | `subagent-driven-development` | Delegate bounded work to specialized subagents |
 | `systematic-debugging` | Structured root cause analysis |

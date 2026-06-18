@@ -92,8 +92,9 @@ For every task, follow this sequence:
 - **Load shared envelope** (per protocol above)
 - **Checkpoint: persist envelope before any work** — `lean-ctx ctx_knowledge remember key orchestration-contract value <current envelope JSON>`
 - Load relevant skills via `/skill` as needed
-- **For huge/massive tasks:** Load superpowers skills: `/skill brainstorming`, `/skill writing-plans`, `/skill executing-plans`, `/skill subagent-driven-development`
+- **For huge/massive tasks:** Load superpowers skills: `/skill brainstorming`, `/skill writing-plans`, `/skill executing-plans`, `/skill subagent-driven-development`, `/skill adaptive-solver`
 - `/skill humanizer` — remove AI writing patterns from all output text
+- `/skill adaptive-solver` — resolve ambiguity, low confidence, or failed attempts via structured loop before guessing or escalating
 - `/skill doubt-driven-development` — cross-examine non-trivial decisions via fresh-context adversarial review before they stand
 - `/skill spec-driven-development` — create GWT-format specs before delegating to developer (gate between PLAN_SCORED→EXECUTE)
 - **Before editing any symbol:** run `gitnexus_impact({target, direction: "upstream"})` to check blast radius — warn user on HIGH/CRITICAL risk
@@ -428,6 +429,7 @@ For tasks that are **huge** (multi-file, cross-service, complex architecture) or
 - `/skill writing-plans` — plan creation with bite-sized TDD tasks, exact file paths, code blocks
 - `/skill executing-plans` — plan execution with checkpoints
 - `/skill subagent-driven-development` — multi-agent code + review cycles
+- `/skill adaptive-solver` — agent-level uncertainty resolution via structured loop (detect → inventory → hypothesize → attempt → evaluate)
 - `/skill test-driven-development` — TDD red/green/refactor cycle
 - `/skill verification-before-completion` — final verification before claiming done
 - `/skill dispatching-parallel-agents` — coordinating multiple sub-agents
