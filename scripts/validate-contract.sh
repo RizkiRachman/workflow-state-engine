@@ -104,7 +104,7 @@ except Exception as e:
 
 # --- Step 2: Top-level required fields -------------------------------------
 REQUIRED_TOP_LEVEL=(
-    "version" "state_machine_version" "state" "session" "requirements"
+    "contract_version" "state_machine_version" "state" "session" "requirements"
     "decisions" "governance" "score" "retry" "outputs" "metrics"
     "token_budget" "scope" "validation" "lessons_learned" "audit_log"
 )

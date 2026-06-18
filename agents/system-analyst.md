@@ -282,7 +282,7 @@ Return a structured JSON object. The orchestrator will score this output automat
   "plan": "## Plan: <title>\n\n### Goal\n<one sentence>\n\n### Files to Change\n- `path/to/file.java` — what to change and why\n\n### Implementation Order\n1. Step 1 — description\n2. Step 2 — description\n\n### Edge Cases & Risks\n- <risk 1>\n\n### Verification\n- How to confirm correctness",
 
   "files_affected": [
-    { "path": "src/main/java/...", "change": "create|modify|delete", "reason": "why" }
+    { "path": "...", "change": "create|modify|delete", "reason": "why" }
   ],
 
   "risks": [
