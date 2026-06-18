@@ -1337,6 +1337,11 @@ main() {
         fi
 
         save_history "$health_score" "$verdict"
+
+        # Also update human-readable health-record.md
+        if [[ -f "$SCRIPT_DIR/update-health-record.sh" ]]; then
+            bash "$SCRIPT_DIR/update-health-record.sh" "$health_score" "$verdict" "$BRANCH" 2>/dev/null || true
+        fi
     fi
 
     exit "$exit_code"
