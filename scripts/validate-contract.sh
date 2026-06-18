@@ -34,6 +34,10 @@ PASS_COUNT=0
 FAIL_COUNT=0
 DEDUCTION=0
 MAX_SCORE=100
+BC_UNAVAILABLE=false
+
+# Check for optional dependencies
+command -v bc >/dev/null 2>&1 || { echo "[WARN] bc not available, score gates disabled" >&2; BC_UNAVAILABLE=true; }
 
 # Colors
 RED='\033[0;31m'
@@ -456,11 +460,12 @@ for t in trans:
 " 2>/dev/null) || TRANSITIONS_FILE=""
 
 check_transition() {
-    local file="$1"
+    local contract_file="$1"
+    local rules_file="$2"
     local current_state
     current_state=$(python3 -c "
 import json
-with open('$file') as f:
+with open('$contract_file') as f:
     print(json.load(f).get('state', ''))
 ")
 
@@ -476,7 +481,6 @@ with open('$file') as f:
 
     # Check if transition is valid per rules.json
     local valid=false
-    local transition_key="$PREV_STATE"
     # rules.json uses wildcard "*" for any-to-any (or specific transitions)
     while IFS= read -r rule_trans; do
         local from="${rule_trans%%->*}"
@@ -487,13 +491,83 @@ with open('$file') as f:
         fi
     done <<< "$TRANSITIONS_FILE"
 
-    if [[ "$valid" == true ]]; then
-        log_pass "Transition '$PREV_STATE → $current_state' is valid per rules.json"
-        return 0
-    else
+    if [[ "$valid" != true ]]; then
         log_fail "Transition '$PREV_STATE → $current_state' is NOT in rules.json allowed transitions"
         return 1
     fi
+
+    # Check score threshold for this transition (if defined in rules)
+    local threshold
+    threshold=$(jq -r --arg from "$PREV_STATE" --arg to "$current_state" '
+        .state_machine.transitions[]
+        | select(.from == $from and .to == $to)
+        | .require_score // null
+    ' "$rules_file" 2>/dev/null || echo "null")
+
+    if [[ "$threshold" != "null" && -n "$threshold" ]]; then
+        if [[ "$BC_UNAVAILABLE" == true ]]; then
+            log_fail "Score gate cannot be checked — bc not available"
+            return 1
+        fi
+        local actual_score
+        actual_score=$(python3 -c "
+import json
+with open('$contract_file') as f:
+    print(json.load(f).get('score', {}).get('combined', 0))
+")
+        if (( $(echo "$actual_score < $threshold" | bc -l) )); then
+            log_fail "Score gate — $PREV_STATE → $current_state requires score ≥ $threshold, got $actual_score"
+            return 1
+        fi
+    fi
+
+    log_pass "Transition '$PREV_STATE → $current_state' is valid per rules.json"
+    return 0
+}
+
+# --- Step 7b: Score gate validation (independent of --prev-state) ----------
+check_score_gate() {
+    local contract_file="$1"
+
+    local current_state new_state
+    current_state=$(jq -r '.state // "unknown"' "$contract_file")
+    new_state=$(jq -r '.governance.target_state // ""' "$contract_file")
+
+    # If no target_state, can't validate transition
+    if [[ "$new_state" == "null" || -z "$new_state" ]]; then
+        log_verbose "No governance.target_state set, skipping score gate validation"
+        return 0
+    fi
+
+    # Read rules for this transition
+    local transition_data
+    transition_data=$(jq -c --arg from "$current_state" --arg to "$new_state" '
+        .state_machine.transitions[]
+        | select(.from == $from and .to == $to)
+    ' "$RULES_FILE" 2>/dev/null || echo "null")
+
+    if [[ "$transition_data" == "null" ]]; then
+        log_fail "No matching transition rule for $current_state → $new_state"
+        return 1
+    fi
+
+    local require_score
+    require_score=$(echo "$transition_data" | jq -r '.require_score // null')
+
+    if [[ "$require_score" != "null" ]]; then
+        if [[ "$BC_UNAVAILABLE" == true ]]; then
+            log_fail "Score gate cannot be checked — bc not available"
+            return 1
+        fi
+        local actual_score
+        actual_score=$(jq -r '.score.combined // 0' "$contract_file")
+        if (( $(echo "$actual_score < $require_score" | bc -l) )); then
+            log_fail "Score gate — $current_state → $new_state requires score ≥ $require_score, got $actual_score"
+            return 1
+        fi
+        log_pass "Score gate — $current_state → $new_state (score $actual_score ≥ $require_score)"
+    fi
+    return 0
 }
 
 # --- Scoring ---------------------------------------------------------------
@@ -584,6 +658,16 @@ main() {
         DEDUCTION=$((DEDUCTION + 15))
     fi
 
+    # Step 3b: Score gate validation (only with --score flag)
+    if [[ "$SCORE_MODE" == true && -f "$RULES_FILE" ]]; then
+        if run_check check_score_gate "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 20))
+        fi
+    fi
+
     # Step 4: Nested fields
     if run_check check_nested_fields "$CONTRACT_FILE"; then
         PASS_COUNT=$((PASS_COUNT + 1))
@@ -610,7 +694,7 @@ main() {
 
     # Step 7: Transition (conditional)
     if [[ -n "$PREV_STATE" ]]; then
-        if run_check check_transition "$CONTRACT_FILE"; then
+        if run_check check_transition "$CONTRACT_FILE" "$RULES_FILE"; then
             PASS_COUNT=$((PASS_COUNT + 1))
         else
             FAIL_COUNT=$((FAIL_COUNT + 1))

@@ -25,6 +25,8 @@ EXIT_CODE=0
 BLOCKED_COUNT=0
 PASS_COUNT=0
 CURRENT_ITER=1
+CONTRACT_BRANCH=""
+LEGACY_MODE=false
 
 # Color output (disable if not a terminal)
 if [[ -t 1 ]]; then
@@ -54,11 +56,13 @@ Usage: autonomous-runner.sh [OPTIONS]
 iterations via opencode run, collecting metrics per iteration.
 
 Options:
-  --help              Show this help and exit
-  --dry-run           Preview all iterations without executing opencode
-  --iterations N      Number of iterations to run (default: 10)
-  --resume N          Resume from iteration N (default: 1)
-  --verbose           Detailed per-phase output
+  --help                    Show this help and exit
+  --dry-run                 Preview all iterations without executing opencode
+  --iterations N            Number of iterations to run (default: 10)
+  --resume N                Resume from iteration N (default: 1)
+  --verbose                 Detailed per-phase output
+  --contract-branch BRANCH  Use canonical state machine with contract.json at session/BRANCH/
+  --legacy                  Explicitly use legacy mode (existing behavior)
 
 Iterations 1-5 use --dangerously-skip-permissions (bypass mode).
 Iterations 6-10 use normal permission mode.
@@ -88,6 +92,14 @@ parse_args() {
                 fi
                 RESUME_FROM="$2"; shift 2 ;;
             --verbose) VERBOSE=true; shift ;;
+            --contract-branch)
+                if [[ -z "${2:-}" ]]; then
+                    echo "Error: --contract-branch requires a branch name"
+                    exit 2
+                fi
+                CONTRACT_BRANCH="$2"; shift 2 ;;
+            --legacy)
+                LEGACY_MODE=true; shift ;;
             *)
                 echo "Error: Unknown option: $1"
                 usage ;;
@@ -519,6 +531,35 @@ PARTIAL
     exit 130
 }
 
+# Initialize or resume a contract at session/{BRANCH}/contract.json
+init_contract() {
+    local branch="$1"
+    local contract_dir="$PROJECT_ROOT/session/$branch"
+
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[DRY-RUN] Would initialize contract at $contract_dir/contract.json (state: INIT)"
+        echo "$contract_dir/contract.json"
+        return
+    fi
+
+    mkdir -p "$contract_dir"
+    local contract_file="$contract_dir/contract.json"
+
+    if [[ ! -f "$contract_file" ]]; then
+        # Initialize from template
+        cp "$PROJECT_ROOT/contract/contract.template.json" "$contract_file"
+        local state="INIT"
+        jq --arg branch "$branch" \
+           --arg state "$state" \
+           '.state = $state | .session.branch = $branch | .session.task_id = ("iter-" + (now | tostring))' \
+           "$contract_file" > "${contract_file}.tmp" && mv "${contract_file}.tmp" "$contract_file"
+        echo "Initialized contract at $contract_file (state: INIT)"
+    else
+        echo "Resumed contract at $contract_file (state: $(jq -r '.state' "$contract_file"))"
+    fi
+    echo "$contract_file"
+}
+
 # =============================================================================
 # MAIN EXECUTION
 # =============================================================================
@@ -564,8 +605,81 @@ main() {
         # Create iteration directory
         mkdir -p "$PROJECT_ROOT/tasks/iter-${i}"
 
-        # ---- Phase 1: PLAN ----
-        local plan_result plan_exit=0 plan_duration=0
+        if [[ -n "$CONTRACT_BRANCH" && "$LEGACY_MODE" == false ]]; then
+            # === CONTRACT BRIDGE MODE ===
+            CONTRACT_FILE=$(init_contract "$CONTRACT_BRANCH" | tail -1)
+            # Set governance mode
+            jq '.governance.mode = "autonomous"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+
+            # Phase: PLAN
+            jq '.state = "PLAN"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+            local plan_result plan_exit=0 plan_duration=0
+            plan_result=$(run_phase "$i" "PLAN" "system-analyst" "$perm_flag")
+            plan_exit=$(echo "$plan_result" | awk '{print $1}')
+            plan_duration=$(echo "$plan_result" | awk '{print $2}')
+            if [[ -z "$plan_exit" ]]; then plan_exit=0; fi
+            if [[ -z "$plan_duration" ]]; then plan_duration=0; fi
+            scripts/auto-persist.sh --file "$CONTRACT_FILE" --triggered-by autonomous-runner 2>/dev/null || true
+
+            # Score PLAN
+            local SCORE
+            SCORE=$(scripts/auto-score.sh --file "$CONTRACT_FILE" --rules "$PROJECT_ROOT/rules/rules.json" --score-only 2>/dev/null || echo "0")
+            if [[ "$SCORE" -ge 70 ]]; then
+                jq --argjson s "$SCORE" '.state = "PLAN_SCORED" | .score.combined = $s | .score.verdict = "PASS"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+            else
+                jq --argjson s "$SCORE" '.state = "PLAN_SCORED" | .score.combined = $s | .score.verdict = "RETRY"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+            fi
+            scripts/auto-persist.sh --file "$CONTRACT_FILE" --triggered-by autonomous-runner 2>/dev/null || true
+
+            # Phase: EXECUTE (only if score >= 70 and plan not blocked)
+            local EXEC_SCORE=0
+            local exec_result exec_exit=0 exec_duration=0
+            if [[ "$SCORE" -ge 70 && "$plan_exit" -eq 0 ]]; then
+                jq '.state = "EXECUTE"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+                exec_result=$(run_phase "$i" "EXECUTE" "developer" "$perm_flag")
+                exec_exit=$(echo "$exec_result" | awk '{print $1}')
+                exec_duration=$(echo "$exec_result" | awk '{print $2}')
+                if [[ -z "$exec_exit" ]]; then exec_exit=0; fi
+                if [[ -z "$exec_duration" ]]; then exec_duration=0; fi
+                scripts/auto-persist.sh --file "$CONTRACT_FILE" --triggered-by autonomous-runner 2>/dev/null || true
+
+                # Score EXECUTE
+                EXEC_SCORE=$(scripts/auto-score.sh --file "$CONTRACT_FILE" --rules "$PROJECT_ROOT/rules/rules.json" --score-only 2>/dev/null || echo "0")
+                if [[ "$EXEC_SCORE" -ge 70 ]]; then
+                    jq --argjson s "$EXEC_SCORE" '.state = "EXECUTE_SCORED" | .score.combined = $s | .score.verdict = "PASS"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+                else
+                    jq --argjson s "$EXEC_SCORE" '.state = "EXECUTE_SCORED" | .score.combined = $s | .score.verdict = "RETRY"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+                fi
+                scripts/auto-persist.sh --file "$CONTRACT_FILE" --triggered-by autonomous-runner 2>/dev/null || true
+            fi
+
+            # Phase: REVIEW (only if exec score >= 70)
+            local REVIEW_SCORE=0
+            local review_result review_exit=0 review_duration=0
+            if [[ "$EXEC_SCORE" -ge 70 && "$exec_exit" -eq 0 ]]; then
+                jq '.state = "REVIEW"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+                review_result=$(run_phase "$i" "REVIEW" "quality-analyst" "$perm_flag")
+                review_exit=$(echo "$review_result" | awk '{print $1}')
+                review_duration=$(echo "$review_result" | awk '{print $2}')
+                if [[ -z "$review_exit" ]]; then review_exit=0; fi
+                if [[ -z "$review_duration" ]]; then review_duration=0; fi
+                scripts/auto-persist.sh --file "$CONTRACT_FILE" --triggered-by autonomous-runner 2>/dev/null || true
+
+                # Score REVIEW
+                REVIEW_SCORE=$(scripts/auto-score.sh --file "$CONTRACT_FILE" --rules "$PROJECT_ROOT/rules/rules.json" --score-only 2>/dev/null || echo "0")
+                if [[ "$REVIEW_SCORE" -ge 70 ]]; then
+                    jq --argjson s "$REVIEW_SCORE" '.state = "REVIEW_SCORED" | .score.combined = $s | .score.verdict = "PASS"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+                else
+                    jq --argjson s "$REVIEW_SCORE" '.state = "REVIEW_SCORED" | .score.combined = $s | .score.verdict = "RETRY"' "$CONTRACT_FILE" > tmp 2>/dev/null && mv tmp "$CONTRACT_FILE" || true
+                fi
+                scripts/auto-persist.sh --file "$CONTRACT_FILE" --triggered-by autonomous-runner 2>/dev/null || true
+            fi
+
+            # Final persist
+            scripts/auto-persist.sh --file "$CONTRACT_FILE" --triggered-by autonomous-runner 2>/dev/null || true
+        else
+            # ---- Phase 1: PLAN ----
+            local plan_result plan_exit=0 plan_duration=0
         plan_result=$(run_phase "$i" "PLAN" "system-analyst" "$perm_flag")
         plan_exit=$(echo "$plan_result" | awk '{print $1}')
         plan_duration=$(echo "$plan_result" | awk '{print $2}')
@@ -703,6 +817,7 @@ main() {
         if [[ "$(detect_blocked "$review_output")" == "true" ]]; then
             log_info "  REVIEW output indicates BLOCKED state"
         fi
+    fi  # end contract-branch conditional
     done
 
     local END_TIME_ITER

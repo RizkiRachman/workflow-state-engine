@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Auto re-index gitnexus after code changes
+if [[ -f "scripts/gitnexus-analyze.sh" ]]; then
+    bash scripts/gitnexus-analyze.sh 2>/dev/null || echo "⚠ gitnexus re-index skipped (non-zero exit)"
+fi
+exit 0

@@ -143,6 +143,77 @@ bash scripts/detect-parallel-conflicts.sh --file1 /tmp/a.txt --file2 /tmp/b.txt
 bash scripts/persist-contract.sh --file session/{branch}/contract.json --inject-score 85
 ```
 
+### Automation Scripts (Auto-Persist & Scoring)
+
+**`scripts/auto-persist.sh`** — Unified contract persistence. Writes the orchestration envelope to both lean-ctx knowledge and `session/{branch}/contract.json` in one atomic call. Supports `--dry-run`, `--no-knowledge`, `--no-file`, `--branch`, and `--triggered-by` flags. Automatically detects state transitions and appends audit log entries.
+
+```bash
+bash scripts/auto-persist.sh                              # Persist current branch
+bash scripts/auto-persist.sh --dry-run                    # Preview without writing
+bash scripts/auto-persist.sh --triggered-by developer     # Tag the source agent
+```
+
+**`scripts/auto-score.sh`** — Three-tier automated scoring pipeline. Runs Tier 1 rule-based checks (schema, permissions, blast radius, writing order, required fields), Tier 2 LLM-as-judge (when available), and computes the combined PASS/RETRY/BLOCKED verdict. Mirrors the scoring logic from the orchestration contract.
+
+```bash
+bash scripts/auto-score.sh --file session/{branch}/contract.json --rules rules/rules.json
+bash scripts/auto-score.sh --file contract.json --rules rules.json --score-only   # Just the number
+```
+
+### Guard & Recovery Scripts
+
+**`scripts/state-guard.sh`** — Agent state access verification. Checks if an agent is allowed to operate in the current contract state by reading `rules.json agent_states`. Prevents agents from being called in states they don't have access to.
+
+```bash
+bash scripts/state-guard.sh --agent system-analyst --state PLAN     # PASS
+bash scripts/state-guard.sh --agent system-analyst --state EXECUTE  # BLOCKED
+```
+
+**`scripts/self-repair.sh`** — Contract corruption recovery. Validates the current contract, scans `session/{branch}/` for valid snapshots when corruption is detected, and restores from the newest valid snapshot. Requires `--force` for auto-restore; prompts by default.
+
+```bash
+bash scripts/self-repair.sh                              # Check + auto-detect
+bash scripts/self-repair.sh --dry-run                    # Preview restoration
+bash scripts/self-repair.sh --force                      # Restore without prompt
+```
+
+**`scripts/drift-detect.sh`** — Drift detection between lean-ctx knowledge and file versions of the contract. Compares 5 key fields (`state`, `score.combined`, `score.verdict`, `session.task_id`, `retry.attempt`) and reports discrepancies.
+
+```bash
+bash scripts/drift-detect.sh                             # Auto-detect branch
+bash scripts/drift-detect.sh --verbose                   # Show all field values
+```
+
+### Spec Gate & Knowledge Verification
+
+**`scripts/sdd-gate.sh`** — SDD (Spec-Driven Development) gate enforcement. Checks if a change touches >3 files, crosses service boundaries, or is estimated >30 min. If so, requires an approved spec before EXECUTE delegation. Supports trivial fix, config-only, and doc-only exemptions.
+
+```bash
+bash scripts/sdd-gate.sh --file session/{branch}/contract.json
+bash scripts/sdd-gate.sh --file contract.json --estimate 30
+```
+
+**`scripts/verify-knowledge.sh`** — Knowledge persistence verification. Queries lean-ctx knowledge base for expected categories (architecture, patterns, testing, lessons) and reports coverage. PASS at ≥70% coverage, FAIL below.
+
+```bash
+bash scripts/verify-knowledge.sh --phase PLAN
+bash scripts/verify-knowledge.sh --all
+```
+
+### Git Hooks
+
+**`scripts/install-hooks.sh`** — Git hook manager for `.githooks/` directory. Installs, uninstalls, or checks status of pre-commit and post-commit hooks. The pre-commit hook blocks commits when the contract is BLOCKED; the post-commit hook auto re-indexes GitNexus.
+
+```bash
+bash scripts/install-hooks.sh                            # Install all hooks
+bash scripts/install-hooks.sh --status                   # Check current state
+bash scripts/install-hooks.sh --uninstall                # Remove hooks
+```
+
+**`.githooks/pre-commit`** — Blocks commits on feature branches when the orchestration contract is in BLOCKED state (score < 50). Only activates when `session/{branch}/contract.json` exists.
+
+**`.githooks/post-commit`** — Auto re-indexes GitNexus after every commit by running `scripts/gitnexus-analyze.sh`.
+
 ### Ponytail Debt Convention
 
 Intentional shortcuts are marked with `ponytail:` comments documenting the ceiling and upgrade path:

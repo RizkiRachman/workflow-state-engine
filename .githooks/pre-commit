@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+# Don't block main/master branches
+if [[ "$BRANCH" == "main" || "$BRANCH" == "master" ]]; then
+    exit 0
+fi
+
+# Validate contract if it exists for this branch
+CONTRACT_FILE="session/$BRANCH/contract.json"
+if [[ -f "$CONTRACT_FILE" ]]; then
+    if [[ -f "scripts/validate-contract.sh" ]]; then
+        bash scripts/validate-contract.sh --file "$CONTRACT_FILE" --score
+        EXIT_CODE=$?
+        if [[ $EXIT_CODE -eq 2 ]]; then
+            echo "⛔ PRE-COMMIT BLOCKED: Contract is BLOCKED (score < 50). Fix contract before committing."
+            echo "   Run: scripts/self-repair.sh --dry-run to assess restoration options."
+            exit 1
+        fi
+    fi
+fi
+exit 0
