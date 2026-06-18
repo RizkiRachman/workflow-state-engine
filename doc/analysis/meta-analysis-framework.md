@@ -71,11 +71,11 @@ and permission impact.
 
 ```
 scripts/
-├── autonomous-runner.sh    # Main orchestrator (637L)
-└── collect-metrics.sh      # Metrics aggregation (270L)
+├── autonomous-runner.sh    # Main orchestrator (737L)
+└── collect-metrics.sh      # Metrics aggregation (269L)
 
 doc/analysis/
-├── 10-loop-report.md       # Analysis report template (157L)
+├── 10-loop-report.md       # Analysis report template (138L)
 ├── meta-analysis-framework.md # This file
 └── iter-*/                 # Per-iteration metrics (generated at runtime)
     ├── metrics.json

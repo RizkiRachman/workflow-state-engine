@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2086
 # autonomous-runner.sh — 10-loop Autonomous Meta-Analysis Framework
 # Orchestrates 10 iterations of PLAN→EXECUTE→REVIEW via opencode run.
 # Each iteration captures JSON metrics, state transitions, and scoring.
@@ -209,6 +208,7 @@ run_phase() {
 
     # Execute with timeout (300s) via stdin pipe to avoid bash -c escaping issues
     mkdir -p "$(dirname "$output_file")"
+    # shellcheck disable=SC2086
     if echo "$prompt" | timeout 300 opencode run --agent "$agent" --format json ${permissions_flag} - > "$output_file" 2>&1; then
         exit_code=0
         log_pass "  [$phase] Completed (exit=0)" >&2
