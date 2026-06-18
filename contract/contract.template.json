@@ -1,0 +1,56 @@
+{
+  "$schema": "../contract/contract.schema.json",
+  "state": "INIT",
+  "session": {
+    "task_id": "",
+    "branch": "",
+    "created_at": ""
+  },
+  "requirements": {
+    "goal": "",
+    "acceptance_criteria": [],
+    "constraints": []
+  },
+  "decisions": {},
+  "governance": {
+    "rules_references": [],
+    "current_guidance": ""
+  },
+  "score": {
+    "rules": {
+      "pass": 0,
+      "fail": 0,
+      "deduction": 0,
+      "subtotal": 0
+    },
+    "judge": {},
+    "combined": 0,
+    "verdict": ""
+  },
+  "retry": {
+    "attempt": 0,
+    "current_phase": "",
+    "issues": []
+  },
+  "outputs": {},
+  "metrics": {
+    "cost_tokens": 0,
+    "elapsed_ms": 0,
+    "agents_used": [],
+    "phases_completed": []
+  },
+  "scope": {
+    "included": [],
+    "excluded": [],
+    "parallel_eligible": false
+  },
+  "validation": {
+    "block_on": {
+      "max_test_failures": 3,
+      "max_score_drop": 30,
+      "max_compile_errors": 1,
+      "sdlc_stage": ""
+    }
+  },
+  "lessons_learned": []
+}

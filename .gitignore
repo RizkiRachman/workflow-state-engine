@@ -37,11 +37,13 @@ node_modules/
 plugins/
 
 # Task board (sprint tracking, not version-controlled)
-tasks/
+# Only .gitkeep files are tracked — content files are ephemeral per-session
+tasks/*/*
+!tasks/*/.gitkeep
 
-# Contract runtime state (mutates on every orchestration session — don't commit)
-contract/contract.json
-contract/state.md
+# Contract runtime state — session/<branch>/contract.json for per-session envelopes
+# contract/ itself contains only committed definitions
+
 # Template artifacts (goods-price-comparison ported files)
 AGENTS.md
 CLAUDE.md

@@ -63,13 +63,13 @@ Every completed task is a data point. Your job is to turn that data into durable
 
 ## Orchestration Envelope — Session Protocol
 
-The orchestrator uses a **shared JSON envelope** (`.opencode/orchestration/contract.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
+The orchestrator uses a **shared JSON envelope** (`contract/contract.template.json`) to pass state between agents and persist across sessions. You MUST follow this protocol.
 
 ### At Session Start (before any work)
 1. **READ** — Load the envelope: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    - If found: extract `session`, `requirements`, `decisions`, `outputs`, `score`, `metrics`, `lessons_learned[]` — these are your learning context
    - If NOT found (running standalone): Create a fresh envelope:
-     - Read `.opencode/orchestration/contract.json` as base
+     - Read `contract/contract.template.json` as base
      - Populate `session.task_id` (short slug like `"quality-analyst-learner-standalone-<date>"`), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract value <base JSON with populated fields>`
      - Log the standalone session for traceability

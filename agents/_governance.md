@@ -6,14 +6,14 @@ permissions, and protocols that apply to every agent in the workflow-state-engin
 ---
 ## 1. Contract Protocol
 
-All agents **MUST** read the shared JSON envelope (`.opencode/orchestration/contract.json`) at session start:
+All agents **MUST** read the shared JSON envelope (`contract/contract.template.json`) at session start:
 
 ```lean-ctx
 lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"
 ```
 
 - If found → extract `decisions.*`, `governance.*`, `retry.issues[]`, `scope.*`, `requirements.*`
-- If NOT found (standalone session) → create fresh from `.opencode/orchestration/contract.json`:
+- If NOT found (standalone session) → create fresh from `contract/contract.template.json`:
   1. Populate `session.task_id` (short slug like `"<agent-type>-standalone-<date>"`)
   2. Populate `session.created_at` (ISO timestamp)
   3. Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <JSON>`
@@ -40,28 +40,28 @@ Every orchestration session MUST persist its contract state to the `session/` di
 ### Directory layout
 
 ```
-contract/                    ← Active contract (mutable, current state)
-  contract.json
-  contract.schema.json
-  state.md
-  superpowers-contract.json
+contract/                    ← Committed definitions (version-controlled, all files tracked)
+  contract.schema.json        JSON Schema for the orchestration envelope
+  superpowers-contract.json   Plugin/skill/MCP registry
+  state.md                    Session state template
+  contract.template.json      Seed envelope for fresh sessions
 
 session/                     ← Historical archive (append-only state log + per-branch snapshots)
   state.md                   ← Append-only log of ALL state transitions (every session, every branch)
   index.md                   ← Master branch index (one row per branch, latest state per row)
   {branch-name}/             ← Per-branch snapshot for resumption
-    contract.json
-    contract.schema.json
-    state.md
-    superpowers-contract.json
+    contract.json              ← Runtime envelope snapshot
+    contract.schema.json       ← Schema copy for standalone validation
+    state.md                   ← Runtime state snapshot
+    superpowers-contract.json  ← Plugin registry snapshot
 ```
 
 ### Lifecycle Protocol
 
 | Event | Action |
 |-------|--------|
-| **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from there (load contract.json); if no, init fresh from `contract/` template |
-| **State transition** | Update `contract/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
+| **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from there (load contract.json); if no, init fresh from `contract/contract.template.json` via `lean-ctx ctx_knowledge` |
+| **State transition** | Update envelope in `lean-ctx ctx_knowledge` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
 | **Session end** (COMPLETE/BLOCKED) | Run final snapshot → append summary to `session/state.md` → update `session/index.md` with result |
 | **Branch switch** | Snapshot old branch (`--branch OLD`) → checkout new branch → load `session/NEW/` if exists |
 

@@ -23,7 +23,7 @@
 # Requirements:
 #   - bash 4+
 #   - git (for branch detection, commit hash)
-#   - jq (for extracting state/score from contract.json)
+#   - jq (for extracting state/score from runtime contract.json in session/<branch>)
 
 set -euo pipefail
 
@@ -75,8 +75,8 @@ BEHAVIOR
     4. Appends an entry to session/state.md with date, branch, state, score
     5. Updates session/index.md — adds or updates the row for this branch
 
-CONTRACT FILES COPIED
-    contract/contract.json
+CONTRACT FILES
+    contract/contract.template.json  (seed template — copied as contract.json to session/)
     contract/contract.schema.json
     contract/state.md
     contract/superpowers-contract.json
@@ -195,7 +195,7 @@ discover_contract_files() {
     local files=()
     local found=false
 
-    for f in "$contract_dir/contract.json" "$contract_dir/contract.schema.json" \
+    for f in "$contract_dir/contract.template.json" "$contract_dir/contract.schema.json" \
              "$contract_dir/state.md" "$contract_dir/superpowers-contract.json"; do
         if [[ -f "$f" ]]; then
             files+=("$f")
@@ -481,24 +481,28 @@ main() {
     log_verbose "Commit: $(get_commit_hash)"
 
     # Step 2: Discover contract files
-    echo "---"
     echo "Step 2: Discover contract files"
-    local contract_file="$PROJECT_ROOT/contract/contract.json"
-    if [[ ! -f "$contract_file" ]]; then
-        log_fail "contract/contract.json not found — nothing to snapshot"
+    local template_file="$PROJECT_ROOT/contract/contract.template.json"
+    if [[ ! -f "$template_file" ]]; then
+        log_fail "contract/contract.template.json not found -- nothing to snapshot"
         exit 1
     fi
-    log_pass "Contract file found: contract/contract.json"
-
-    local src_files
+    log_pass "Contract template found: contract/contract.template.json"
     src_files=($(discover_contract_files))
     if [[ $? -ne 0 || ${#src_files[@]} -eq 0 ]]; then
         log_fail "No contract files to snapshot"
         exit 1
     fi
     log_verbose "Found ${#src_files[@]} contract file(s)"
-
-    # Step 3: Extract state and score from contract.json
+    # Step 3: Extract contract metadata
+    echo "Step 3: Extract contract metadata"
+    local source_json="$PROJECT_ROOT/session/$br/contract.json"
+    if [[ ! -f "$source_json" ]]; then
+        source_json="$PROJECT_ROOT/contract/contract.template.json"
+    fi
+    state="$(jq -r '.state // "unknown"' "$source_json" 2>/dev/null || echo "unknown")"
+    combined_score="$(jq -r '.score.combined // 0' "$source_json" 2>/dev/null || echo "0")"
+    log_pass "State: $state | Score: ${combined_score}/100"
     echo "---"
     echo "Step 3: Extract contract metadata"
     local state
