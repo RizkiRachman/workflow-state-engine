@@ -37,7 +37,12 @@ node_modules/
 plugins/
 
 # Task board (sprint tracking, not version-controlled)
-tasks/
+
+session/feature/
+session/main/
+session/index.md
+session/state.md
+
 
 # Contract runtime state — session/<branch>/contract.json for per-session envelopes
 # contract/ itself contains only committed definitions
