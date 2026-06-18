@@ -40,9 +40,8 @@ plugins/
 tasks/
 
 # Contract runtime state (mutates on every orchestration session — don't commit)
-# Only index.md is version-controlled — all other contract/ files are runtime state
-contract/*
-!contract/index.md
+contract/contract.json
+contract/state.md
 # Template artifacts (goods-price-comparison ported files)
 AGENTS.md
 CLAUDE.md
