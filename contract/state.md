@@ -1,6 +1,8 @@
 # STATE — Workflow State Engine
 ## Current Focus
-<!-- Current task or phase — updated each session -->
+State: **PLAN**. Transitioned from INIT. Ready to delegate to @system-analyst.
+Next: Scoring pipeline → persist → snapshot.
+
 ## Known Blockers
 <!-- Active blockers preventing progress -->
 <!-- Format: [YYYY-MM-DD] **Task name**: Brief desc of what was done -->

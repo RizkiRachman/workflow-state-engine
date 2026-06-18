@@ -490,25 +490,16 @@ main() {
     log_pass "Contract template found: contract/contract.template.json"
     src_files=($(discover_contract_files))
     if [[ $? -ne 0 || ${#src_files[@]} -eq 0 ]]; then
-        log_fail "No contract files to snapshot"
-        exit 1
+        log_verbose "Found ${#src_files[@]} contract file(s)"
     fi
-    log_verbose "Found ${#src_files[@]} contract file(s)"
     # Step 3: Extract contract metadata
     echo "Step 3: Extract contract metadata"
-    local source_json="$PROJECT_ROOT/session/$br/contract.json"
-    if [[ ! -f "$source_json" ]]; then
-        source_json="$PROJECT_ROOT/contract/contract.template.json"
+    local src_json="$PROJECT_ROOT/session/$branch/contract.json"
+    if [[ ! -f "$src_json" ]]; then
+        src_json="$PROJECT_ROOT/contract/contract.template.json"
     fi
-    state="$(jq -r '.state // "unknown"' "$source_json" 2>/dev/null || echo "unknown")"
-    combined_score="$(jq -r '.score.combined // 0' "$source_json" 2>/dev/null || echo "0")"
-    log_pass "State: $state | Score: ${combined_score}/100"
-    echo "---"
-    echo "Step 3: Extract contract metadata"
-    local state
-    state="$(jq -r '.state // "unknown"' "$contract_file" 2>/dev/null || echo "unknown")"
-    local combined_score
-    combined_score="$(jq -r '.score.combined // 0' "$contract_file" 2>/dev/null || echo "0")"
+    state="$(jq -r '.state // "unknown"' "$src_json" 2>/dev/null || echo "unknown")"
+    combined_score="$(jq -r '.score.combined // 0' "$src_json" 2>/dev/null || echo "0")"
     log_pass "State: $state | Score: ${combined_score}/100"
     log_verbose "Summary: $SUMMARY_TEXT"
 
@@ -535,23 +526,16 @@ main() {
         echo "Step 6: Update branch index (session/index.md)"
         update_branch_index "$branch" "$state" "$combined_score" "$commit_hash"
     else
-        echo "---"
         echo "Step 5-6: Skipped (--snapshot-only)"
         log_info "Skipping state.md and index.md updates (--snapshot-only)"
     fi
-
-    # Summary
-    echo "---"
     if [[ "$DRY_RUN" == true ]]; then
         echo -e "${CYAN}DRY-RUN — no files were modified.${NC}"
-    fi
-    if [[ "$EXIT_CODE" -eq 0 ]]; then
+    elif [[ "$EXIT_CODE" -eq 0 ]]; then
         echo -e "${GREEN}Snapshot completed successfully for branch '$branch'.${NC}"
     else
         echo -e "${RED}Snapshot completed with errors.${NC}"
     fi
-
-    exit "$EXIT_CODE"
 }
 
 main "$@"
