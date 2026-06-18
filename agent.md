@@ -426,6 +426,7 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 | `writing-plans` | Create structured implementation plans |
 | `humanizer` | Remove AI writing patterns from output |
 | `doubt-driven-development` | Validate assumptions before committing to design |
+| `adaptive-solver` | Meta-cognitive uncertainty resolution — structured loop for ambiguity, low confidence, or failed attempts |
 | `spec-driven-development` | Write spec first, implement after |
 | `subagent-driven-development` | Delegate bounded work to specialized subagents |
 | `systematic-debugging` | Structured root cause analysis |
