@@ -57,8 +57,8 @@ Checks performed:
      .opencode/usage -> usage/,
      .opencode/config -> config/.
   3. Contract file integrity
-     Verifies contract/contract.json is valid JSON and contract/index.md
-     exists (schema definition source).
+ Verifies contract/contract.schema.json is valid JSON schema and all
+ committed definition files exist.
   4. Agent file consistency
      Verifies each .md file in agents/ has a proper heading.
   5. Cross-references
@@ -148,31 +148,22 @@ check_required_dirs() {
         fi
     fi
 
-    # contract/ — index.md (definition), contract.json + state.md (runtime, optional)
+    # contract/ — committed definition files (all version-controlled)
     dir="$PROJECT_ROOT/contract"
     if [[ ! -d "$dir" ]]; then
         log_fail "contract/ directory does not exist"
         violations=$((violations + 1))
     else
-        if [[ ! -f "$dir/index.md" ]]; then
-            log_fail "contract/index.md is missing (committed definition)"
-            violations=$((violations + 1))
-        else
-            log_pass "contract/index.md exists (definition source)"
-        fi
-        # contract.json and state.md are runtime state — gitignored, only exist during active sessions
-        if [[ -f "$dir/contract.json" ]]; then
-            log_pass "contract/contract.json exists (runtime state)"
-        else
-            log_info "contract/contract.json not found (expected — runtime file, only present during active sessions)"
-        fi
-        if [[ -f "$dir/state.md" ]]; then
-            log_pass "contract/state.md exists (runtime state)"
-        else
-            log_info "contract/state.md not found (expected — runtime file, only present during active sessions)"
-        fi
+        local def_files=("README.md" "contract.schema.json" "superpowers-contract.json" "state.md")
+        for f in "${def_files[@]}"; do
+            if [[ ! -f "$dir/$f" ]]; then
+                log_fail "contract/$f is missing"
+                violations=$((violations + 1))
+            else
+                log_pass "contract/$f exists"
+            fi
+        done
     fi
-
     # config/ — at least 2 .json files
     dir="$PROJECT_ROOT/config"
     if [[ ! -d "$dir" ]]; then
@@ -362,52 +353,37 @@ check_opencode_symlinks() {
 # ── Check 3: Contract file integrity ───────────────────────────────────────
 check_contract_integrity() {
     echo "Check 3: Contract file integrity"
-
     local violations=0
-    local contract_file="$PROJECT_ROOT/contract/contract.json"
-    local schema_file="$PROJECT_ROOT/contract/index.md"
-
-    # Check contract.json is valid JSON (runtime state — optional)
-    if [[ ! -f "$contract_file" ]]; then
-        log_info "contract/contract.json not found (runtime state — expected only during active sessions)"
+    local schema_file="$PROJECT_ROOT/contract/contract.schema.json"
+    
+    # Check contract.schema.json is valid JSON
+    if [[ ! -f "$schema_file" ]]; then
+        log_fail "contract/contract.schema.json does not exist"
+        violations=$((violations + 1))
     else
         if command -v jq &>/dev/null; then
-            if jq empty "$contract_file" 2>/dev/null; then
-                log_pass "contract/contract.json is valid JSON"
+            if jq empty "$schema_file" 2>/dev/null; then
+                log_pass "contract/contract.schema.json is valid JSON"
             else
-                log_fail "contract/contract.json is not valid JSON"
-                if [[ "$VERBOSE" == true ]]; then
-                    jq empty "$contract_file" 2>&1 | sed 's/^/    -> /'
-                fi
+                log_fail "contract/contract.schema.json is not valid JSON"
                 violations=$((violations + 1))
             fi
         elif command -v python3 &>/dev/null; then
-            if python3 -m json.tool "$contract_file" &>/dev/null; then
-                log_pass "contract/contract.json is valid JSON"
+            if python3 -m json.tool "$schema_file" &>/dev/null; then
+                log_pass "contract/contract.schema.json is valid JSON"
             else
-                log_fail "contract/contract.json is not valid JSON"
-                if [[ "$VERBOSE" == true ]]; then
-                    python3 -m json.tool "$contract_file" 2>&1 | sed 's/^/    -> /'
-                fi
+                log_fail "contract/contract.schema.json is not valid JSON"
                 violations=$((violations + 1))
             fi
         else
-            log_info "Neither jq nor python3 found — skipping JSON validation for contract.json"
+            log_info "Neither jq nor python3 found — skipping JSON validation"
         fi
     fi
-
-    # Check contract/index.md exists (schema definition source)
-    if [[ ! -f "$schema_file" ]]; then
-        log_fail "contract/index.md does not exist"
-        violations=$((violations + 1))
-    else
-        log_pass "contract/index.md exists (schema definition source)"
-    fi
-
-    # Deep schema validation removed: schema now embedded in index.md markdown
+    
     if [[ "$violations" -eq 0 ]]; then
-        echo "  Result: All contract files valid"
+        echo "  Result: Contract schema valid"
     fi
+    return "$violations"
 }
 
 # ── Check 4: Agent file consistency ────────────────────────────────────────
