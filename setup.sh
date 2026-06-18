@@ -74,7 +74,7 @@ ln -sfn ../skills   .opencode/skills
 ln -sfn ../plugins  .opencode/plugins
 ln -sfn ../rules    .opencode/rules
 ln -sfn ../template .opencode/orchestration
-ln -sfn ../doc      .opencode/planning
+ln -sfn ../doc .opencode/planning
 ln -sfn ../usage    .opencode/usage
 ln -sfn ../config   .opencode/config
 ln -sfn ../agent.md .opencode/AGENTS.md
@@ -122,6 +122,7 @@ if [ "$VALIDATION_FAILED" -eq 1 ]; then
   echo "  .opencode/skills        -> ../skills"
   echo "  .opencode/rules         -> ../rules"
   echo "  .opencode/orchestration -> ../template"
+  echo "  .opencode/planning      -> ../doc"
   echo "  STATE.md                -> contract/state.md"
   echo "  PROJECT.md              -> doc/project.md"
   echo "  AGENTS.md               -> ../agent.md"
