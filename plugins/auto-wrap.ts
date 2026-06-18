@@ -2,7 +2,7 @@ import {appendFileSync, mkdirSync} from "fs";
 import {resolve} from "path";
 
 const ENABLED = process.env.AUTO_WRAP_ENABLED !== "false";
-const HINT = "[workflow-contract-state]";
+const HINT = "[hints][workflow-architecture][workflow-contract][self-autonomous]";
 const LOG = resolve(process.env.OPENCODE_DIR || process.cwd(), ".opencode/auto-wrap.log");
 
 function log(msg: string) {

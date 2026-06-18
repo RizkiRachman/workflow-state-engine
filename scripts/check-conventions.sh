@@ -213,7 +213,7 @@ check_json_schema() {
         unknown_keys=$(jq -s '
             .[0].properties as $schemaProps |
             .[1] as $contract |
-            [$contract | keys[] | select(. as $k | ($schemaProps | has($k)) | not)]
+            [$contract | keys[] | select(. as $k | ($schemaProps | has($k)) | not) | select(startswith("$") | not)]
         ' "$schema_file" "$contract_file" 2>/dev/null)
 
         if [[ -z "$unknown_keys" || "$unknown_keys" == "[]" ]]; then
@@ -236,7 +236,7 @@ check_json_schema() {
             unknown_keys=$(jq -s '
                 .[0].properties as $schemaProps |
                 .[1] as $contract |
-                [$contract | keys[] | select(. as $k | ($schemaProps | has($k)) | not)]
+                [$contract | keys[] | select(. as $k | ($schemaProps | has($k)) | not) | select(startswith("$") | not)]
             ' "$schema_file" "$contract_file" 2>/dev/null)
 
             if [[ -n "$unknown_keys" && "$unknown_keys" != "[]" ]]; then

@@ -207,7 +207,7 @@ Start at 100. Deduct for each violation:
 | Check | Method | Deduction |
 |-------|--------|-----------|
 | Schema valid | Parse output against expected structure | -15 |
-| Permissions violated | Grep for forbidden patterns (project conventions violations, FQN, push to main) | -40 |
+| Permissions violated | Grep for forbidden anti-patterns (conventions violations, FQN, direct push to protected branch) | -40 |
 | Blast radius safe | `gitnexus_impact` on changed symbols | -40 if HIGH/CRITICAL |
 | Writing order correct | Verify port→service→mapper→adapter order in plan | -15 |
 | Required fields present | Check expected keys are non-null in output | -15 |
