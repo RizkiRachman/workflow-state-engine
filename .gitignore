@@ -37,6 +37,9 @@ node_modules/
 plugins/
 
 # Task board (sprint tracking, not version-controlled)
+# Only .gitkeep files are tracked — content files are ephemeral per-sprint
+tasks/*/*
+!tasks/*/.gitkeep
 
 session/feature/
 session/main/
