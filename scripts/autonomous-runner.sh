@@ -63,8 +63,8 @@ Options:
 Iterations 1-5 use --dangerously-skip-permissions (bypass mode).
 Iterations 6-10 use normal permission mode.
 
-Each iteration saves metrics to doc/analysis/iter-N/metrics.json.
-After completion, generates doc/analysis/10-loop-report.md.
+Each iteration saves metrics to tasks/iter-N/metrics.json.
+After completion, generates tasks/10-loop-report.md.
 USAGE
     exit 2
 }
@@ -189,7 +189,7 @@ run_phase() {
     # Convert phase to lowercase for filename (POSIX-compatible)
     local phase_lower
     phase_lower=$(echo "$phase" | tr '[:upper:]' '[:lower:]')
-    local output_file="$PROJECT_ROOT/doc/analysis/iter-${iter}/${phase_lower}-output.json"
+    local output_file="$PROJECT_ROOT/tasks/iter-${iter}/${phase_lower}-output.json"
     local cmd_base="opencode run"
 
     # Use stderr for log messages so stdout is clean for return value capture
@@ -328,7 +328,7 @@ build_metrics() {
 save_metrics() {
     local iter="$1"
     local metrics_json="$2"
-    local target_dir="$PROJECT_ROOT/doc/analysis/iter-${iter}"
+    local target_dir="$PROJECT_ROOT/tasks/iter-${iter}"
     local target_file="$target_dir/metrics.json"
 
     mkdir -p "$target_dir"
@@ -352,7 +352,7 @@ detect_blocked() {
 
 # Generate the final analysis report
 generate_report() {
-    local report_file="$PROJECT_ROOT/doc/analysis/10-loop-report.md"
+    local report_file="$PROJECT_ROOT/tasks/10-loop-report.md"
     local timestamp
     timestamp="$(get_timestamp)"
 
@@ -470,7 +470,7 @@ REPORT
 
     # Append per-iteration summary rows
     for ((i = RESUME_FROM; i <= ITERATIONS; i++)); do
-        local metrics_file="$PROJECT_ROOT/doc/analysis/iter-${i}/metrics.json"
+        local metrics_file="$PROJECT_ROOT/tasks/iter-${i}/metrics.json"
         local perm_label
         perm_label="$(get_permissions_label "$i")"
         local plan_status="—" exec_status="—" review_status="—" duration="—" blocked="—"
@@ -502,7 +502,7 @@ cleanup() {
     log_info "SIGINT received — saving partial state..."
     local timestamp
     timestamp="$(get_timestamp)"
-    local summary_file="$PROJECT_ROOT/doc/analysis/partial-state-${timestamp}.json"
+    local summary_file="$PROJECT_ROOT/tasks/partial-state-${timestamp}.json"
     cat > "$summary_file" <<PARTIAL
 {
   "status": "INTERRUPTED",
@@ -562,7 +562,7 @@ main() {
         log_bold "=== Iteration $i / $total_iterations (${perm_label}) ==="
 
         # Create iteration directory
-        mkdir -p "$PROJECT_ROOT/doc/analysis/iter-${i}"
+        mkdir -p "$PROJECT_ROOT/tasks/iter-${i}"
 
         # ---- Phase 1: PLAN ----
         local plan_result plan_exit=0 plan_duration=0
@@ -575,7 +575,7 @@ main() {
         # Extract scores from PLAN output
         local plan_score=0 plan_verdict="PASS" plan_rules="{}"
         local plan_state_before="INIT" plan_state_after="PLAN_SCORED"
-        local plan_output_file="$PROJECT_ROOT/doc/analysis/iter-${i}/plan-output.json"
+        local plan_output_file="$PROJECT_ROOT/tasks/iter-${i}/plan-output.json"
         if [[ -f "$plan_output_file" && "$DRY_RUN" != true ]]; then
             plan_score=$(jq -r '.score.combined // 0' "$plan_output_file" 2>/dev/null || echo 0)
             plan_verdict=$(jq -r '.score.verdict // "PASS"' "$plan_output_file" 2>/dev/null || echo "PASS")
@@ -604,7 +604,7 @@ main() {
         # Extract scores from EXECUTE output
         local exec_score=0 exec_verdict="PASS" exec_rules="{}"
         local exec_state_before="PLAN_SCORED" exec_state_after="EXECUTE_SCORED"
-        local exec_output_file="$PROJECT_ROOT/doc/analysis/iter-${i}/execute-output.json"
+        local exec_output_file="$PROJECT_ROOT/tasks/iter-${i}/execute-output.json"
         if [[ -f "$exec_output_file" && "$DRY_RUN" != true ]]; then
             exec_score=$(jq -r '.score.combined // 0' "$exec_output_file" 2>/dev/null || echo 0)
             exec_verdict=$(jq -r '.score.verdict // "PASS"' "$exec_output_file" 2>/dev/null || echo "PASS")
@@ -633,7 +633,7 @@ main() {
         # Extract scores from REVIEW output
         local review_score=0 review_verdict="PASS" review_rules="{}"
         local review_state_before="EXECUTE_SCORED" review_state_after="REVIEW_SCORED"
-        local review_score_file="$PROJECT_ROOT/doc/analysis/iter-${i}/review-output.json"
+        local review_score_file="$PROJECT_ROOT/tasks/iter-${i}/review-output.json"
         if [[ -f "$review_score_file" && "$DRY_RUN" != true ]]; then
             review_score=$(jq -r '.score.combined // 0' "$review_score_file" 2>/dev/null || echo 0)
             review_verdict=$(jq -r '.score.verdict // "PASS"' "$review_score_file" 2>/dev/null || echo "PASS")
@@ -666,7 +666,7 @@ main() {
 
         # Extract contract_compliance from REVIEW output (most comprehensive)
         local cc_field_access=0 cc_audit_entries=0 cc_schema_valid=true cc_writing_order=0
-        local cc_output_file="$PROJECT_ROOT/doc/analysis/iter-${i}/review-output.json"
+        local cc_output_file="$PROJECT_ROOT/tasks/iter-${i}/review-output.json"
         if [[ -f "$cc_output_file" && "$DRY_RUN" != true ]]; then
             cc_field_access=$(jq -r '.contract_compliance.field_access_violations // 0' "$cc_output_file" 2>/dev/null || echo 0)
             cc_audit_entries=$(jq -r '.contract_compliance.audit_log_entries_added // 0' "$cc_output_file" 2>/dev/null || echo 0)
@@ -690,9 +690,9 @@ main() {
         fi
 
         # Detect BLOCKED from opencode output files
-        local plan_output="$PROJECT_ROOT/doc/analysis/iter-${i}/plan-output.json"
-        local exec_output="$PROJECT_ROOT/doc/analysis/iter-${i}/execute-output.json"
-        local review_output="$PROJECT_ROOT/doc/analysis/iter-${i}/review-output.json"
+        local plan_output="$PROJECT_ROOT/tasks/iter-${i}/plan-output.json"
+        local exec_output="$PROJECT_ROOT/tasks/iter-${i}/execute-output.json"
+        local review_output="$PROJECT_ROOT/tasks/iter-${i}/review-output.json"
 
         if [[ "$(detect_blocked "$plan_output")" == "true" ]]; then
             log_info "  PLAN output indicates BLOCKED state"
@@ -724,7 +724,7 @@ main() {
     echo "  Passed:     ${PASS_COUNT}"
     echo "  BLOCKED:    ${BLOCKED_COUNT}"
     echo "  Duration:   $((total_duration / 1000))s"
-    echo "  Report:     doc/analysis/10-loop-report.md"
+    echo "  Report:     tasks/10-loop-report.md"
     echo ""
 
     if [[ "$BLOCKED_COUNT" -gt 0 ]]; then

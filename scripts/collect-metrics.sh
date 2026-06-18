@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2086
 # collect-metrics.sh — Aggregate per-iteration metrics into cumulative report
-# Reads all doc/analysis/iter-*/metrics.json files and produces cumulative JSON.
+# Reads all tasks/iter-*/metrics.json files and produces cumulative JSON.
 #   bash scripts/collect-metrics.sh                    # Auto-detect iter dirs
 #   bash scripts/collect-metrics.sh --help             # Show usage
-#   bash scripts/collect-metrics.sh --pattern PATTERN  # Glob pattern (default: doc/analysis/iter-*/metrics.json)
+#   bash scripts/collect-metrics.sh --pattern PATTERN  # Glob pattern (default: tasks/iter-*/metrics.json)
 #   bash scripts/collect-metrics.sh --output FILE      # Output file (default: stdout)
 #   0 — Success
 #   1 — No metrics files found
 #   2 — Usage displayed / invalid args
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PATTERN="$PROJECT_ROOT/doc/analysis/iter-*/metrics.json"
+PATTERN="$PROJECT_ROOT/tasks/iter-*/metrics.json"
 OUTPUT_FILE=""
 VERBOSE=false
 
@@ -36,7 +36,7 @@ Aggregate per-iteration metrics into a cumulative JSON report.
 
 Options:
   --help                Show this help and exit
-  --pattern PATTERN     Glob pattern for metrics files (default: doc/analysis/iter-*/metrics.json)
+  --pattern PATTERN     Glob pattern for metrics files (default: tasks/iter-*/metrics.json)
   --output FILE         Write output to file (default: stdout)
   --verbose             Detailed processing output
 
