@@ -329,7 +329,7 @@ Pattern: First attempt consistently 2x larger than needed
 🏝️ Island: State machine is self‑contained — can extract to its own module later
 ```
 
-## Retrospective
+## Retrospective (Validation)
 
 Use **Start/Stop/Continue** as the single default format for all tasks:
 

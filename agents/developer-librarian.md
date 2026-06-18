@@ -22,6 +22,8 @@ permission:
 - Write: None (strictly read-only)
 - Execute: git diff, git log (for context only), web fetch
 - Cannot: Edit files, spawn subagents, push to git
+- MCPs: firecrawl (search, scrape, crawl), context7 (docs lookup), gh_grep (GitHub search), websearch (grounded search)
+- Denied MCPs: gitnexus (all tools), graphify (all tools), memory_*, postgres (all tools)
 
 ## ⛔ PRE-FLIGHT GATE — DO NOT SKIP
 1. **Load contract**: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`

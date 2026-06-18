@@ -22,6 +22,7 @@ permission:
 - Write: None (strictly read-only)
 - Execute: `lean-ctx ctx_shell` with `git diff`, `git log` (read-only diagnostic commands only)
 - Cannot: Edit files, spawn subagents, push to git, web fetch, run bash
+- Denied MCPs: gitnexus (all tools), memory_*, firecrawl (all tools), 
 
 ## ⛔ PRE-FLIGHT GATE — DO NOT SKIP
 1. **Load contract**: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`

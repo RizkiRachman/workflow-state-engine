@@ -96,7 +96,7 @@ Before editing **any existing symbol** (function, class, method):
 4. **Never rename with find-and-replace** — use `gitnexus_rename` which understands the call graph
 
 ---
-## 4. Frugality Ladder (Ponytail — before every code decision)
+## 5. Frugality Ladder (Ponytail — before every code decision)
 
 Run this ladder in order before writing ANY code:
 
@@ -115,7 +115,7 @@ security, accessibility, anything explicitly requested. Non-trivial logic leaves
 ONE runnable check (assert-based, no test framework).
 
 ---
-## 5. Post-Flight Protocol (before commit)
+## 6. Post-Flight Protocol (before commit)
 
 After completing work, run these steps **in order**:
 
@@ -155,7 +155,7 @@ graphify --update 2>/dev/null || true
 **One-shot alias**: `save session` = all 6 steps above. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes.
 
 ---
-## 6. Communication
+## 7. Communication
 
 - Explain tradeoffs, not just decisions
 - Admit unknowns — be clear about what you don't know
