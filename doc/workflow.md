@@ -2,7 +2,7 @@
 
 # Orchestration Contract & State Machine
 
-> **Contract template**: `contract/contract.json`
+> **Contract template**: `contract/contract.template.json`
 > **State machine rules**: `rules/rules.json`
 
 The orchestration contract is the shared JSON envelope that tracks every task from start to finish. It's the single source of truth for what phase we're in, decisions made, scoring results, and retry state.
@@ -301,7 +301,7 @@ Agents **source their governance rules** from this file. The orchestrator (tech-
 
 Reference: `contract/contract.schema.json`
 
-The envelope (`contract/contract.json`) has a canonical JSON Schema at `contract/contract.schema.json`. This schema:
+The envelope (`session/{branch}/contract.json`) has a canonical JSON Schema at `contract/contract.schema.json`. This schema:
 
 - Defines the required structure for all envelope fields (state, scope, decisions, scoring, retry, metrics)
 - Specifies valid state values and transitions
@@ -329,7 +329,7 @@ Two scripts maintain code quality and architecture conventions. Both are integra
 ### 1. `scripts/check-conventions.sh`
 
 Validates project-wide conventions including:
-- JSON Schema compliance of `contract/contract.json`
+- JSON Schema compliance of `session/{branch}/contract.json`
 - File and directory structure conventions
 - Naming patterns and project layout rules
 - Scoring pipeline configuration consistency
@@ -353,7 +353,7 @@ This feeds into the SIMPLICITY_001 scoring rule — unresolved ponytail debt wit
 ### `scripts/validate-contract.sh`
 Seven-step envelope validation: JSON validity, required fields, state enum, nested fields, content quality, field ACL, and transition validation.
 ```bash
-bash scripts/validate-contract.sh --file contract/contract.json --score
+bash scripts/validate-contract.sh --file session/{branch}/contract.json --score
 ```
 
 ### `scripts/detect-parallel-conflicts.sh`
@@ -365,7 +365,7 @@ bash scripts/detect-parallel-conflicts.sh --file1 /tmp/a.txt --file2 /tmp/b.txt
 ### `scripts/persist-contract.sh`
 Atomic envelope persistence via temp-file + rename with optional score injection.
 ```bash
-bash scripts/persist-contract.sh --file contract/contract.json --inject-score 85
+bash scripts/persist-contract.sh --file session/{branch}/contract.json --inject-score 85
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -470,7 +470,7 @@ How every piece of the toolkit connects in the workflow:
 1. User request
        │
 2. tech-lead creates contract envelope
-       │  (contract/contract.json → lean-ctx knowledge)
+       │  (session/{branch}/contract.json → lean-ctx knowledge)
        ▼
 3. Envelope stored: lean-ctx ctx_knowledge remember key="orchestration-contract"
        │
@@ -507,7 +507,7 @@ Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
 | Concept | Definition | Configured In | Loaded By |
 |---|---|---|---|
-| Envelope | Shared session state | `contract/contract.json` | lean-ctx knowledge recall |
+| Envelope | Shared session state | `session/{branch}/contract.json` | lean-ctx knowledge recall |
 | State machine | Legal transitions | `rules/rules.json` | tech-lead (enforced in prompt) |
 | Scoring | PASS/RETRY/BLOCKED | `rules/rules.json` | tech-lead (scoring pipeline) |
 | Agents | Role definitions | `opencode.json` + `agents/*.md` | OpenCode at startup |
@@ -518,20 +518,20 @@ Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 
 ---
 
-## Session Lifecycle (Contract Archival)
+## Session Lifecycle (Per-Branch State)
 
 Every orchestration session persists its contract state to the `session/` directory for cross-session traceability and resumption.
 
 ### Directory Layout
 
 ```
-contract/                    ← Active contract (mutable, current state)
-  contract.json
+contract/                    ← Contract templates (immutable)
+  contract.template.json
   contract.schema.json
-  state.md
+  state.template.md
   superpowers-contract.json
 
-session/                     ← Historical archive (append-only state log + per-branch snapshots)
+session/                     ← Live state + historical archive (per-branch state + append-only log)
   state.md                   ← Append-only log of ALL state transitions
   index.md                   ← Master branch index (one row per branch)
   {branch-name}/             ← Per-branch snapshot for resumption
@@ -545,8 +545,8 @@ session/                     ← Historical archive (append-only state log + per
 
 | Event | Action |
 |-------|--------|
-| **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from there; if no, init fresh from `contract/` template |
-| **State transition** | Update `contract/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
+| **Session start** | Read git branch → check `session/{branch}/` exists → if yes, resume from there; if no, init fresh from `contract/` templates (`contract.template.json`, `state.template.md`) |
+| **State transition** | Update `session/{branch}/contract.json` → snapshot to `session/{branch}/` via `scripts/snapshot-contract.sh` |
 | **Session end** (COMPLETE/BLOCKED) | Run final snapshot → append to `session/state.md` → update `session/index.md` |
 | **Branch switch** | Snapshot old branch → checkout new → load `session/NEW/` if exists |
 
@@ -573,7 +573,7 @@ cat session/index.md                            # Should show all branches with 
 
 # Validate per-branch snapshot
 ls session/{branch-name}/                       # Should show 4 contract files
-diff contract/contract.json session/{branch}/contract/contract.json   # Should match (identical snapshot)
+# session/{branch}/contract.json is the live state — no diff against template needed
 ```
 
 ### Save Session Protocol
@@ -584,7 +584,7 @@ When the user says "save session" or a phase completes, save to **ALL** systems.
 # 1. Persist orchestration envelope to lean-ctx knowledge
 lean-ctx ctx_knowledge remember key orchestration-contract value "<JSON>"
 
-# 2. Update contract/state.md — append completed work items
+# 2. Update session/{branch}/state.md — append completed work items
 
 # 3. Archive snapshot to session/ (contract files + state log + index)
 bash scripts/snapshot-contract.sh --snapshot-only

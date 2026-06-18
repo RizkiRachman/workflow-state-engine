@@ -3,8 +3,9 @@
 #
 # snapshot-contract.sh — Snapshot the current orchestration contract state
 #
-# Copies the mutable contract files into the session/ archive for the current
-# git branch. Idempotent — safe to run multiple times.
+# Validates session state and records orchestration state transitions into the
+# session/ archive for the current git branch. Idempotent — safe to run multiple times.
+# Live state lives at session/{branch}/contract.json (NOT contract/contract.json).
 #
 # Usage:
 #   ./scripts/snapshot-contract.sh               # Default: snapshot current branch
@@ -64,25 +65,24 @@ OPTIONS
     --help            Show this help message and exit
     --dry-run         Show what would be done without modifying anything
     --verbose         Print detailed output for each operation
-    --snapshot-only   Only copy contract files, skip state.md/index.md updates
+    --snapshot-only   Only validate session state, skip state.md/index.md updates
     --branch BRANCH   Override branch detection (for CI/testing)
     --summary TEXT    Custom summary text for state.md entry (default: "Snapshot")
 
 BEHAVIOR
     1. Detects current git branch name
-    2. Creates session/{branch}/ directory if not exists
-    3. Copies all files from contract/ into session/{branch}/
+    2. Ensures session/{branch}/ exists (initializes from contract templates if needed)
+    3. Validates session state at session/{branch}/contract.json
     4. Appends an entry to session/state.md with date, branch, state, score
     5. Updates session/index.md — adds or updates the row for this branch
 
-CONTRACT FILES
-    contract/contract.template.json  (seed template — copied as contract.json to session/)
-    contract/contract.schema.json
-    contract/state.md
-    contract/superpowers-contract.json
+SOURCE FILES
+    session/{branch}/contract.json     (live state — must exist for snapshot)
+    contract/contract.template.json    (seed template for new branches)
+    contract/state.template.md         (seed template for new branches)
 
 EDGE CASES
-    - No contract files → warn and exit 1
+    - No session state → initialize from contract templates
     - Not in a git repo → warn and exit 1
     - Branch name contains / → creates nested dirs correctly
     - session/state.md/index.md missing → create with headers
@@ -184,75 +184,51 @@ derive_status() {
 
 # ── Core Operations ─────────────────────────────────────────────────────────
 
-# Build the list of contract source files (from contract/ dir)
+# Validate that session state exists for the given branch
+# Returns the session contract.json path on success, exits with error on failure.
 discover_contract_files() {
-    local contract_dir="$PROJECT_ROOT/contract"
-    if [[ ! -d "$contract_dir" ]]; then
-        log_fail "contract/ directory not found: $contract_dir"
+    local branch="$1"
+    local session_dir="$PROJECT_ROOT/session/$branch"
+    local contract_file="$session_dir/contract.json"
+
+    if [[ ! -f "$contract_file" ]]; then
+        log_fail "Session contract.json not found: $contract_file — run the script once to initialize"
         return 1
     fi
 
-    local files=()
-    local found=false
-
-    for f in "$contract_dir/contract.template.json" "$contract_dir/contract.schema.json" \
-             "$contract_dir/state.md" "$contract_dir/superpowers-contract.json"; do
-        if [[ -f "$f" ]]; then
-            files+=("$f")
-            found=true
-        else
-            log_info "Optional contract file not found: $(basename "$f") — skipping"
-        fi
-    done
-
-    if [[ "$found" == false ]]; then
-        log_fail "No contract files found in contract/"
-        return 1
-    fi
-
-    echo "${files[@]}"
+    # Return the session contract.json as the single source file
+    echo "$contract_file"
 }
 
-# Copy contract files into session/{branch}/
+# Validate session state file and log its state
 snapshot_files() {
     local branch="$1"
-    shift
-    local src_files=("$@")
-
     local session_dir="$PROJECT_ROOT/session"
     local target_dir="$session_dir/$branch"
 
     if [[ "$DRY_RUN" == true ]]; then
-        log_dry "Would create directory: $target_dir"
-        for f in "${src_files[@]}"; do
-            local basename_f
-            basename_f="$(basename "$f")"
-            log_dry "Would copy: $basename_f → $target_dir/$basename_f"
-        done
+        log_dry "Would validate session state at: $target_dir/contract.json"
         return 0
     fi
 
-    # Create target directory
+    # Create target directory if missing (first run)
     if [[ ! -d "$target_dir" ]]; then
         mkdir -p "$target_dir"
         log_verbose "Created directory: $target_dir"
         log_pass "Directory created: $target_dir"
-    else
-        log_verbose "Directory exists: $target_dir"
-        log_pass "Directory ready: $target_dir"
     fi
 
-    # Copy files
-    local copied=0
-    for f in "${src_files[@]}"; do
-        local basename_f
-        basename_f="$(basename "$f")"
-        cp "$f" "$target_dir/$basename_f"
-        copied=$((copied + 1))
-        log_verbose "Copied: $basename_f → $target_dir/$basename_f"
-    done
+    local contract_file="$target_dir/contract.json"
+    if [[ ! -f "$contract_file" ]]; then
+        log_fail "Session contract.json not found: $contract_file — run without --snapshot-only first to initialize"
+        return 1
+    fi
 
-    log_pass "Copied $copied file(s) to $target_dir"
+    local state
+    state="$(jq -r '.state // "unknown"' "$contract_file" 2>/dev/null || echo "unknown")"
+    local score
+    score="$(jq -r '.score.combined // 0' "$contract_file" 2>/dev/null || echo "0")"
+    log_pass "Session state validated: state=$state, score=${score}/100"
 }
 
 # Append a new entry to session/state.md
@@ -480,17 +456,34 @@ main() {
     log_pass "Branch: $branch"
     log_verbose "Commit: $(get_commit_hash)"
 
-    # Step 2: Discover contract files
-    echo "Step 2: Discover contract files"
+    # Step 2: Initialize session state and discover source files
+    echo "Step 2: Initialize session state"
+    local session_dir="$PROJECT_ROOT/session/$branch"
     local template_file="$PROJECT_ROOT/contract/contract.template.json"
     if [[ ! -f "$template_file" ]]; then
         log_fail "contract/contract.template.json not found -- nothing to snapshot"
         exit 1
     fi
-    log_pass "Contract template found: contract/contract.template.json"
-    src_files=($(discover_contract_files))
-    if [[ $? -ne 0 || ${#src_files[@]} -eq 0 ]]; then
-        log_verbose "Found ${#src_files[@]} contract file(s)"
+
+    # Initialize session state if first run for this branch
+    if [[ ! -f "$session_dir/contract.json" ]]; then
+        if [[ "$DRY_RUN" == true ]]; then
+            log_dry "Would initialize session state in $session_dir"
+        else
+            mkdir -p "$session_dir"
+            cp "$template_file" "$session_dir/contract.json"
+            if [[ -f "$PROJECT_ROOT/contract/state.template.md" ]]; then
+                cp "$PROJECT_ROOT/contract/state.template.md" "$session_dir/state.md"
+                log_verbose "Copied: state.template.md → $session_dir/state.md"
+            fi
+            log_info "Initialized session state for branch $branch"
+        fi
+    fi
+    log_pass "Session state found at: $session_dir/contract.json"
+    # Validate session contract.json exists
+    if ! discover_contract_files "$branch" > /dev/null 2>&1; then
+        log_fail "Session state not initialized — run without --snapshot-only first"
+        exit 1
     fi
     # Step 3: Extract contract metadata
     echo "Step 3: Extract contract metadata"
@@ -503,25 +496,13 @@ main() {
     log_pass "State: $state | Score: ${combined_score}/100"
     log_verbose "Summary: $SUMMARY_TEXT"
 
-    # Step 3.5: Atomic persist of live contract.json (if it exists)
-    local live_contract="$PROJECT_ROOT/contract/contract.json"
-    if [[ -f "$live_contract" && "$live_contract" != "$PROJECT_ROOT/contract/contract.template.json" ]]; then
-        echo "Step 3.5: Atomic persist contract.json"
-        if "$PROJECT_ROOT/scripts/persist-contract.sh" --file "$live_contract" --validate --verbose 2>/dev/null; then
-            log_pass "Contract.json atomically persisted and validated"
-        else
-            log_warn "Contract.json persist/validate had issues (continuing with snapshot)"
-        fi
-        echo "---"
-    fi
-
-    # Step 4: Snapshot files
+    # Step 4: Validate session state
     echo "---"
-    echo "Step 4: Snapshot contract files"
-    snapshot_files "$branch" "${src_files[@]}"
+    echo "Step 4: Validate session state"
+    snapshot_files "$branch"
 
     if [[ $? -ne 0 ]]; then
-        log_fail "Failed to snapshot contract files"
+        log_fail "Failed to validate session state"
         exit 1
     fi
 
@@ -542,7 +523,7 @@ main() {
         log_info "Skipping state.md and index.md updates (--snapshot-only)"
     fi
     if [[ "$DRY_RUN" == true ]]; then
-        echo -e "${CYAN}DRY-RUN — no files were modified.${NC}"
+        echo -e "${CYAN}DRY-RUN — no state files were modified.${NC}"
     elif [[ "$EXIT_CODE" -eq 0 ]]; then
         echo -e "${GREEN}Snapshot completed successfully for branch '$branch'.${NC}"
     else

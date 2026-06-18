@@ -23,6 +23,7 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CURRENT_BRANCH="$(git branch --show-current 2>/dev/null || echo "unknown")"
 
 # ── Config ──────────────────────────────────────────────────────────────────
 VERBOSE=false
@@ -66,7 +67,7 @@ CHECKS
 
   2. JSON Schema validation
      Verifies contract/contract.schema.json exists and validates
-     contract/contract.json against it using jq (Draft 2020-12).
+     session/{branch}/contract.json against it using jq (Draft 2020-12).
 
   3. Forbidden patterns
      Scans agent files for FQN patterns (src/main/java/), push-to-main/master
@@ -76,8 +77,9 @@ CHECKS
      If pom.xml or build.gradle exists, attempts to run architecture tests.
      Otherwise skips with info.
 
-  5. State.md sync check
-     Verifies contract/state.md contains Current Focus and Known Blockers sections.
+  5. Contract state sync check
+     Verifies session/{branch}/state.md contains Current Focus and
+     Known Blockers sections.
 
 EXIT CODES
   0   All checks pass
@@ -167,7 +169,7 @@ check_json_schema() {
     echo "Check 2: JSON Schema validation"
 
     local schema_file="$PROJECT_ROOT/contract/contract.schema.json"
-    local contract_file="$PROJECT_ROOT/contract/contract.json"
+    local contract_file="$PROJECT_ROOT/session/$CURRENT_BRANCH/contract.json"
 
     if [[ ! -f "$schema_file" ]]; then
         log_fail "contract/contract.schema.json does not exist"
@@ -179,7 +181,7 @@ check_json_schema() {
     fi
 
     if [[ ! -f "$contract_file" ]]; then
-        log_fail "contract/contract.json does not exist — cannot validate"
+        log_fail "session/$CURRENT_BRANCH/contract.json does not exist — cannot validate"
         return
     fi
 
@@ -217,9 +219,9 @@ check_json_schema() {
         ' "$schema_file" "$contract_file" 2>/dev/null)
 
         if [[ -z "$unknown_keys" || "$unknown_keys" == "[]" ]]; then
-            log_pass "contract/contract.schema.json exists and validates contract.json"
+            log_pass "contract/contract.schema.json exists and validates session/${CURRENT_BRANCH}/contract.json"
         else
-            log_fail "contract/contract.json does not validate against contract/contract.schema.json"
+            log_fail "session/${CURRENT_BRANCH}/contract.json does not validate against contract/contract.schema.json"
             if [[ "$VERBOSE" == true ]]; then
                 local clean_keys
                 clean_keys=$(echo "$unknown_keys" | tr -d '[]" \n')
@@ -242,7 +244,7 @@ check_json_schema() {
             if [[ -n "$unknown_keys" && "$unknown_keys" != "[]" ]]; then
                 log_fail "contract.json has properties not defined in schema: $unknown_keys"
             else
-                log_pass "contract/contract.schema.json exists and validates contract.json"
+                log_pass "contract/contract.schema.json exists and validates session/${CURRENT_BRANCH}/contract.json"
             fi
         else
             log_info "contract/contract.schema.json has no 'properties' — cannot deep validate"
@@ -423,12 +425,12 @@ check_archunit() {
 # ── Check 5: State.md sync ─────────────────────────────────────────────────
 check_state_md() {
     echo "---"
-    echo "Check 5: contract/state.md sync check"
+    echo "Check 5: Contract state sync check"
 
-    local state_file="$PROJECT_ROOT/contract/state.md"
+    local state_file="$PROJECT_ROOT/session/$CURRENT_BRANCH/state.md"
 
     if [[ ! -f "$state_file" ]]; then
-        log_fail "contract/state.md does not exist"
+        log_fail "session/$CURRENT_BRANCH/state.md does not exist"
         return
     fi
 
@@ -438,7 +440,7 @@ check_state_md() {
     if grep -qi '^##\s*Current Focus' "$state_file" >/dev/null 2>&1; then
         log_verbose "Found 'Current Focus' section"
     else
-        log_fail "contract/state.md missing 'Current Focus' section"
+        log_fail "session/$CURRENT_BRANCH/state.md missing 'Current Focus' section"
         violations=$((violations + 1))
     fi
 
@@ -446,7 +448,7 @@ check_state_md() {
     if grep -qi '^##\s*Known Blockers' "$state_file" >/dev/null 2>&1; then
         log_verbose "Found 'Known Blockers' section"
     else
-        log_fail "contract/state.md missing 'Known Blockers' section"
+        log_fail "session/$CURRENT_BRANCH/state.md missing 'Known Blockers' section"
         violations=$((violations + 1))
     fi
 
@@ -473,7 +475,7 @@ check_state_md() {
     fi
 
     if [[ "$violations" -eq 0 ]]; then
-        log_pass "contract/state.md has Current Focus and Known Blockers (both populated)"
+        log_pass "session/$CURRENT_BRANCH/state.md has Current Focus and Known Blockers sections"
     fi
 }
 
@@ -504,6 +506,21 @@ check_session_archive() {
         log_verbose "session/index.md exists"
     else
         log_fail "session/index.md does not exist"
+        violations=$((violations + 1))
+    fi
+
+    # Check current branch snapshot exists
+    local branch_dir="$session_dir/$CURRENT_BRANCH"
+    if [[ -d "$branch_dir" ]]; then
+        log_verbose "session/$CURRENT_BRANCH/ exists"
+        if [[ -f "$branch_dir/contract.json" ]]; then
+            log_verbose "session/$CURRENT_BRANCH/contract.json exists"
+        else
+            log_fail "session/$CURRENT_BRANCH/contract.json does not exist"
+            violations=$((violations + 1))
+        fi
+    else
+        log_fail "session/$CURRENT_BRANCH/ directory does not exist"
         violations=$((violations + 1))
     fi
 

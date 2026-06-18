@@ -2,96 +2,126 @@
   "contract_version": "1.2.0",
   "created_at": "2026-06-11T02:39:44Z",
   "last_updated": "2026-06-17T12:00:00Z",
-
   "summary": "Superpowers & MCP Contract — central registry of all plugins, skills, and MCP tools available to agents in this project.",
-
   "plugins": [
-    {
-      "name": "oh-my-opencode-slim",
-      "version": "latest",
-      "purpose": "Agent framework — provides orchestration-template, verification-before-completion skills",
-      "applies_to": ["tech-lead", "software-architect", "developer-librarian", "developer-explorer", "developer-fixer"],
-      "when_to_use": "Always active. Core framework for agent behavior."
-    },
     {
       "name": "@razroo/opencode-model-fallback",
       "version": "latest",
       "purpose": "Automatic model fallback chain — if primary model fails, falls through fallback_models list",
-      "applies_to": ["tech-lead", "system-analyst", "developer", "quality-analyst", "developer-explorer", "developer-librarian", "software-architect", "developer-fixer", "quality-analyst-learner"],
+      "applies_to": [
+        "tech-lead",
+        "system-analyst",
+        "developer",
+        "quality-analyst",
+        "developer-explorer",
+        "developer-librarian",
+        "software-architect",
+        "developer-fixer",
+        "quality-analyst-learner"
+      ],
       "when_to_use": "Always active. Each agent has its own fallback_models list in opencode.json."
     },
     {
       "name": "@zenobius/opencode-skillful",
       "version": "latest",
       "purpose": "Lazy-loaded skill discovery and injection — provides skill_find, skill_use, skill_resource tools. Skills only consume tokens when explicitly loaded.",
-      "applies_to": ["all agents"],
+      "applies_to": [
+        "all agents"
+      ],
       "when_to_use": "Use skill_find to discover skills by keyword, skill_use to load a skill into context, skill_resource to read reference files. Reduces context overhead from pre-loaded skills."
     },
     {
       "name": "@tarquinen/opencode-dcp",
       "version": "latest",
       "purpose": "Dynamic Context Pruning — compress, deduplicate, and purge obsolete tool outputs to reduce token usage. Replaces stale conversation content with summaries.",
-      "applies_to": ["all agents"],
+      "applies_to": [
+        "all agents"
+      ],
       "when_to_use": "Automatic. Provides /dcp command for manual control. Complements lean-ctx compaction."
     },
     {
       "name": "@morphllm/opencode-morph-plugin",
       "version": "latest",
       "purpose": "Fast Apply editing (10,500+ tok/s), WarpGrep agentic codebase search, and context compaction via Morph API. Requires MORPH_API_KEY env var.",
-      "applies_to": ["developer", "developer-fixer", "developer-explorer", "tech-lead"],
+      "applies_to": [
+        "developer",
+        "developer-fixer",
+        "developer-explorer",
+        "tech-lead"
+      ],
       "when_to_use": "Use morph_edit for large file changes with scattered edits (300+ lines). Use warpgrep_codebase_search for fast agentic code search. Context compaction runs automatically."
     },
     {
       "name": "@openspoon/subtask2",
       "version": "latest",
       "purpose": "Extended orchestration system with granular flow control — extends /commands and subtask with more powerful delegation capabilities.",
-      "applies_to": ["tech-lead", "developer", "system-analyst"],
+      "applies_to": [
+        "tech-lead",
+        "developer",
+        "system-analyst"
+      ],
       "when_to_use": "For complex multi-step orchestration beyond basic subtask. Extends existing subtask tool."
     },
     {
       "name": "opencode-goal-plugin",
       "version": "latest",
       "purpose": "Session-scoped /goal workflow that keeps objectives in context and auto-continues until complete.",
-      "applies_to": ["tech-lead"],
+      "applies_to": [
+        "tech-lead"
+      ],
       "when_to_use": "Use /goal at session start to set a working objective. Auto-continues until goal is achieved."
     },
     {
       "name": "opencode-vibeguard",
       "version": "latest",
       "purpose": "Secret/PII redaction — replaces sensitive strings with placeholders before LLM requests, restores after response and before tool execution.",
-      "applies_to": ["all agents"],
+      "applies_to": [
+        "all agents"
+      ],
       "when_to_use": "Always active. Configure patterns in vibeguard.config.json in project root."
     },
     {
       "name": "opencode-websearch-cited",
       "version": "latest",
       "purpose": "Web search with inline citations and Sources list — provides websearch_cited tool backed by web search providers.",
-      "applies_to": ["developer-librarian", "system-analyst", "tech-lead"],
+      "applies_to": [
+        "developer-librarian",
+        "system-analyst",
+        "tech-lead"
+      ],
       "when_to_use": "Use when web search results need source citations. Complements built-in websearch."
     },
     {
       "name": "opencode-worktree",
       "version": "latest",
       "purpose": "Zero-friction git worktrees for OpenCode — isolates feature branches without switching working directory.",
-      "applies_to": ["developer", "developer-fixer", "tech-lead"],
+      "applies_to": [
+        "developer",
+        "developer-fixer",
+        "tech-lead"
+      ],
       "when_to_use": "When working on multiple features simultaneously or needing isolated workspaces. Complements using-git-worktrees skill."
     },
     {
       "name": "superpowers@git+https://github.com/obra/superpowers.git",
       "version": "latest",
       "purpose": "8 methodology skills for structured development: brainstorming, writing-plans, TDD, subagent-driven-dev, systematic-debugging, verification-before-completion, executing-plans, finishing-a-branch, requesting/receiving code review",
-      "applies_to": ["all agents"],
+      "applies_to": [
+        "all agents"
+      ],
       "when_to_use": "Use `/skill <name>` to load the relevant skill before its methodology is needed."
     },
     {
       "name": "opencode-notify",
       "version": "latest",
       "purpose": "Desktop notifications for long-running operations",
-      "applies_to": ["tech-lead", "developer"],
+      "applies_to": [
+        "tech-lead",
+        "developer"
+      ],
       "when_to_use": "Use for operations that take >30 seconds (mvn verify, mvn clean install, etc.)"
     }
   ],
-
   "superpowers_skills": [
     {
       "name": "brainstorming",
@@ -160,7 +190,6 @@
       "skill_command": "/skill adaptive-solver"
     }
   ],
-
   "mcp_tools": [
     {
       "name": "gitnexus",
@@ -173,7 +202,9 @@
         "gitnexus_rename({symbol_name, new_name}) — Safe multi-file rename",
         "gitnexus_cypher({query}) — Complex graph queries (structural patterns)"
       ],
-      "applies_to": ["all agents"],
+      "applies_to": [
+        "all agents"
+      ],
       "when_to_use": "Before every non-trivial edit (impact), during code exploration (query/context), before commit (detect_changes)"
     },
     {
@@ -186,7 +217,12 @@
         "graphify_get_community({community_id}) — All nodes in a community",
         "graphify_graph_stats() — Quick summary stats"
       ],
-      "applies_to": ["tech-lead", "system-analyst", "developer-explorer", "software-architect"],
+      "applies_to": [
+        "tech-lead",
+        "system-analyst",
+        "developer-explorer",
+        "software-architect"
+      ],
       "when_to_use": "For unfamiliar code exploration (after gitnexus_query), community detection, finding cross-module relationships"
     },
     {
@@ -202,7 +238,9 @@
         "lean-ctx ctx_search — Regex code search",
         "lean-ctx ctx_tree — Directory listing"
       ],
-      "applies_to": ["all agents"],
+      "applies_to": [
+        "all agents"
+      ],
       "when_to_use": "Always — it's the default shell, memory, and file reading tool. Prefer over native equivalents."
     },
     {
@@ -212,7 +250,12 @@
         "context7_resolve-library-id({query, libraryName}) — Find library IDs",
         "context7_query-docs({libraryId, query}) — Get docs/examples"
       ],
-      "applies_to": ["developer-librarian", "system-analyst", "developer", "tech-lead"],
+      "applies_to": [
+        "developer-librarian",
+        "system-analyst",
+        "developer",
+        "tech-lead"
+      ],
       "when_to_use": "For libraries with frequent API changes (Spring Boot, React, AI SDKs), version-specific behavior, or unfamiliar libs"
     },
     {
@@ -227,7 +270,11 @@
         "pg_unused_indexes — Find dead indexes",
         "pg_advisor — Rolled-up DBA lint pass"
       ],
-      "applies_to": ["developer", "system-analyst", "tech-lead"],
+      "applies_to": [
+        "developer",
+        "system-analyst",
+        "tech-lead"
+      ],
       "when_to_use": "For database schema changes, query optimization, data migration, or investigating DB-related issues"
     },
     {
@@ -243,53 +290,219 @@
         "firecrawl_monitor_create({page, goal}) — Change detection monitors",
         "firecrawl_map({url, search}) — Discover all URLs on a website"
       ],
-      "applies_to": ["all agents"],
+      "applies_to": [
+        "all agents"
+      ],
       "when_to_use": "For web search, documentation lookup, scraping, structured data extraction, competitive research, and content monitoring. All agents have firecrawl_* tools available via MCP."
     }
   ],
-
   "agent_to_plugin_mapping": {
-    "tech-lead": ["opencode-notify", "opencode-goal-plugin", "@openspoon/subtask2"],
-    "system-analyst": ["@zenobius/opencode-skillful", "opencode-websearch-cited"],
-    "developer": ["@morphllm/opencode-morph-plugin", "opencode-worktree"],
-    "quality-analyst": ["@zenobius/opencode-skillful"],
-    "developer-explorer": ["@morphllm/opencode-morph-plugin", "@zenobius/opencode-skillful"],
-    "developer-librarian": ["opencode-websearch-cited", "@zenobius/opencode-skillful"],
-    "software-architect": ["@zenobius/opencode-skillful"],
-    "developer-fixer": ["@morphllm/opencode-morph-plugin", "opencode-worktree"],
-    "quality-analyst-learner": ["@zenobius/opencode-skillful"],
+    "tech-lead": [
+      "opencode-notify",
+      "opencode-goal-plugin",
+      "@openspoon/subtask2"
+    ],
+    "system-analyst": [
+      "@zenobius/opencode-skillful",
+      "opencode-websearch-cited"
+    ],
+    "developer": [
+      "@morphllm/opencode-morph-plugin",
+      "opencode-worktree"
+    ],
+    "quality-analyst": [
+      "@zenobius/opencode-skillful"
+    ],
+    "developer-explorer": [
+      "@morphllm/opencode-morph-plugin",
+      "@zenobius/opencode-skillful"
+    ],
+    "developer-librarian": [
+      "opencode-websearch-cited",
+      "@zenobius/opencode-skillful"
+    ],
+    "software-architect": [
+      "@zenobius/opencode-skillful"
+    ],
+    "developer-fixer": [
+      "@morphllm/opencode-morph-plugin",
+      "opencode-worktree"
+    ],
+    "quality-analyst-learner": [
+      "@zenobius/opencode-skillful"
+    ],
     "developer-observer": [],
     "developer-council": []
   },
-
   "agent_to_mcp_mapping": {
-    "tech-lead": ["gitnexus", "graphify", "lean-ctx", "context7", "postgres", "firecrawl"],
-    "system-analyst": ["gitnexus", "graphify", "lean-ctx", "context7", "postgres", "firecrawl"],
-    "developer": ["gitnexus", "graphify", "lean-ctx", "postgres", "firecrawl", "context7"],
-    "quality-analyst": ["gitnexus", "graphify", "lean-ctx", "firecrawl"],
-    "developer-explorer": ["gitnexus", "graphify", "lean-ctx", "firecrawl", "context7"],
-    "developer-librarian": ["context7", "gitnexus", "graphify", "lean-ctx", "firecrawl"],
-    "software-architect": ["gitnexus", "graphify", "lean-ctx", "firecrawl"],
-    "developer-fixer": ["gitnexus", "graphify", "lean-ctx", "firecrawl", "context7"],
-    "quality-analyst-learner": ["lean-ctx", "gitnexus", "graphify", "firecrawl"],
-    "developer-observer": ["lean-ctx", "graphify", "firecrawl"],
-    "developer-council": ["gitnexus", "lean-ctx", "firecrawl"]
+    "tech-lead": [
+      "gitnexus",
+      "graphify",
+      "lean-ctx",
+      "context7",
+      "postgres",
+      "firecrawl"
+    ],
+    "system-analyst": [
+      "gitnexus",
+      "graphify",
+      "lean-ctx",
+      "context7",
+      "postgres",
+      "firecrawl"
+    ],
+    "developer": [
+      "gitnexus",
+      "graphify",
+      "lean-ctx",
+      "postgres",
+      "firecrawl",
+      "context7"
+    ],
+    "quality-analyst": [
+      "gitnexus",
+      "graphify",
+      "lean-ctx",
+      "firecrawl"
+    ],
+    "developer-explorer": [
+      "gitnexus",
+      "graphify",
+      "lean-ctx",
+      "firecrawl",
+      "context7"
+    ],
+    "developer-librarian": [
+      "context7",
+      "gitnexus",
+      "graphify",
+      "lean-ctx",
+      "firecrawl"
+    ],
+    "software-architect": [
+      "gitnexus",
+      "graphify",
+      "lean-ctx",
+      "firecrawl"
+    ],
+    "developer-fixer": [
+      "gitnexus",
+      "graphify",
+      "lean-ctx",
+      "firecrawl",
+      "context7"
+    ],
+    "quality-analyst-learner": [
+      "lean-ctx",
+      "gitnexus",
+      "graphify",
+      "firecrawl"
+    ],
+    "developer-observer": [
+      "lean-ctx",
+      "graphify",
+      "firecrawl"
+    ],
+    "developer-council": [
+      "gitnexus",
+      "lean-ctx",
+      "firecrawl"
+    ]
   },
-
   "agent_to_skill_mapping": {
-    "tech-lead": ["orchestration-template", "verification-before-completion", "humanizer", "firecrawl", "audit-observability"],
-    "system-analyst": ["brainstorming", "writing-plans", "system-analyst", "business-analyst", "java-developer", "software-developer", "humanizer", "firecrawl", "firecrawl-search", "firecrawl-deep-research"],
-    "developer": ["subagent-driven-development", "executing-plans", "test-driven-development", "java-developer", "software-developer", "qa-expert", "token-optimize", "humanizer", "firecrawl", "firecrawl-scrape", "firecrawl-build-scrape", "firecrawl-build-search"],
-    "quality-analyst": ["requesting-code-review", "receiving-code-review", "qa-expert", "security-expert", "devops-expert", "java-developer", "software-developer", "humanizer", "firecrawl", "firecrawl-qa"],
-    "developer-explorer": ["humanizer", "firecrawl", "firecrawl-search", "firecrawl-map"],
-    "developer-librarian": ["humanizer", "firecrawl", "firecrawl-search"],
-    "software-architect": ["systematic-debugging", "system-analyst", "java-developer", "software-developer", "humanizer", "firecrawl", "firecrawl-deep-research", "firecrawl-knowledge-base"],
-    "developer-fixer": ["subagent-driven-development", "executing-plans", "humanizer", "firecrawl", "firecrawl-scrape"],
-    "quality-analyst-learner": ["verification-before-completion", "qa-expert", "java-developer", "software-developer", "humanizer", "firecrawl", "firecrawl-knowledge-ingest"],
-    "developer-observer": ["humanizer", "firecrawl", "firecrawl-scrape", "systematic-debugging", "verification-before-completion"],
-    "developer-council": ["firecrawl"]
+    "tech-lead": [
+      "orchestration-template",
+      "verification-before-completion",
+      "humanizer",
+      "firecrawl",
+      "audit-observability"
+    ],
+    "system-analyst": [
+      "brainstorming",
+      "writing-plans",
+      "system-analyst",
+      "business-analyst",
+      "java-developer",
+      "software-developer",
+      "humanizer",
+      "firecrawl",
+      "firecrawl-search",
+      "firecrawl-deep-research"
+    ],
+    "developer": [
+      "subagent-driven-development",
+      "executing-plans",
+      "test-driven-development",
+      "java-developer",
+      "software-developer",
+      "qa-expert",
+      "token-optimize",
+      "humanizer",
+      "firecrawl",
+      "firecrawl-scrape",
+      "firecrawl-build-scrape",
+      "firecrawl-build-search"
+    ],
+    "quality-analyst": [
+      "requesting-code-review",
+      "receiving-code-review",
+      "qa-expert",
+      "security-expert",
+      "devops-expert",
+      "java-developer",
+      "software-developer",
+      "humanizer",
+      "firecrawl",
+      "firecrawl-qa"
+    ],
+    "developer-explorer": [
+      "humanizer",
+      "firecrawl",
+      "firecrawl-search",
+      "firecrawl-map"
+    ],
+    "developer-librarian": [
+      "humanizer",
+      "firecrawl",
+      "firecrawl-search"
+    ],
+    "software-architect": [
+      "systematic-debugging",
+      "system-analyst",
+      "java-developer",
+      "software-developer",
+      "humanizer",
+      "firecrawl",
+      "firecrawl-deep-research",
+      "firecrawl-knowledge-base"
+    ],
+    "developer-fixer": [
+      "subagent-driven-development",
+      "executing-plans",
+      "humanizer",
+      "firecrawl",
+      "firecrawl-scrape"
+    ],
+    "quality-analyst-learner": [
+      "verification-before-completion",
+      "qa-expert",
+      "java-developer",
+      "software-developer",
+      "humanizer",
+      "firecrawl",
+      "firecrawl-knowledge-ingest"
+    ],
+    "developer-observer": [
+      "humanizer",
+      "firecrawl",
+      "firecrawl-scrape",
+      "systematic-debugging",
+      "verification-before-completion"
+    ],
+    "developer-council": [
+      "firecrawl"
+    ]
   },
-
   "startup_protocol": {
     "step_0": "Create feature branch: git checkout -b feature/<YYYYMMDD>-<description>",
     "step_1": "Load skills: orchestration-template → superpowers-contract → brainstorming (if creative work)",
@@ -298,10 +511,9 @@
     "step_4": "Refresh intelligence: gitnexus analyze if stale",
     "step_5": "Plugins auto-load from opencode.json plugin array. Key plugins: @zenobius/opencode-skillful (lazy skills), @tarquinen/opencode-dcp (context pruning), @morphllm/opencode-morph-plugin (fast editing), opencode-vibeguard (secret redaction)"
   },
-
   "config_files": {
-    "vibeguard.config.json": "Project root. Patterns for secret/PII redaction.",
-    ".opencode-skillful.json": "Project root. Skill discovery paths and renderer config.",
+    ".opencode/config/vibeguard.config.json": "Project root. Patterns for secret/PII redaction.",
+    ".opencode/config/opencode-skillful.json": "Project root. Skill discovery paths and renderer config.",
     ".opencode/dcp.jsonc": "Dynamic Context Pruning settings.",
     "MORPH_API_KEY": "Environment variable. Required for @morphllm/opencode-morph-plugin. Set in ~/.zshrc: export MORPH_API_KEY='sk-...'"
   }

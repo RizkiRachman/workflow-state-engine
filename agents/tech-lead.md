@@ -31,7 +31,7 @@ You MUST complete these steps BEFORE any tool call or work:
 1. **Load contract**: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    → If empty: create from `contract/contract.template.json`
    → FAILURE TO LOAD = GOVERNANCE VIOLATION
-2. **Validate envelope**: Run `bash scripts/validate-contract.sh --file contract/contract.json --rules rules/rules.json --score`
+2. **Validate envelope**: Run `bash scripts/validate-contract.sh --file session/{branch}/contract.json --rules rules/rules.json --score`
    → If exit code != 0 (score < 70): envelope is corrupt or in illegal state
    → If contract.json doesn't exist (fresh session): validate template with `bash scripts/validate-contract.sh --file contract/contract.template.json --score`
    → On failure: set state=BLOCKED, persist, STOP
@@ -60,14 +60,14 @@ The **shared JSON envelope** (`contract/contract.template.json`) is the single s
    - If NOT found: create fresh from `contract/contract.template.json`:
      - Populate `session.task_id` (short slug), `session.branch` (current git branch), `session.created_at` (ISO timestamp)
      - Write: `lean-ctx ctx_knowledge remember key orchestration-contract value <populated JSON>`
-   - **Session resume detected** (envelope exists with COMPLETE state): Read `state`, `retry.current_phase`, `retry.issues`. Update contract/state.md Current Focus with `"Resuming at ${state} (phase: ${retry.current_phase}). Issues: ${retry.issues}"`. Summarize to user.
+   - **Session resume detected** (envelope exists with COMPLETE state): Read `state`, `retry.current_phase`, `retry.issues`. Update session/{branch}/state.md Current Focus with `"Resuming at ${state} (phase: ${retry.current_phase}). Issues: ${retry.issues}"`. Summarize to user.
 
 2. **CREATE** (new session) — Populate `session` fields as above. Set `state = "INIT"`. Persist immediately.
 
 3. **UPDATE** (on every transition) — After each delegation, scoring, phase completion, or state change:
    - Update relevant fields: `state`, `outputs.<phase>`, `score.*`, `retry.*`, `metrics.*`
    - Persist: `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
-   - Sync contract/state.md: update Current Focus and Known Blockers
+   - Sync session/{branch}/state.md: update Current Focus and Known Blockers
    - Save conversation: `ctx_session save`
    - **Checkpoint before every delegation** — persist first, then delegate
 
@@ -86,7 +86,7 @@ For every task, follow this sequence:
 
 ### 0. Context Load
 - Read `PROJECT.md` for project vision, scope, and constraints
-- Read `contract/state.md` for current position, active decisions, and blockers
+- Read `session/{branch}/state.md` for current position, active decisions, and blockers
 - Read `AGENTS.md` for project conventions (architecture, rules, writing order)
 - **Load Superpowers & MCP Contract**: `lean-ctx ctx_knowledge recall --query "superpowers-contract"` — identifies available plugins, skills, and MCPs for this session
 - **Load shared envelope** (per protocol above)
@@ -308,7 +308,7 @@ After each subagent delegation returns and scoring completes, persist state acro
 1. Read current envelope from `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
 2. Update `state`, `outputs.<phase>`, `score.*`, `retry.*` with results
 3. **Persist envelope** — write via `lean-ctx ctx_knowledge remember key orchestration-contract value <updated JSON>`
-4. **Sync contract/state.md** — update Current Focus and Known Blockers:
+4. **Sync session/{branch}/state.md** — update Current Focus and Known Blockers:
    - Current Focus: `"Agent orchestration — ${state} (phase: ${retry.current_phase}). ${score.combined >= 70 ? '' : 'Score: ' + score.combined}"`
    - If BLOCKED: add to Known Blockers with issues from `retry.issues[]`
    - If PASS: clear Known Blockers
@@ -345,7 +345,7 @@ BLOCKED (any phase) → user intervention → retry with guidance
 **BLOCKED escalation:**
 If state = `BLOCKED`:
 1. Read envelope from `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
-2. Update contract/state.md Known Blockers: `"BLOCKED at ${phase}: ${issues}"`
+2. Update session/{branch}/state.md Known Blockers: `"BLOCKED at ${phase}: ${issues}"`
 3. Persist envelope final state via `lean-ctx ctx_knowledge remember key orchestration-contract value <JSON>`
 4. Run **Save Session Protocol**: update state.md → archive snapshot → save conversation (ctx_session save) → re-index gitnexus → re-index graphify
 5. **Snapshot blocked state**: `scripts/snapshot-contract.sh --summary "State: BLOCKED at ${phase} — ${issues}"`
@@ -373,7 +373,7 @@ After each completed task, persist knowledge so the AI gets smarter over time. T
 
 1. **Apply quality-analyst-learner output**: Run `lean-ctx knowledge remember` for each `knowledge_updates[]` entry from the quality-analyst-learner
 2. **Append to envelope**: Add quality-analyst-learner's `lessons_learned[]` to envelope's `lessons_learned[]`
-3. **Update contract/state.md** — add completed work, decisions made, blockers encountered
+3. **Update session/{branch}/state.md** — add completed work, decisions made, blockers encountered
 4. **Save session** — use `ctx_session save` to persist conversation state for resumption
 5. **Run `/gsd-health`** periodically to verify system state and catch drift early
 
@@ -460,10 +460,10 @@ Every agent MUST run these steps in order at session start:
 1. **Create branch**: Run `lean-ctx ctx_shell` with `git checkout -b feature/<YYYYMMDD>-<description>` (skip if already on feature branch)
 2. **Load superpowers contract**: `lean-ctx ctx_knowledge recall --query "superpowers-contract"` → see available plugins, skills, MCPs
 3. **Load orchestration envelope**: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"` → read current state
-4. **Sync state**: Read `contract/state.md` (Current Focus) + `PROJECT.md` (vision) + lean-ctx knowledge (past decisions)
+4. **Sync state**: Read `session/{branch}/state.md` (Current Focus) + `PROJECT.md` (vision) + lean-ctx knowledge (past decisions)
 5. **Refresh intelligence**: `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` if index is stale (>1 hour old)
 6. **Session archive check**: `ls session/$(git branch --show-current)/` — if exists, load `contract.json` from there for state continuity
-7. **Validate contract integrity**: `bash scripts/validate-contract.sh --file contract/contract.json --rules rules/rules.json --score`
+7. **Validate contract integrity**: `bash scripts/validate-contract.sh --file session/{branch}/contract.json --rules rules/rules.json --score`
    → If contract.json missing: validate template instead: `bash scripts/validate-contract.sh --file contract/contract.template.json --score`
    → PASS (exit 0) → proceed
    → FAIL (exit 1 or 2) → BLOCKED: fix corruption before proceeding
