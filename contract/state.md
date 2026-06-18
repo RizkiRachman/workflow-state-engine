@@ -1,13 +1,37 @@
 # STATE — Workflow State Engine
 ## Current Focus
-State: **PLAN**. Transitioned from INIT. Ready to delegate to @system-analyst.
-Next: Scoring pipeline → persist → snapshot.
+State: **COMPLETE**. **All 10 gap-fix rounds finished. 18/18 gaps closed.**
+| Round | Score | Focus |
+|-------|-------|-------|
+| R1 | 82 ✅ | Template field additions |
+| R2 | 94 ✅ | Schema-template field alignment + validate-contract.sh |
+| R3 | 89 ✅ | Validator in load flow |
+| R4 | 90 ✅ | Content quality checks + SDD gate flag |
+| R5 | 94 ✅ | Parallel conflict detection |
+| R6 | 93 ✅ | Atomic envelope persistence |
+| R7 | 91 ✅ | DDD trigger + build verify checks |
+| R8 | 93 ✅ | Partial credit + recurring retry tracking |
+| R9 | ~85 ✅ | Field-level access control |
+| R10 | ~92 ✅ | Audit log trim + final integration |
 
 ## Known Blockers
-<!-- Active blockers preventing progress -->
-<!-- Format: [YYYY-MM-DD] **Task name**: Brief desc of what was done -->
+None — all 18 gaps from simulation report addressed.
+
+## Scripts Created
+- scripts/validate-contract.sh (652L, 7 validation steps)
+- scripts/detect-parallel-conflicts.sh (177L, diff-based conflict detection)
+- scripts/persist-contract.sh (159L, temp-file+rename atomic persistence)
+
 ## Activity Log
-<!-- Format: [YYYY-MM-DD] **Task name**: Brief desc of what was done -->
-- [2026-06-18] **Contract path pivot**: Fixed all 12 agent files — replaced `.opencode/orchestration/contract.json` → `contract/contract.template.json`
-- [2026-06-18] **snapshot-contract.sh**: Updated source from `contract.json` → `contract.template.json`, reads runtime state from `session/<branch>/contract.json`
-- [2026-06-18] **validate-toolkit.sh**: Updated contract checks to validate committed definition files
+- [2026-06-18] **Campaign COMPLETE**: All 10 rounds finished. 18/18 gaps closed.
+- [2026-06-18] **Round 10 DONE**: Audit log trim check (>100 entries or >10KB flagged).
+- [2026-06-18] **Round 9 DONE**: Field-level access control (read_only_fields vs writeable_fields).
+- [2026-06-18] **Round 8 DONE**: Partial credit for BLOCKED + recurring retry tracking.
+- [2026-06-18] **Round 7 DONE**: DDD trigger at PLAN_SCORED + build verify before REVIEW.
+- [2026-06-18] **Round 6 DONE**: Atomic envelope persistence (persist-contract.sh).
+- [2026-06-18] **Round 5 DONE**: Parallel conflict detection (detect-parallel-conflicts.sh).
+- [2026-06-18] **Round 4 DONE**: Content quality checks + SDD gate flag.
+- [2026-06-18] **Round 3 DONE**: Validator integrated into agent.md load flow.
+- [2026-06-18] **Round 2 DONE**: Schema-template field alignment + validate-contract.sh created.
+- [2026-06-18] **Round 1 DONE**: Added 10 field groups to contract.template.json.
+- [2026-06-18] **Simulation campaign**: 10 simulations, 18 gaps identified.

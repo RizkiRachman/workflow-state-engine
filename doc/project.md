@@ -15,7 +15,7 @@
 - **Architecture**: Contract-driven state machine (agents/ -> skills/ -> contract/)
 - **Storage**: `contract/contract.json` (shared envelope) + `ctx_knowledge` (cross-session persistence)
 - **API Spec**: `contract/contract.schema.json` (canonical envelope schema)
-- **Validation**: Shell scripts (`scripts/check-conventions.sh`, `scripts/scan-ponytail-debt.sh`, `scripts/validate-toolkit.sh`) + CI (`.github/workflows/governance.yml`)
+- **Validation**: Shell scripts (`scripts/check-conventions.sh`, `scripts/validate-contract.sh`, `scripts/detect-parallel-conflicts.sh`, `scripts/persist-contract.sh`, `scripts/scan-ponytail-debt.sh`, `scripts/validate-toolkit.sh`) + CI (`.github/workflows/governance.yml`)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

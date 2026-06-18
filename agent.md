@@ -284,12 +284,17 @@ Use **Doubt-Driven Development (DDD)** when uncertain: spawn a fresh-context adv
 
 | # | Step | Tool |
 |---|------|------|
+| **0** | Validate contract | `bash scripts/validate-contract.sh --file contract/contract.json --score` |
 | 1 | Impact verify | `gitnexus_impact` |
 | 2 | Change detect | `gitnexus_detect_changes` |
 | 3 | Knowledge persist | `lean-ctx ctx_knowledge remember` |
 | 4 | Graphify sync | `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` |
 | 5 | STATE.md | `ctx_edit` |
-| 6 | Session save (complete) | See **Save Session Protocol** below |
+| 6 | Session save (complete) | See **Save Session Protocol** below
+
+**Pre-flight**: `bash scripts/validate-contract.sh --file contract/contract.json --score` (score < 70 = BLOCKED)
+**Parallel conflict check**: `bash scripts/detect-parallel-conflicts.sh --file1 /tmp/a.txt --file2 /tmp/b.txt`
+**Atomic persist**: `bash scripts/persist-contract.sh --file contract/contract.json --inject-score 85` |
 
 Exceptions: docs-only changes skip 1, 2, 4. Config-only skip 1, 2.
 

@@ -503,6 +503,18 @@ main() {
     log_pass "State: $state | Score: ${combined_score}/100"
     log_verbose "Summary: $SUMMARY_TEXT"
 
+    # Step 3.5: Atomic persist of live contract.json (if it exists)
+    local live_contract="$PROJECT_ROOT/contract/contract.json"
+    if [[ -f "$live_contract" && "$live_contract" != "$PROJECT_ROOT/contract/contract.template.json" ]]; then
+        echo "Step 3.5: Atomic persist contract.json"
+        if "$PROJECT_ROOT/scripts/persist-contract.sh" --file "$live_contract" --validate --verbose 2>/dev/null; then
+            log_pass "Contract.json atomically persisted and validated"
+        else
+            log_warn "Contract.json persist/validate had issues (continuing with snapshot)"
+        fi
+        echo "---"
+    fi
+
     # Step 4: Snapshot files
     echo "---"
     echo "Step 4: Snapshot contract files"

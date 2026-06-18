@@ -31,9 +31,10 @@ You MUST complete these steps BEFORE any tool call or work:
 1. **Load contract**: `lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode "exact"`
    → If empty: create from `contract/contract.template.json`
    → FAILURE TO LOAD = GOVERNANCE VIOLATION
-2. **Validate state**: Extract `state` field. Check transition is legal per `rules.json` state_machine
-   → Expected states: `["*"]` (orchestrator drives all transitions)
-   → If illegal: set state=BLOCKED, persist, STOP
+2. **Validate envelope**: Run `bash scripts/validate-contract.sh --file contract/contract.json --rules rules/rules.json --score`
+   → If exit code != 0 (score < 70): envelope is corrupt or in illegal state
+   → If contract.json doesn't exist (fresh session): validate template with `bash scripts/validate-contract.sh --file contract/contract.template.json --score`
+   → On failure: set state=BLOCKED, persist, STOP
 3. **Check branch**: Run `lean-ctx ctx_shell` with `git branch --show-current`
    → If main/master: STOP. Create feature branch first.
 4. **Read rules**: `rules/rules.json`
@@ -460,5 +461,9 @@ Every agent MUST run these steps in order at session start:
 4. **Sync state**: Read `contract/state.md` (Current Focus) + `PROJECT.md` (vision) + lean-ctx knowledge (past decisions)
 5. **Refresh intelligence**: `lean-ctx ctx_shell` `bash scripts/gitnexus-analyze.sh` if index is stale (>1 hour old)
 6. **Session archive check**: `ls session/$(git branch --show-current)/` — if exists, load `contract.json` from there for state continuity
+7. **Validate contract integrity**: `bash scripts/validate-contract.sh --file contract/contract.json --rules rules/rules.json --score`
+   → If contract.json missing: validate template instead: `bash scripts/validate-contract.sh --file contract/contract.template.json --score`
+   → PASS (exit 0) → proceed
+   → FAIL (exit 1 or 2) → BLOCKED: fix corruption before proceeding
 
 These steps ensure every agent starts with the full context of what's available, where the project is, and what's been decided.
