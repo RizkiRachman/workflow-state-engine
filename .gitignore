@@ -47,3 +47,7 @@ tasks/*/*
 # Template artifacts (goods-price-comparison ported files)
 AGENTS.md
 CLAUDE.md
+
+# Internal workflow artifacts — analysis docs, release plans (not for public repo)
+doc/analysis/
+doc/releases/
