@@ -9,6 +9,7 @@ This folder defines the orchestration contract for AI agent workflows.
 | `contract.schema.json` | JSON Schema (Draft 2020-12) validating the orchestration envelope |
 | `superpowers-contract.json` | Registry of all plugins, skills, and MCP tools available to agents |
 | `state.md` | Template for session state tracking |
+| `contract.template.json` | Seed envelope with default values — agents use this as the base for new sessions via `lean-ctx ctx_knowledge` |
 
 ## Runtime State
 
