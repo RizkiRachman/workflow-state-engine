@@ -38,7 +38,7 @@ Single source of truth for all AI agents. The canonical agent instruction file i
 
 ## About The Project
 
-This is a reusable orchestration toolkit for AI coding agents. It codifies agent collaboration into an 8-state state machine, ensuring:
+This is a reusable orchestration toolkit for AI coding agents. It codifies agent collaboration into a 9-state state machine, ensuring:
 
 - **Every output is scored** via a three-tier pipeline (rule checks → LLM-as-judge → combined verdict)
 - **Every decision is tracked** in the shared JSON envelope (`session/{branch}/contract.json`)
@@ -202,7 +202,7 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 ├── usage/             ← 15 tool usage guides
 ├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
 ├── config/            ← Plugin configurations
-├── scripts/           ← 25+ automation & architecture enforcement scripts
+├── scripts/           ← 40+ automation & architecture enforcement scripts
 │   ├── install.sh                — One-command project setup
 │   ├── uninstall.sh              — Clean removal
 │   ├── validate-toolkit.sh       — Full toolkit integrity check
@@ -293,7 +293,7 @@ Three-tier scoring runs after every delegation:
 
 ## Roadmap
 
-- [x] Core state machine (8 states + BLOCKED)
+- [x] Core state machine (9 states + BLOCKED)
 - [x] Three-tier scoring pipeline
 - [x] 11 specialized agent instructions
 - [x] Ponytail frugality ladder integration
@@ -313,9 +313,9 @@ Three-tier scoring runs after every delegation:
 - [x] Configuration template sync (opencode.json.template — 4 placeholders, synced from opencode.json)
 - [x] Session archival protocol (session/ directory — per-branch snapshots, append-only state log, branch index)
 - [ ] Skill registry publishing (skills.sh)
-- [ ] Intensity modes for ponytail (off/lite/full/ultra)
+- [x] Intensity modes for ponytail (off/low/medium/high/full)
 - [ ] Debt ledger harvesting (`/ponytail-debt` command)
-- [ ] Multi-model council consensus for high-stakes decisions
+- [x] Multi-model council consensus for high-stakes decisions
 - [x] Parallel shard execution with conflict reconciliation
 - [x] Automated contract persistence (scripts/auto-persist.sh)
 - [x] Automated 3-tier scoring pipeline (scripts/auto-score.sh)
