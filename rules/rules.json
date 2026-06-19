@@ -1,1 +1,166 @@
-null
+{
+  "version": "0.8.0",
+  "description": "State machine transitions, scoring thresholds, validation gates, and ponytail (frugality) enforcement for the Workflow State Engine.",
+  "state_machine": {
+    "version": "0.8.0",
+    "transitions": [
+      { "from": "INIT",           "to": "PLAN",           "require_score": null },
+      { "from": "PLAN",           "to": "PLAN_SCORED",    "require_score": null },
+      { "from": "PLAN_SCORED",    "to": "EXECUTE",        "require_score": 70 },
+      { "from": "EXECUTE",        "to": "EXECUTE_SCORED", "require_score": null },
+      { "from": "EXECUTE_SCORED", "to": "REVIEW",         "require_score": 70 },
+      { "from": "REVIEW",         "to": "REVIEW_SCORED",  "require_score": null },
+      { "from": "REVIEW_SCORED",  "to": "COMPLETE",       "require_score": 70 },
+      { "from": "PLAN_SCORED",    "to": "EXECUTE",        "require_score": 70, "gates": ["sdd"] },
+      { "from": "EXECUTE",        "to": "EXECUTE_SCORED", "require_score": null, "gates": ["ponytail"] },
+      { "from": "REVIEW",         "to": "REVIEW_SCORED",  "require_score": null, "gates": ["ponytail"] },
+      { "from": "*",              "to": "BLOCKED",        "require_score": 50 }
+    ],
+    "states": ["INIT","PLAN","PLAN_SCORED","EXECUTE","EXECUTE_SCORED","REVIEW","REVIEW_SCORED","COMPLETE","BLOCKED"],
+    "add_gate": {
+      "PONYTAIL_CHECK": {
+        "description": "Ponytail frugality gate — runs 6-rung ladder before code writing",
+        "transition": "EXECUTE -> EXECUTE_SCORED",
+        "rungs": [
+          "1. Does this need to exist? -> skip (YAGNI)",
+          "2. Standard library does it? -> use it",
+          "3. Native platform feature? -> use it",
+          "4. Already-installed dependency? -> use it",
+          "5. Can this be one line? -> one line",
+          "6. Only then: minimum code that works"
+        ],
+        "enforcement": {
+          "deduction_on_violation": 15,
+          "max_per_file": 3,
+          "comment_prefix": "ponytail:"
+        }
+      }
+    }
+  },
+  "scoring": {
+    "version": "0.8.0",
+    "thresholds": {
+      "pass": 70,
+      "retry_min": 50,
+      "retry_max_attempts": 3,
+      "escalation": 50
+    },
+    "tier1_rules": {
+      "schema_valid": { "deduction": 15, "description": "JSON schema validity check" },
+      "permissions_violated": { "deduction": 40, "description": "Governance permission boundary crossed" },
+      "blast_radius_high": { "deduction": 40, "description": "gitnexus_impact returned HIGH/CRITICAL" },
+      "writing_order_wrong": { "deduction": 15, "description": "Writing order violated (port->service->mapper->adapter)" },
+      "over_engineering": { "deduction": 15, "description": "YAGNI violation detected (SIMPLICITY_001)" },
+      "required_fields_missing": { "deduction": 15, "description": "Envelope completeness check" }
+    },
+    "tier2_judge": {
+      "requirements_fulfillment": { "weight": 40, "description": "Matches acceptance criteria" },
+      "governance_compliance": { "weight": 30, "description": "Follows _governance.md rules" },
+      "completeness": { "weight": 20, "description": "All tasks done, tests written" },
+      "edge_cases": { "weight": 10, "description": "Nulls, errors, boundaries covered" }
+    },
+    "confidence_scoring": {
+      "enabled": true,
+      "description": "Score confidence at each decision point (1-5 scale)",
+      "levels": {
+        "1": "Guess — no evidence",
+        "2": "Informed — partial evidence",
+        "3": "Confident — supported by data",
+        "4": "Strong — multiple corroborating sources",
+        "5": "Certain — verifiable, deterministic"
+      },
+      "min_confidence_to_proceed": 3,
+      "escalate_below": 2,
+      "record_in": "decisions.confidence_scores[]"
+    },
+    "validation_gates": {
+      "max_test_failures": { "value": 3, "action": "BLOCKED" },
+      "max_score_drop": { "value": 30, "action": "BLOCKED" },
+      "max_compile_errors": { "value": 1, "action": "BLOCKED" },
+      "blast_radius_unacknowledged": { "action": "BLOCKED" },
+      "schema_failure": { "action": "BLOCKED" }
+    },
+    "timeout_ms": 30000
+  },
+  "ponytail": {
+    "version": "0.8.0",
+    "description": "Frugality ladder intensity controls and per-skill overrides",
+    "intensity": {
+      "off": { "label": "No enforcement", "skip_rungs": [1,2,3,4,5,6] },
+      "low": { "label": "Rungs 5-6 only (one line -> minimum code)", "skip_rungs": [1,2,3,4] },
+      "medium": { "label": "Rungs 4-6 (existing deps -> one line -> minimum)", "skip_rungs": [1,2,3] },
+      "high": { "label": "Rungs 3-6 (native -> existing -> one line -> minimum)", "skip_rungs": [1,2] },
+      "full": { "label": "All 6 rungs", "skip_rungs": [] }
+    },
+    "default_intensity": "high",
+    "phases": ["EXECUTE", "REVIEW"],
+    "per_skill_overrides": {
+      "system-analyst": { "intensity": "medium", "reason": "Planning benefits from broader exploration" },
+      "developer": { "intensity": "full", "reason": "Implementation must minimize code" },
+      "developer-fixer": { "intensity": "full", "reason": "Fixes should be minimal" },
+      "quality-analyst": { "intensity": "high", "reason": "Review should catch over-engineering" }
+    },
+    "debt_ledger": {
+      "description": "Track intentional shortcuts (ponytail: comments) as technical debt",
+      "fields": {
+        "file": "File path",
+        "line": "Line number",
+        "comment": "ponytail: comment text",
+        "ceiling": "Known limitation",
+        "upgrade": "Planned upgrade path",
+        "intensity": "intensity level at time of debt",
+        "severity": "low|medium|high|critical",
+        "discovered_at": "ISO timestamp",
+        "resolved_at": "ISO timestamp (null if unresolved)"
+      },
+      "store_in": ["contract.outputs.debt_ledger[]", "contract.ponytail.debt_items[]"]
+    },
+    "pre_commit_gate": {
+      "enabled": true,
+      "description": "Run ponytail scan before every commit",
+      "script": "scripts/scan-ponytail-debt.sh",
+      "block_on": "critical",
+      "flag_on": "high",
+      "max_debt_items": 5
+    }
+  },
+  "agent_watchdog": {
+    "version": "0.8.0",
+    "description": "Timeout and deadlock detection for agent delegations",
+    "delegation_timeout_ms": 120000,
+    "parallel_deadlock_detection": {
+      "enabled": true,
+      "description": "Detect when parallel agents are waiting on each other's output",
+      "max_wait_cycles": 5,
+      "resolution": "fallback_to_serial"
+    },
+    "health_check": {
+      "enabled": true,
+      "interval_phases": 3,
+      "script": "scripts/drift-detect.sh",
+      "repair_script": "scripts/self-repair.sh --dry-run"
+    }
+  },
+  "decisions": {
+    "confidence_journal": {
+      "enabled": true,
+      "description": "Auto-persist every decision with confidence score to decision journal",
+      "store_in": "contract.decisions.adr_log[]",
+      "fields": {
+        "id": "ADR-NNN",
+        "timestamp": "ISO 8601",
+        "title": "Decision title",
+        "context": "Why this decision was needed",
+        "decision": "What was decided",
+        "alternatives": "Rejected alternatives",
+        "confidence": "1-5",
+        "confidence_rationale": "Why this confidence level"
+      }
+    },
+    "revert_threshold": {
+      "description": "Score below which a previous decision should be revisited",
+      "threshold": 30,
+      "action": "Flag for review"
+    }
+  }
+}
