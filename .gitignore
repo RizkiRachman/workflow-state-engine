@@ -53,3 +53,5 @@ CLAUDE.md
 # Internal workflow artifacts — analysis docs, release plans (not for public repo)
 doc/analysis/
 doc/releases/
+opencode.*.json
+opencode.json
