@@ -11,7 +11,7 @@
 <!-- omit from toc -->
 ### Contract-driven state machine orchestration engine for AI agent workflows
 
-State machine: `INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE`
+State machine: `INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE`
 
 Single source of truth for all AI agents. The canonical agent instruction file is [`agent.md`](agent.md) which serves as `instructions[0]` for every agent.
 
@@ -83,6 +83,18 @@ git --version
 
 ### Installation
 
+#### Quick Install
+
+```sh
+git clone https://github.com/RizkiRachman/workflow-state-engine.git
+cd workflow-state-engine
+bash scripts/install.sh
+```
+
+The `install.sh` script handles dependency checks, `.opencode/` symlinks, session directory setup, and validation automatically.
+
+#### Manual Setup
+
 1. **Clone the repo**
 
    ```sh
@@ -90,63 +102,40 @@ git --version
    cd workflow-state-engine
    ```
 
-2. **Bootstrap symlinks and verify prerequisites**
+2. **Bootstrap symlinks** — `setup.sh` creates `.opencode/` symlinks pointing to root-level source directories:
 
    ```sh
    bash setup.sh
    ```
 
-   `setup.sh` runs pre-flight checks (Git, OpenCode, lean-ctx), verifies MCP tools are available, checks required plugins are installed, and creates `.opencode/` symlinks pointing to the root-level source directories.
-
-3. **Configure `opencode.json`**
-
-   Copy the template and configure your API keys:
+3. **Configure opencode.json** — copy and configure API keys:
 
    ```sh
    cp opencode.json.template opencode.json
-   # Then edit opencode.json — replace YOUR_SUMOPOD_API_KEY,
-   # YOUR_FIRECRAWL_API_KEY, and other placeholders with real values.
+   # Edit opencode.json — replace YOUR_SUMOPOD_API_KEY,
+   # YOUR_FIRECRAWL_API_KEY, and other placeholders
    ```
 
-   The template (`opencode.json.template`) annotates each MCP server and plugin with its tier:
+#### Verify Installation
 
-   | Tier | Label | Components |
-   |------|-------|------------|
-   | **MANDATORY** | All agents rely on these | `gitnexus`, `lean-ctx` |
-   | **RECOMMENDED** | Adds web capabilities | `firecrawl` |
-   | **OPTIONAL** | Enhances specific agents | `context7`, all plugins |
+```sh
+# Check toolkit integrity
+bash scripts/validate-toolkit.sh
 
-4. **Run MCP verification (optional)**
+# Verify MCP servers
+bash scripts/check-mcp.sh
 
-   ```sh
-   source scripts/check-mcp.sh
-   ```
+# Load orchestration envelope
+lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode exact
+```
 
-   This verifies that all MANDATORY MCP servers (lean-ctx, gitnexus) are available and prints RECOMMENDED/OPTIONAL status. Compatible with `set -e` scripts.
+#### Branch Setup
 
-5. **Run plugin verification (optional)**
+```sh
+git checkout -b feature/your-task-description
+```
 
-   ```sh
-   bash scripts/check-plugins.sh
-   ```
-
-   This checks all npm plugins from `opencode.json` are installed globally or locally, and verifies custom plugins (`auto-wrap.ts`, `ponytail.mjs`) exist on disk.
-
-6. **Verify the orchestration envelope loads**
-
-   ```sh
-   lean-ctx ctx_knowledge recall --key "orchestration-contract" --mode exact
-   ```
-
-   If the envelope exists, you're resuming a session. If not, a fresh one will be created on first delegation.
-
-7. **Configure your branch**
-
-   ```sh
-   git checkout -b feature/your-task-description
-   ```
-
-   ⚠️ Never work on `main` — the orchestrator enforces this before any operation.
+⚠️ Never work on `main` — the orchestrator enforces this before any operation.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -213,7 +202,41 @@ Mark intentional shortcuts with `// ponytail: <ceiling>. Upgrade: <path>` commen
 ├── usage/             ← 15 tool usage guides
 ├── doc/               ← Workflow docs, project docs, gap analyses, cross-agent conventions
 ├── config/            ← Plugin configurations
-├── scripts/           ← Verification, automation & architecture enforcement scripts (validate-contract.sh, auto-persist.sh, auto-score.sh, state-guard.sh, self-repair.sh, drift-detect.sh, sdd-gate.sh, verify-knowledge.sh, health-check.sh, install-hooks.sh, detect-parallel-conflicts.sh, persist-contract.sh, check-conventions.sh, validate-toolkit.sh, check-mcp.sh, check-plugins.sh, scan-ponytail-debt.sh, archive-sessions.sh, autonomous-runner.sh)
+├── scripts/           ← 25+ automation & architecture enforcement scripts
+│   ├── install.sh                — One-command project setup
+│   ├── uninstall.sh              — Clean removal
+│   ├── validate-toolkit.sh       — Full toolkit integrity check
+│   ├── validate-contract.sh      — Contract JSON validation
+│   ├── check-conventions.sh      — Architecture convention checking
+│   ├── check-mcp.sh              — MCP server verification
+│   ├── health-check.sh           — 6-dimension health verification
+│   ├── pre-commit-ponytail.sh    — Ponytail debt gate (pre-commit)
+│   ├── scan-ponytail-debt.sh     — Debt marker scanner
+│   ├── contract-migrate.sh       — Contract version migration
+│   ├── generate-config.sh        — Agent config + skills.json generation
+│   ├── build-npm.sh              — npm package build
+│   ├── publish-skills.sh         — Skills catalog publication
+│   ├── self-healing-retry.sh     — Adaptive retry + backoff
+│   ├── timeout-watchdog.sh       — Delegation watchdog with deadlock detection
+│   ├── decision-journal.sh       — ADR + confidence score management
+│   ├── session-lock.sh           — Concurrent session lock
+│   ├── cleanup-branches.sh       — Stale branch cleanup
+│   ├── prototype-mode.sh         — Prototype/low-ceremony mode toggle
+│   ├── uncertainty-router.sh     — Confidence-based decision routing
+│   ├── revert-threshold.sh       — Revert complexity scoring
+│   ├── test-gitnexus-integration.sh — GitNexus integration test
+│   ├── snapshot-contract.sh      — Envelope snapshot & archival
+│   ├── sdd-gate.sh               — SDD spec gate enforcement
+│   ├── state-guard.sh            — Agent state guard verification
+│   ├── self-repair.sh            — Corrupt contract repair
+│   ├── drift-detect.sh           — Knowledge vs file drift detection
+│   ├── persist-contract.sh       — Atomic envelope persistence
+│   ├── verify-knowledge.sh       — Knowledge persistence verification
+│   ├── auto-persist.sh           — Automated contract persistence
+│   ├── auto-score.sh             — Automated 3-tier scoring
+│   ├── archive-sessions.sh       — Session archival & cleanup
+│   ├── autonomous-runner.sh      — Autonomous contract bridge runner
+│   └── gitnexus-analyze.sh       — GitNexus re-index
 ├── .githooks/         ← Git hooks for pre-commit validation and post-commit re-index (pre-commit, post-commit)
 ├── opencode.json      ← OpenCode configuration
 ├── opencode.json.template ← Redacted template with annotated MCP tiers
@@ -235,8 +258,8 @@ Orchestrator (tech-lead)
 ## State Machine
 
 ```
-INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
-                              ↘                ↘                ↘
+INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
+                              ↘                      ↘                ↘
                           BLOCKED (score < 50 or retry ≥ 3)
                                 ↘
                           User intervention → retry with guidance
@@ -246,7 +269,8 @@ INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVI
 |-----------|------|-----------|
 | INIT → PLAN | Session created | Always |
 | PLAN → PLAN_SCORED | Plan produced | Always |
-| PLAN_SCORED → EXECUTE | Spec gate | Score ≥ 70 |
+| PLAN_SCORED → PONYTAIL_CHECK | Ponytail gate | Score ≥ 70 |
+| PONYTAIL_CHECK → EXECUTE | Ponytail scan | Debt items ≤ max_debt_items |
 | EXECUTE → EXECUTE_SCORED | Implementation done | Always |
 | EXECUTE_SCORED → REVIEW | Code review | Score ≥ 70 |
 | REVIEW → REVIEW_SCORED | Review done | Always |

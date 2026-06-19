@@ -32,6 +32,9 @@ Thumbs.db
 *.swo
 *~
 
+# Build artifacts (npm tarballs, manifests)
+dist/
+
 # Node
 node_modules/
 

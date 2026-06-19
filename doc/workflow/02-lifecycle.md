@@ -27,7 +27,25 @@ This part walks through each phase of the state machine end-to-end, documents th
 - **Gate**: Score ≥ 70 → PASS advances to EXECUTE. 50-69 → RETRY — re-delegate to system-analyst with issues[]. <50 → BLOCKED.
 - **SDD gate trigger**: If score ≥ 70, SDD spec gate fires at the next transition. The plan is ready for spec-driven implementation.
 
-### B1c. PLAN_SCORED → EXECUTE [Gate: SDD]
+### B1c. PLAN_SCORED → PONYTAIL_CHECK [Gate: Ponytail]
+
+- **Reads**: outputs.plan, scope.*, rules.json → ponytail.pre_commit_gate
+- **Delegates to**: @tech-lead (or runs scripts/pre-commit-ponytail.sh directly)
+- **Activity**: The frugality ladder (6 rungs) is enforced. The system checks:
+  - Does this feature need to exist? (YAGNI)
+  - Can the standard library do it?
+  - Is there a native platform feature?
+  - Does an already-installed dependency cover this?
+  - Can this be one line?
+  - Only then: minimum code that works
+- **Ponytail scan**: scripts/pre-commit-ponytail.sh scans the staged changes for debt markers (ponytail:, TODO, FIXME, HACK) and undocumented shortcuts
+- **Gate**: Debt items ≤ max_debt_items (default: 5). Critical debt → BLOCKED. High debt → FLAG.
+- **Outputs**: state=PONYTAIL_CHECK, ponytail.debt_items[] in contract, outputs.debt_ledger[]
+- **Scoring threshold**: Debt items ≤ max_debt_items to advance. If exceeded, the plan must be simplified before execution.
+- **Writes back**: contract.ponytail.debt_items (array of debt entries found), contract.ponytail.intensity (current intensity level)
+- **Next transition**: PONYTAIL_CHECK → EXECUTE runs the original SDD gate (spec check)
+
+### B1d. PLAN_SCORED → EXECUTE [Gate: SDD]
 
 - **Reads**: score.* (proves ≥70), decisions.* (approved architecture), outputs.plan (full spec to implement from)
 - **Gate**: SDD fires here — mandatory spec approval before any code is written. The plan must be in Given/When/Then format (or equivalent formal specification) before execution begins:
@@ -39,7 +57,7 @@ This part walks through each phase of the state machine end-to-end, documents th
 - **Delegates to**: @developer (implementation per spec, TDD cycle)
 - **Writes back**: state=EXECUTE, governance.mode: spec, governance.current_guidance (any execution direction from orchestrator)
 
-### B1d. EXECUTE → EXECUTE_SCORED [Gate: Ponytail]
+### B1e. EXECUTE → EXECUTE_SCORED [Gate: Ponytail]
 
 - **Reads**: outputs.plan (task breakdown, dependency graph), decisions.* (approved architecture, coding standard)
 - **Gate**: Ponytail fires before ANY code is written — run the 6-rung frugality ladder:
@@ -61,7 +79,7 @@ This part walks through each phase of the state machine end-to-end, documents th
 - **Outputs**: outputs.code_changes[] (files_created, files_modified), outputs.test_results (test_count, pass, fail)
 - **Writes back**: state=EXECUTE_SCORED
 
-### B1e. EXECUTE_SCORED → REVIEW [Gate: DDD]
+### B1f. EXECUTE_SCORED → REVIEW [Gate: DDD]
 
 - **Reads**: outputs.code_changes[], outputs.test_results, outputs.plan (for scope comparison)
 - **Delegates to**: @tech-lead (scoring pipeline — self-scored)
@@ -69,7 +87,7 @@ This part walks through each phase of the state machine end-to-end, documents th
 - **Activity**: Score implementation (Tier 1 → Tier 2 → Tier 3). Pass ≥ 70 advances to REVIEW.
 - **Writes back**: state=REVIEW, score.* (updated with implementation score)
 
-### B1f. REVIEW → REVIEW_SCORED [Gate: Ponytail]
+### B1g. REVIEW → REVIEW_SCORED [Gate: Ponytail]
 
 - **Reads**: score.* (proves ≥70), outputs.* (code_changes, test_results, risks_introduced[])
 - **Delegates to**: @quality-analyst (code quality review — 6 dimensions)
@@ -84,7 +102,7 @@ This part walks through each phase of the state machine end-to-end, documents th
 - **Outputs**: outputs.agent_reports[] with findings per dimension, outputs.review_verdict (PASS/BLOCK/FLAG)
 - **Writes back**: state=REVIEW_SCORED
 
-### B1g. REVIEW_SCORED → COMPLETE
+### B1h. REVIEW_SCORED → COMPLETE
 
 - **Reads**: outputs.agent_reports[], score.*, outputs.code_changes[], outputs.test_results
 - **Delegates to**: @tech-lead (score review findings) + @quality-analyst-learner (post-exec analysis)
@@ -97,7 +115,7 @@ This part walks through each phase of the state machine end-to-end, documents th
 Doubt-Driven Development (DDD) subjects non-trivial decisions to adversarial review. It fires at 6 points across the lifecycle:
 
 1. **B1a** (INIT→PLAN) — "What assumptions am I making about scope and constraints?" Before delegating to system-analyst, the tech-lead challenges the task framing.
-2. **B1e** (EXECUTE_SCORED→REVIEW) — "What would I criticize about my own code?" Before review, the tech-lead runs an adversarial self-review of the implementation.
+2. **B1f** (EXECUTE_SCORED→REVIEW) — "What would I criticize about my own code?" Before review, the tech-lead runs an adversarial self-review of the implementation.
 3. **Before commit** — "What did I miss?" Developer runs DDD on every non-trivial change before committing (branches, cross-service calls, shared state modifications).
 4. **After review** — "Did the reviewer find what I expected?" After quality-analyst review, the tech-lead compares DDD predictions against actual findings.
 5. **At BLOCKED** — "What assumption was wrong?" Every BLOCKED event triggers a root-cause challenge to avoid repeating the same failure.

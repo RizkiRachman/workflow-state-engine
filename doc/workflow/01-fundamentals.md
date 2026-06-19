@@ -9,7 +9,7 @@ This part covers the core orchestration mechanics: state machine transitions, co
 ## A1. State Machine Diagram + Transitions
 
 ```
-INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
+INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
                                                                                        ↓
                                                                                   BLOCKED
 ```
@@ -20,7 +20,8 @@ INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVI
 |---|---|---|
 | INIT → PLAN | Task starts | Envelope created with state=INIT, delegate to system-analyst |
 | PLAN → PLAN_SCORED | Scoring pipeline | Score ≥ 70 → PASS, 50-69 → RETRY, <50 → BLOCKED |
-| PLAN_SCORED → EXECUTE | Score ≥ 70 | Plus SDD spec gate: spec must be approved |
+| PLAN_SCORED → PONYTAIL_CHECK | Score ≥ 70 | Ponytail gate fires: pre-commit-ponytail.sh scans for debt |
+| PONYTAIL_CHECK → EXECUTE | Debt items ≤ max_debt_items | Frugality ladder enforced; debt items must be within thresholds |
 | EXECUTE → EXECUTE_SCORED | Scoring pipeline | Same scoring thresholds |
 | EXECUTE_SCORED → REVIEW | Score ≥ 70 | Delegate to quality-analyst |
 | REVIEW → REVIEW_SCORED | Scoring pipeline | Verdict: PASS/BLOCK/FLAG |
@@ -97,7 +98,8 @@ The contract is the single source of truth. Every delegation starts by reading t
 |---|---|---|---|---|
 | INIT→PLAN | requirements.*, governance.*, retry.issues[] | Delegate system design & plan | state: PLAN, session.*, scope.* | system-analyst |
 | PLAN→PLAN_SCORED | outputs.plan, scope.* | Score plan (+ SDD spec) | state: PLAN_SCORED, score.*, decisions.* | tech-lead |
-| PLAN_SCORED→EXECUTE | score.*, decisions.*, outputs.plan | Implement per spec | state: EXECUTE, governance.mode: spec | developer |
+| PLAN_SCORED→PONYTAIL_CHECK | score.* (proves ≥70), decisions.* | Run ponytail scan | state: PONYTAIL_CHECK, ponytail.debt_items[] | tech-lead |
+| PONYTAIL_CHECK→EXECUTE | ponytail.debt_items[] | Implement per spec (if debt ≤ max) | state: EXECUTE, governance.mode: spec | developer |
 | EXECUTE→EXECUTE_SCORED | outputs.code_changes[], outputs.test_results | Score implementation | state: EXECUTE_SCORED, score.* | tech-lead |
 | EXECUTE_SCORED→REVIEW | score.*, outputs.* | Code quality review | state: REVIEW | quality-analyst |
 | REVIEW→REVIEW_SCORED | outputs.agent_reports[] | Score review findings | state: REVIEW_SCORED, score.*, outputs.score_summary | tech-lead |
