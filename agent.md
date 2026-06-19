@@ -4,7 +4,7 @@
 
 **Contract-driven state machine orchestration engine for AI agent workflows.**
 
-State machine: `INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE`
+State machine: `INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE`
 
 Single source of truth for all AI agents. Reference skills and usage guides for depth. This file is `instructions[0]` — loaded by every agent at session start.
 
@@ -31,15 +31,16 @@ Single source of truth for all AI agents. Reference skills and usage guides for 
 | Concept | Description |
 |---------|-------------|
 | **Shared JSON Envelope** | `session/{branch}/contract.json` — single source of truth for state, decisions, outputs, scoring |
-| **State Machine** | 8 states + BLOCKED: agents transition through the workflow via the envelope |
+| **State Machine** | 9 states + BLOCKED: agents transition through the workflow via the envelope |
 | **Scoring Pipeline** | Three-tier scoring after every delegation (rule checks → LLM-as-judge → combined verdict) |
+| **Ponytail Gate** | Ponytail debt check between PLAN_SCORED and EXECUTE via pre-commit-ponytail.sh |
 | **Agent Delegation** | Orchestrator delegates to specialized agents (system-analyst, developer, quality-analyst) |
 | **Cross-Session Learning** | Lessons, patterns, gotchas persisted via `ctx_knowledge` |
 
 ### State Machine Transitions
 
 ```
-INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
+INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
                               ↘                ↘                ↘
                           BLOCKED (score < 50 or retry ≥ 3)
                                 ↘
@@ -50,7 +51,8 @@ INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVI
 |-----------|------|-----------|
 | INIT → PLAN | Session created | Always |
 | PLAN → PLAN_SCORED | Plan produced | Always |
-| PLAN_SCORED → EXECUTE | Spec gate | Score ≥ 70 |
+| PLAN_SCORED → PONYTAIL_CHECK | Ponytail gate | Score ≥ 70 |
+| PONYTAIL_CHECK → EXECUTE | Ponytail scan | Debt items ≤ max_debt_items |
 | EXECUTE → EXECUTE_SCORED | Implementation done | Always |
 | EXECUTE_SCORED → REVIEW | Code review | Score ≥ 70 |
 | REVIEW → REVIEW_SCORED | Review done | Always |

@@ -143,7 +143,7 @@ print('$field' in data)
 }
 
 # --- Step 3: Validate state enum ------------------------------------------
-VALID_STATES=("INIT" "PLAN" "PLAN_SCORED" "EXECUTE" "EXECUTE_SCORED" "REVIEW" "REVIEW_SCORED" "COMPLETE" "BLOCKED")
+VALID_STATES=("INIT" "PLAN" "PLAN_SCORED" "PONYTAIL_CHECK" "EXECUTE" "EXECUTE_SCORED" "REVIEW" "REVIEW_SCORED" "COMPLETE" "BLOCKED")
 
 check_state_enum() {
     local file="$1"
@@ -202,7 +202,6 @@ check_nested_fields() {
         "retry:max_attempts"
         "retry:score_threshold"
         "retry:escalation_threshold"
-        "retry:issues"
         "retry:phase_issues"
         "retry:escalation_trace"
         "outputs:plan"
@@ -211,6 +210,10 @@ check_nested_fields() {
         "outputs:test_results"
         "outputs:agent_reports"
         "outputs:score_summary"
+        "outputs:debt_ledger"
+        "ponytail:debt_items"
+        "ponytail:intensity"
+        "decisions:confidence_scores"
         "metrics:cost_tokens"
         "metrics:elapsed_ms"
         "metrics:agents_used"

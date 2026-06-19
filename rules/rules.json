@@ -1,301 +1,166 @@
 {
-  "version": "0.7.0",
-  "strict": true,
-  "description": "Machine-enforceable rules for OpenCode agents. CRITICAL = BLOCK agent. HIGH = FLAG orchestrator. LOW = advisory.",
-
-  "required_mcps": {
-    "description": "MCPs required for the framework to function. Preflight.sh checks these dynamically.",
-    "lean-ctx": {
-      "description": "Context persistence — contract storage and retrieval",
-      "severity": "required",
-      "check_cli": "command -v lean-ctx",
-      "check_tool": "lean-ctx ctx_knowledge recall"
-    },
-    "gitnexus": {
-      "description": "Code intelligence — impact analysis before edits",
-      "severity": "required",
-      "check_cli": "npx --yes gitnexus --version"
-    },
-    "graphify": {
-      "description": "Knowledge graph — codebase exploration (depends on gitnexus index)",
-      "severity": "optional",
-      "check_cli": "python3 -c \"import graphify; print('graphify')\""
-    }
-  },
-
+  "version": "0.8.0",
+  "description": "State machine transitions, scoring thresholds, validation gates, and ponytail (frugality) enforcement for the Workflow State Engine.",
   "state_machine": {
+    "version": "0.8.0",
     "transitions": [
-      { "from": "INIT", "to": "PLAN", "require_score": null },
-      { "from": "PLAN", "to": "PLAN_SCORED", "require_score": null },
-      { "from": "PLAN_SCORED", "to": "EXECUTE", "require_score": 70 },
-      { "from": "EXECUTE", "to": "EXECUTE_SCORED", "require_score": null },
-      { "from": "EXECUTE_SCORED", "to": "REVIEW", "require_score": 70 },
-      { "from": "REVIEW", "to": "REVIEW_SCORED", "require_score": null },
-      { "from": "REVIEW_SCORED", "to": "COMPLETE", "require_score": 70 },
-      { "from": "*", "to": "BLOCKED", "condition": "score < 50 OR retry_attempts >= 3" },
-      { "from": "BLOCKED", "to": "INIT", "condition": "user_intervention" }
+      { "from": "INIT",           "to": "PLAN",           "require_score": null },
+      { "from": "PLAN",           "to": "PLAN_SCORED",    "require_score": null },
+      { "from": "PLAN_SCORED",    "to": "EXECUTE",        "require_score": 70 },
+      { "from": "EXECUTE",        "to": "EXECUTE_SCORED", "require_score": null },
+      { "from": "EXECUTE_SCORED", "to": "REVIEW",         "require_score": 70 },
+      { "from": "REVIEW",         "to": "REVIEW_SCORED",  "require_score": null },
+      { "from": "REVIEW_SCORED",  "to": "COMPLETE",       "require_score": 70 },
+      { "from": "PLAN_SCORED",    "to": "EXECUTE",        "require_score": 70, "gates": ["sdd"] },
+      { "from": "EXECUTE",        "to": "EXECUTE_SCORED", "require_score": null, "gates": ["ponytail"] },
+      { "from": "REVIEW",         "to": "REVIEW_SCORED",  "require_score": null, "gates": ["ponytail"] },
+      { "from": "*",              "to": "BLOCKED",        "require_score": 50 }
     ],
-    "agent_states": {
-      "tech-lead": ["*"],
-      "system-analyst": ["INIT", "PLAN", "PLAN_SCORED"],
-      "developer": ["EXECUTE", "EXECUTE_SCORED"],
-      "quality-analyst": ["REVIEW", "REVIEW_SCORED"],
-      "software-architect": ["INIT", "PLAN", "PLAN_SCORED"],
-      "developer-explorer": ["*"],
-      "developer-fixer": ["*"],
-      "developer-librarian": ["*"],
-      "developer-council": ["*"],
-      "developer-observer": ["*"],
-      "quality-analyst-learner": ["REVIEW_SCORED", "COMPLETE"]
-    }
-  },
-
-  "token_budget": {
-    "enabled": true,
-    "max_per_session": 200000,
-    "warning_threshold_pct": 80,
-    "hard_limit_pct": 95,
-    "enforcement": "strict",
-    "rules": [
-      {
-        "id": "TOKEN_001",
-        "description": "Per-session token budget must not exceed max_per_session",
-        "severity": "CRITICAL",
-        "action": "block"
-      },
-      {
-        "id": "TOKEN_002",
-        "description": "Warning emitted when usage exceeds warning_threshold_pct",
-        "severity": "WARNING",
-        "action": "warn"
-      },
-      {
-        "id": "TOKEN_003",
-        "description": "Subagent calls must not exceed max_per_subagent_call",
-        "severity": "HIGH",
-        "action": "block_retry"
-      },
-      {
-        "id": "TOKEN_004",
-        "description": "Phase budgets must not be exceeded without justification",
-        "severity": "MEDIUM",
-        "action": "flag"
+    "states": ["INIT","PLAN","PLAN_SCORED","EXECUTE","EXECUTE_SCORED","REVIEW","REVIEW_SCORED","COMPLETE","BLOCKED"],
+    "add_gate": {
+      "PONYTAIL_CHECK": {
+        "description": "Ponytail frugality gate — runs 6-rung ladder before code writing",
+        "transition": "EXECUTE -> EXECUTE_SCORED",
+        "rungs": [
+          "1. Does this need to exist? -> skip (YAGNI)",
+          "2. Standard library does it? -> use it",
+          "3. Native platform feature? -> use it",
+          "4. Already-installed dependency? -> use it",
+          "5. Can this be one line? -> one line",
+          "6. Only then: minimum code that works"
+        ],
+        "enforcement": {
+          "deduction_on_violation": 15,
+          "max_per_file": 3,
+          "comment_prefix": "ponytail:"
+        }
       }
-    ]
-  },
-
-  "rules": [
-    {
-      "id": "PREFLIGHT_001",
-      "severity": "CRITICAL",
-      "description": "Agent MUST load contract.json before any tool call",
-      "condition": "first_action_not_contract_load",
-      "action": "BLOCK",
-      "message": "⛔ PREFLIGHT FAILED: contract.json not loaded. Run: lean-ctx ctx_knowledge recall --query \"orchestration-contract\""
-    },
-    {
-      "id": "PREFLIGHT_002",
-      "severity": "CRITICAL",
-      "description": "Agent MUST NOT work on main branch",
-      "condition": "git_branch_is_main",
-      "action": "BLOCK",
-      "message": "⛔ PREFLIGHT FAILED: Current branch is main. Create a feature branch first."
-    },
-    {
-      "id": "PREFLIGHT_003",
-      "severity": "CRITICAL",
-      "description": "Agent MUST validate contract.state before proceeding",
-      "condition": "contract_state_mismatch",
-      "action": "BLOCK",
-      "message": "⛔ STATE FAILED: Contract state is ${actual}. Expected one of: ${expected}"
-    },
-    {
-      "id": "IMPACT_001",
-      "severity": "CRITICAL",
-      "description": "Agent MUST run gitnexus_impact before editing any symbol",
-      "condition": "edit_without_impact_analysis",
-      "action": "BLOCK",
-      "message": "⛔ IMPACT FAILED: Edit attempted without gitnexus_impact analysis. Run: gitnexus_impact({target, direction: \"upstream\"})"
-    },
-    {
-      "id": "PERSIST_001",
-      "severity": "HIGH",
-      "description": "Agent MUST persist contract after every delegation/phase change",
-      "condition": "delegation_without_persist",
-      "action": "FLAG",
-      "message": "⚠️ PERSIST WARNING: Contract not persisted after delegation. Run: lean-ctx ctx_knowledge remember category architecture key orchestration-contract value <updated JSON>"
-    },
-    {
-      "id": "SCORE_001",
-      "severity": "HIGH",
-      "description": "Scoring MUST be computed after each subagent returns",
-      "condition": "delegation_returned_without_scoring",
-      "action": "FLAG",
-      "message": "⚠️ SCORE WARNING: Subagent output not scored. Run scoring pipeline (Tier 1 rules + Tier 2 judge)"
-    },
-    {
-      "id": "WRITE_001",
-      "severity": "CRITICAL",
-      "description": "Agent MUST follow writing order: Port → Service → Mapper → Adapter → Constants → Events → Tests",
-      "condition": "writing_order_violation",
-      "action": "BLOCK",
-      "message": "⛔ WRITING ORDER: Files created in wrong order. Expected order: port → service → mapper → adapter → constants → events → tests"
-    },
-    {
-      "id": "BRANCH_001",
-      "severity": "HIGH",
-      "description": "Agent MUST push feature branch before significant work",
-      "condition": "significant_work_without_push",
-      "action": "FLAG",
-      "message": "⚠️ BRANCH WARNING: Feature branch exists but not pushed. Run: git push -u origin $(git branch --show-current)"
-    },
-    {
-      "id": "SHELL_001",
-      "severity": "CRITICAL",
-      "description": "Agent MUST use lean-ctx ctx_shell for all shell commands. bash tool is denied — triggers permission prompts and blocks automation.",
-      "condition": "agent_used_bash_instead_of_ctx_shell",
-      "action": "BLOCK",
-      "message": "⛔ SHELL VIOLATION: Use lean-ctx ctx_shell for shell commands. bash is denied in opencode.json — triggers permission prompts and blocks automation."
-    },
-
-    {
-      "id": "LEARN_001",
-      "severity": "HIGH",
-      "description": "Learner agent MUST update ALL 11 memory systems in post-flight matrix",
-      "condition": "learner_skipped_memory_system",
-      "action": "FLAG",
-      "message": "⚠️ LEARNER WARNING: Not all memory systems updated. See AGENTS.md §1.7 for full matrix."
-    },
-    {
-      "id": "SCORE_002",
-      "severity": "HIGH",
-      "description": "Tier 2 LLM judge MUST use the canonical judge prompt from rules.json scoring.tier2.judge_prompt or templates/judge-prompt.md",
-      "condition": "judge_prompt_not_from_canonical_source",
-      "action": "FLAG",
-      "message": "⚠️ SCORE WARNING: Judge prompt must use canonical source. See .opencode/rules/rules.json scoring.tier2.judge_prompt"
-    },
-    {
-      "id": "SCORE_003",
-      "severity": "HIGH",
-      "description": "Scoring pipeline MUST complete within timeout_ms — a hung scoring call blocks orchestration flow",
-      "condition": "scoring_exceeded_timeout",
-      "action": "FLAG",
-      "message": "⚠️ SCORE TIMEOUT: Scoring pipeline exceeded configured timeout. Set state=BLOCKED with issue 'scoring_timeout'."
-    },
-    {
-      "id": "SDD_001",
-      "severity": "HIGH",
-      "description": "PLAN_SCORED→EXECUTE transition requires SDD spec approval (score ≥ 70). Exempt: trivial bug fixes, config-only, documentation-only.",
-      "condition": "execute_without_spec_approval",
-      "action": "BLOCK",
-      "message": "⛔ SDD GATE FAILED: EXECUTE attempted without approved spec. Run system-analyst with 'mode: spec' first, then score spec ≥ 70."
-    },
-    {
-      "id": "PARALLEL_001",
-      "severity": "HIGH",
-      "description": "Before parallel fan-out, run gitnexus_detect_changes() on all shard files to check for overlap conflicts",
-      "condition": "parallel_fanout_without_conflict_check",
-      "action": "FLAG",
-      "message": "⚠️ PARALLEL CONFLICT RISK: Fanning out without conflict detection. Run gitnexus_detect_changes() on ALL shard files first."
-    },
-    {
-      "id": "POSTFLIGHT_001",
-      "severity": "HIGH",
-      "description": "Agent MUST run gitnexus_detect_changes() before committing to verify only expected files changed",
-      "condition": "commit_without_detect_changes",
-      "action": "FLAG",
-      "message": "⚠️ POSTFLIGHT WARNING: Commit attempted without gitnexus_detect_changes(). Run gitnexus_detect_changes() to verify file scope."
-    },
-    {
-      "id": "POSTFLIGHT_002",
-      "severity": "HIGH",
-      "description": "Agent MUST persist knowledge to lean-ctx after task completion — gotchas, patterns, decisions discovered during the task",
-      "condition": "task_completed_without_knowledge_persist",
-      "action": "FLAG",
-      "message": "⚠️ POSTFLIGHT WARNING: Task completed without persisting new knowledge. Run: lean-ctx ctx_knowledge remember category <category> key <key> value <value>"
-    },
-    {
-      "id": "POSTFLIGHT_003",
-      "severity": "HIGH",
-      "description": "Agent MUST update STATE.md after each phase or task completion — append completed work, update Current Focus and Known Blockers",
-      "condition": "task_completed_without_state_update",
-      "action": "FLAG",
-      "message": "⚠️ POSTFLIGHT WARNING: Task completed without updating STATE.md. Update Current Focus and Known Blockers to reflect work done."
-    },
-    {
-      "id": "READ_001",
-      "severity": "CRITICAL",
-      "description": "Agent MUST use lean-ctx ctx_read for file reads. Native read is blocked in opencode.json permission — agents CANNOT invoke it.",
-      "condition": "agent_used_native_read_instead_of_ctx_read",
-      "action": "BLOCK",
-      "message": "⛔ READ BLOCKED: Native read is denied in opencode.json permission + per-agent tools. Use lean-ctx ctx_read or ctx_multi_read instead."
-    },
-    {
-      "id": "EDIT_001",
-      "severity": "CRITICAL",
-      "description": "Agent MUST use lean-ctx ctx_edit for file edits. Native edit is blocked in opencode.json permission — agents CANNOT invoke it.",
-      "condition": "agent_used_native_edit_instead_of_ctx_edit",
-      "action": "BLOCK",
-      "message": "⛔ EDIT BLOCKED: Native edit is denied in opencode.json permission + per-agent tools. Use lean-ctx ctx_edit instead."
-    },
-    {
-      "id": "GREP_001",
-      "severity": "CRITICAL",
-      "description": "Agent MUST use lean-ctx ctx_search for code search. Native grep is blocked in opencode.json permission — agents CANNOT invoke it.",
-      "condition": "agent_used_native_grep_instead_of_ctx_search",
-      "action": "BLOCK",
-      "message": "⛔ GREP BLOCKED: Native grep is denied in opencode.json permission + per-agent tools. Use lean-ctx ctx_search for regex code searches."
-    },
-    {
-      "id": "SIMPLICITY_001",
-      "severity": "HIGH",
-      "description": "Code simplicity/frugality check: reject unnecessary abstractions, unused deps, over-engineered patterns, YAGNI violations",
-      "condition": "code_has_unnecessary_abstraction",
-      "message": "⚠️ SIMPLICITY: Unnecessary abstraction detected — ponytail ladder skipped? Check: (1) Could stdlib replace this? (2) Is every abstraction justified? (3) Could any file be eliminated?"
-    },
-    {
-      "id": "AUDIT_001",
-      "severity": "CRITICAL",
-      "description": "State transition audit — if a state transition completes without appending to audit_log, deduct -15 from score",
-      "condition": "transition_without_audit_log_append",
-      "message": "⛔ AUDIT FAILED: State transition detected without corresponding audit_log entry. Append {timestamp, prev_state, new_state, triggered_by, transition_reason, scoring_snapshot} before persisting."
-    },
-    {
-      "id": "AUDIT_002",
-      "severity": "HIGH",
-      "description": "Stalled phase detection — if >5 transitions without state change, advisory warning",
-      "condition": "more_than_5_transitions_same_state",
-      "message": "⚠️ AUDIT ADVISORY: Detected >5 consecutive transitions without state change. Phase may be stalled. Investigate before continuing."
-    },
-    {
-      "id": "AUDIT_003",
-      "severity": "CRITICAL",
-      "description": "Score regression — if score drops >20pts between adjacent audit entries in the same phase, deduct -15",
-      "condition": "score_drop_exceeds_20pts_same_phase",
-      "message": "⛔ REGRESSION DETECTED: Score dropped >20 points between adjacent audit entries in the same phase. Investigate root cause immediately."
     }
-  ],
-  
+  },
   "scoring": {
-    "timeout_ms": 30000,
-    "tier1": {
-      "schema_valid_deduction": 15,
-      "permissions_violated_deduction": 40,
-      "blast_radius_high_deduction": 40,
-      "writing_order_wrong_deduction": 15,
-      "required_fields_missing_deduction": 15,
-      "over_engineering_deduction": 15,
-      "subtotal_threshold": 70
-    },
-    "tier2": {
-      "enabled": true,
-      "judge_prompt": "You are an impartial judge evaluating an AI agent's output. Score 0-100 based on: (1) Requirements fulfillment 0-40, (2) Governance compliance 0-30, (3) Completeness 0-20, (4) Edge cases and risks 0-10. Return JSON: { score: N, rationale: '...', missing_items: [...] }"
-    },
+    "version": "0.8.0",
     "thresholds": {
       "pass": 70,
-      "retry": 50,
-      "max_attempts": 3,
+      "retry_min": 50,
+      "retry_max_attempts": 3,
       "escalation": 50
+    },
+    "tier1_rules": {
+      "schema_valid": { "deduction": 15, "description": "JSON schema validity check" },
+      "permissions_violated": { "deduction": 40, "description": "Governance permission boundary crossed" },
+      "blast_radius_high": { "deduction": 40, "description": "gitnexus_impact returned HIGH/CRITICAL" },
+      "writing_order_wrong": { "deduction": 15, "description": "Writing order violated (port->service->mapper->adapter)" },
+      "over_engineering": { "deduction": 15, "description": "YAGNI violation detected (SIMPLICITY_001)" },
+      "required_fields_missing": { "deduction": 15, "description": "Envelope completeness check" }
+    },
+    "tier2_judge": {
+      "requirements_fulfillment": { "weight": 40, "description": "Matches acceptance criteria" },
+      "governance_compliance": { "weight": 30, "description": "Follows _governance.md rules" },
+      "completeness": { "weight": 20, "description": "All tasks done, tests written" },
+      "edge_cases": { "weight": 10, "description": "Nulls, errors, boundaries covered" }
+    },
+    "confidence_scoring": {
+      "enabled": true,
+      "description": "Score confidence at each decision point (1-5 scale)",
+      "levels": {
+        "1": "Guess — no evidence",
+        "2": "Informed — partial evidence",
+        "3": "Confident — supported by data",
+        "4": "Strong — multiple corroborating sources",
+        "5": "Certain — verifiable, deterministic"
+      },
+      "min_confidence_to_proceed": 3,
+      "escalate_below": 2,
+      "record_in": "decisions.confidence_scores[]"
+    },
+    "validation_gates": {
+      "max_test_failures": { "value": 3, "action": "BLOCKED" },
+      "max_score_drop": { "value": 30, "action": "BLOCKED" },
+      "max_compile_errors": { "value": 1, "action": "BLOCKED" },
+      "blast_radius_unacknowledged": { "action": "BLOCKED" },
+      "schema_failure": { "action": "BLOCKED" }
+    },
+    "timeout_ms": 30000
+  },
+  "ponytail": {
+    "version": "0.8.0",
+    "description": "Frugality ladder intensity controls and per-skill overrides",
+    "intensity": {
+      "off": { "label": "No enforcement", "skip_rungs": [1,2,3,4,5,6] },
+      "low": { "label": "Rungs 5-6 only (one line -> minimum code)", "skip_rungs": [1,2,3,4] },
+      "medium": { "label": "Rungs 4-6 (existing deps -> one line -> minimum)", "skip_rungs": [1,2,3] },
+      "high": { "label": "Rungs 3-6 (native -> existing -> one line -> minimum)", "skip_rungs": [1,2] },
+      "full": { "label": "All 6 rungs", "skip_rungs": [] }
+    },
+    "default_intensity": "high",
+    "phases": ["EXECUTE", "REVIEW"],
+    "per_skill_overrides": {
+      "system-analyst": { "intensity": "medium", "reason": "Planning benefits from broader exploration" },
+      "developer": { "intensity": "full", "reason": "Implementation must minimize code" },
+      "developer-fixer": { "intensity": "full", "reason": "Fixes should be minimal" },
+      "quality-analyst": { "intensity": "high", "reason": "Review should catch over-engineering" }
+    },
+    "debt_ledger": {
+      "description": "Track intentional shortcuts (ponytail: comments) as technical debt",
+      "fields": {
+        "file": "File path",
+        "line": "Line number",
+        "comment": "ponytail: comment text",
+        "ceiling": "Known limitation",
+        "upgrade": "Planned upgrade path",
+        "intensity": "intensity level at time of debt",
+        "severity": "low|medium|high|critical",
+        "discovered_at": "ISO timestamp",
+        "resolved_at": "ISO timestamp (null if unresolved)"
+      },
+      "store_in": ["contract.outputs.debt_ledger[]", "contract.ponytail.debt_items[]"]
+    },
+    "pre_commit_gate": {
+      "enabled": true,
+      "description": "Run ponytail scan before every commit",
+      "script": "scripts/scan-ponytail-debt.sh",
+      "block_on": "critical",
+      "flag_on": "high",
+      "max_debt_items": 5
+    }
+  },
+  "agent_watchdog": {
+    "version": "0.8.0",
+    "description": "Timeout and deadlock detection for agent delegations",
+    "delegation_timeout_ms": 120000,
+    "parallel_deadlock_detection": {
+      "enabled": true,
+      "description": "Detect when parallel agents are waiting on each other's output",
+      "max_wait_cycles": 5,
+      "resolution": "fallback_to_serial"
+    },
+    "health_check": {
+      "enabled": true,
+      "interval_phases": 3,
+      "script": "scripts/drift-detect.sh",
+      "repair_script": "scripts/self-repair.sh --dry-run"
+    }
+  },
+  "decisions": {
+    "confidence_journal": {
+      "enabled": true,
+      "description": "Auto-persist every decision with confidence score to decision journal",
+      "store_in": "contract.decisions.adr_log[]",
+      "fields": {
+        "id": "ADR-NNN",
+        "timestamp": "ISO 8601",
+        "title": "Decision title",
+        "context": "Why this decision was needed",
+        "decision": "What was decided",
+        "alternatives": "Rejected alternatives",
+        "confidence": "1-5",
+        "confidence_rationale": "Why this confidence level"
+      }
+    },
+    "revert_threshold": {
+      "description": "Score below which a previous decision should be revisited",
+      "threshold": 30,
+      "action": "Flag for review"
     }
   }
 }
