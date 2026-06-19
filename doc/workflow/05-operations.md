@@ -184,6 +184,25 @@ bash scripts/drift-detect.sh                             # Auto-detect branch
 bash scripts/drift-detect.sh --verbose                   # Show all field values
 ```
 
+### Prototype Mode & Uncertainty Routing
+
+**`scripts/prototype-mode.sh`** — Prototype-First Mode (G26) toggle. Switches between prototype-mode (lightweight, low-ceremony workflow) and full orchestration mode. In prototype mode: SDD gate is skipped, scoring pipeline is bypassed (no PLAN_SCORED/EXECUTE_SCORED/REVIEW_SCORED), single-pass execute (no retry cycles for prototype code), and auto-merge enabled (no formal review gate). Mode state is persisted to `session/{branch}/.mode`. Ponytail intensity is read from `rules.json -> ponytail.default_intensity`.
+
+```bash
+bash scripts/prototype-mode.sh --enable             # Enable prototype mode
+bash scripts/prototype-mode.sh --disable            # Disable, restore full orchestration
+bash scripts/prototype-mode.sh --status             # Check if prototype mode is active
+bash scripts/prototype-mode.sh --enable --verbose   # Enable with detail
+```
+
+**`scripts/uncertainty-router.sh`** — Uncertainty-Based Routing (G27). Routes decisions based on confidence/uncertainty level. Thresholds are read from `rules.json -> decisions.confidence_journal` (maps 1-5 scale to 0-100). Routing: 0-30 → ESCALATE to user (exit 2), 31-60 → COUNCIL/REVIEW (exit 1), 61-85 → PROCEED WITH NOTES (exit 0), 86-100 → AUTO-APPROVE (exit 0). Supports `--advisory-only` for non-blocking recommendation mode. Domain-specific guidance for code, architecture, security, deployment, testing, and requirements decisions.
+
+```bash
+bash scripts/uncertainty-router.sh --score 25 --domain architecture    # ESCALATE
+bash scripts/uncertainty-router.sh --score 75 --domain code --advisory-only  # Advisory
+bash scripts/uncertainty-router.sh --score 95 --domain deployment      # AUTO
+```
+
 ### Spec Gate & Knowledge Verification
 
 **`scripts/sdd-gate.sh`** — SDD (Spec-Driven Development) gate enforcement. Checks if a change touches >3 files, crosses service boundaries, or is estimated >30 min. If so, requires an approved spec before EXECUTE delegation. Supports trivial fix, config-only, and doc-only exemptions.

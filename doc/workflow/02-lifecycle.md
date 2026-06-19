@@ -129,6 +129,46 @@ When state becomes BLOCKED, all agents must follow this strict escalation protoc
 
 **DDD at BLOCKED**: DDD fires on every BLOCKED event — "What assumption was wrong?" This question feeds into the retry guidance and helps avoid repeating the same failure pattern.
 
+## B2a. Prototype Mode — Lightweight Alternative
+
+For rapid prototyping, low-risk experiments, or early-stage exploration, the orchestrator can switch to **Prototype-First Mode** (G26). This bypasses the full state machine for a faster, low-ceremony workflow:
+
+| Full Orchestration | Prototype Mode |
+|---|---|
+| SDD gate required before EXECUTE | SDD gate **skipped** |
+| Three-tier scoring pipeline (PLAN_SCORED, EXECUTE_SCORED, REVIEW_SCORED) | Scoring pipeline **bypassed** |
+| Multi-pass execute with retry cycles | **Single-pass** execute |
+| Formal review gate (quality-analyst) | **Auto-merge** (no review gate) |
+| Ponytail intensity from rules.json | Ponytail intensity still enforced |
+
+**When to use**: Exploratory code, experimental features, spike solutions, proof-of-concept work, or any change where speed > rigor. Prototype mode should not be used for production-critical changes, security-sensitive code, or cross-service modifications.
+
+**State persistence**: Mode state is stored in `session/{branch}/.mode` (JSON: `{"mode":"prototype","ponytail_intensity":"...","enabled_at":"..."}`). A legacy marker `.prototype-mode` is also created for backward compatibility.
+
+```bash
+bash scripts/prototype-mode.sh --status   # Check mode
+bash scripts/prototype-mode.sh --enable  # Switch to prototype mode
+bash scripts/prototype-mode.sh --disable # Restore full orchestration
+```
+
+## B2b. Uncertainty-Based Routing for Decisions
+
+When confidence in a decision is low, the orchestrator routes to appropriate escalation paths using **Uncertainty-Based Routing** (G27). This works alongside the lifecycle gates:
+
+- **Confidence 0-30** → ESCALATE to user for human judgment (exit 2)
+- **Confidence 31-60** → COUNCIL/REVIEW for multi-agent consensus (exit 1)
+- **Confidence 61-85** → PROCEED WITH NOTES; flag concerns for later review (exit 0)
+- **Confidence 86-100** → AUTO-APPROVE without further review (exit 0)
+
+Thresholds are read from `rules.json -> decisions.confidence_journal` (map from 1-5 scale). The `--advisory-only` flag emits the recommendation without blocking execution.
+
+```bash
+bash scripts/uncertainty-router.sh --score 25 --domain architecture     # Blocks, escalate
+bash scripts/uncertainty-router.sh --score 75 --domain code --advisory-only  # Advisory
+```
+
+Uncertainty routing feeds into the DDD framework — when a decision routes to COUNCIL or ESCALATE, the DDD doubt table is triggered to document the adversarial analysis.
+
 ## B3. Learning Loop (Lessons → Knowledge)
 
 After every COMPLETE transition, the quality-analyst-learner extracts lessons from the session and persists them to the knowledge base. This creates a closed learning loop:

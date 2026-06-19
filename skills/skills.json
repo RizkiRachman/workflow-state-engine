@@ -1,0 +1,95 @@
+{
+  "$schema": "skills.schema.json",
+  "generated_at": "2026-06-19T04:24:12Z",
+  "total_skills": 11,
+  "skills": [
+    {
+      "name": "brainstorming",
+      "purpose": "Requirement extraction before creative work",
+      "when_to_use": "Before any feature creation, component building, or behavior modification",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "writing-plans",
+      "purpose": "Task breakdown into 2-5 minute chunks with complete code",
+      "when_to_use": "When you have a spec/requirements for a multi-step task, before touching code",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "test-driven-development",
+      "purpose": "Red/green/refactor cycle — write failing test first, then implement, then refactor",
+      "when_to_use": "When implementing any feature or bugfix, before writing implementation code",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "subagent-driven-development",
+      "purpose": "Multi-agent code implementation + review cycle",
+      "when_to_use": "When executing implementation plans with independent tasks",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "systematic-debugging",
+      "purpose": "Structured root cause analysis (4 phases: reproduce, isolate, hypothesize, fix)",
+      "when_to_use": "When encountering any bug, test failure, or unexpected behavior, before proposing fixes",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "verification-before-completion",
+      "purpose": "Run verification commands and confirm output before claiming work is complete",
+      "when_to_use": "Before committing, creating PRs, or claiming work is done",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "executing-plans",
+      "purpose": "Execute written plans with batch execution and review checkpoints",
+      "when_to_use": "When you have a written implementation plan to execute",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "requesting-code-review",
+      "purpose": "Submit code for review before merging",
+      "when_to_use": "When completing tasks, implementing major features, or before merging",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "receiving-code-review",
+      "purpose": "Act on review feedback with technical rigor",
+      "when_to_use": "When receiving code review feedback, before implementing suggestions",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "audit-observability",
+      "purpose": "State contract audit trail, orchestration observability, score analytics, and cross-service consistency enforcement",
+      "when_to_use": "Before and after every state transition, during scoring analysis, and when detecting drift across services",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    },
+    {
+      "name": "adaptive-solver",
+      "purpose": "Meta-cognitive uncertainty resolution — structured loop for ambiguity, low confidence, or failed attempts. Agents detect the gap, inventory skills, hypothesize, attempt, evaluate, and retry without asking the user.",
+      "when_to_use": "When encountering ambiguous input, flagging confidence (≤ 3/5), or when a tool/skill attempt produced unexpected results. Trigger before guessing or asking the user for clarification.",
+      "skill_cmd": "",
+      "applies_to": [],
+      "tools": []
+    }
+  ]
+}
