@@ -85,6 +85,7 @@ workspace/
 .opencode/
 opencode.json
 opencode.*.json
+.workflow-engine/
 session/
 .gitnexus
 
