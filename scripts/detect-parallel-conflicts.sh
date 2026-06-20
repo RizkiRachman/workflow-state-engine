@@ -82,7 +82,7 @@ extract_files() {
         grep '^--- ' "$input" | sed 's/^--- a\///' | sort -u > "$output"
     else
         # Plain file list
-        grep -v '^$' "$input" | grep -v '^#' | sort -u > "$output"
+        grep -v '^$' "$input" | grep -v '^#' | sed 's|^\./||' | sort -u > "$output"
     fi
 
     echo "$output"
@@ -94,6 +94,8 @@ main() {
         case "$1" in
             --agent1) AGENT1_FILE="$2"; shift 2 ;;
             --agent2) AGENT2_FILE="$2"; shift 2 ;;
+            --diff1) AGENT1_FILE="$2"; shift 2 ;;
+            --diff2) AGENT2_FILE="$2"; shift 2 ;;
             --label1) AGENT1_LABEL="$2"; shift 2 ;;
             --label2) AGENT2_LABEL="$2"; shift 2 ;;
             --verbose) VERBOSE=true; shift ;;

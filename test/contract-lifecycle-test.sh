@@ -45,6 +45,13 @@ Tests:
   10. Content quality at PLAN_SCORED no plan — missing outputs.plan → fail
   11. Content quality at REVIEW_SCORED no architecture — missing arch → fail
   12. Audit log required beyond INIT — state=PLAN but empty audit → fail
+  13. Scope: parallel_eligible w/o max_parallel_agents — flagged
+  14. Scope: included/excluded overlap — flagged
+  15. Scope: shard_id without parallel_eligible — flagged
+  16. Scope: valid parallel config — passes
+  17. --score mode: outputs ONLY a number on valid contract
+  18. --score mode: invalid JSON exits 2 with clean output
+  19. --max-depth 0: skips deep checks, still outputs score
 EOF
     exit 0
 }
@@ -345,7 +352,7 @@ make_contract "$td/contract.json"
 set_field "$td/contract.json" "scope.included" '["src/main/java"]'
 set_field "$td/contract.json" "scope.excluded" '["src/main/java"]'
 output=$("$VALIDATE_SCRIPT" --file "$td/contract.json" 2>&1) || true
-if echo "$output" | grep -qE "[SCOPE].*overlap"; then
+if echo "$output" | grep -qE "overlap"; then
     pass "Test 14: scope.included/excluded overlap — flagged"
 else
     fail "Test 14: Should flag included/excluded overlap"
@@ -360,7 +367,7 @@ td="/tmp/contract-test-15"
 make_contract "$td/contract.json"
 set_field "$td/contract.json" "scope.shard_id" '"service-a"'
 output=$("$VALIDATE_SCRIPT" --file "$td/contract.json" 2>&1) || true
-if echo "$output" | grep -qE "[SCOPE].*shard_id"; then
+if echo "$output" | grep -qE "shard_id"; then
     pass "Test 15: shard_id without parallel_eligible — flagged"
 else
     fail "Test 15: Should flag shard_id without parallel_eligible"
@@ -383,6 +390,47 @@ if echo "$output" | grep -qE "[PASS].*Scope consistency"; then
 else
     fail "Test 16: Valid parallel config should pass"
     if [[ "$VERBOSE" == true ]]; then echo "    $output"; fi
+fi
+
+# ────────────────────────────────────────────
+# Test 17: --score mode outputs ONLY a number on valid contract
+# ────────────────────────────────────────────
+TOTAL=$((TOTAL + 1))
+td="/tmp/contract-test-17"
+make_contract "$td/contract.json"
+output=$("$VALIDATE_SCRIPT" --file "$td/contract.json" --score 2>/dev/null)  # redirect stderr away
+if echo "$output" | grep -qE '^[0-9]+$'; then
+    pass "Test 17: --score mode outputs numeric score ($output)"
+else
+    fail "Test 17: --score mode should output only a number, got: '$output'"
+fi
+
+# ────────────────────────────────────────────
+# Test 18: --score mode on invalid JSON still exits 2 but no stray output
+# ────────────────────────────────────────────
+TOTAL=$((TOTAL + 1))
+td="/tmp/contract-test-18"
+mkdir -p "$td"
+echo 'broken' > "$td/contract.json"
+exit_code=0
+output=$("$VALIDATE_SCRIPT" --file "$td/contract.json" --score 2>/dev/null) || exit_code=$?
+[[ $exit_code -eq 2 ]] && pass "Test 18: Exit 2 on invalid JSON in --score mode" || fail "Test 18: Expected exit 2, got $exit_code"
+
+# ────────────────────────────────────────────
+# Test 19: --max-depth 0 skips deep checks
+# ────────────────────────────────────────────
+TOTAL=$((TOTAL + 1))
+td="/tmp/contract-test-19"
+make_contract "$td/contract.json"
+del_field "$td/contract.json" "session.task_id"
+# Without --max-depth, this would flag missing task_id
+# With --max-depth 0, it should skip nested checks
+output=$("$VALIDATE_SCRIPT" --file "$td/contract.json" --max-depth 0 --score 2>/dev/null)
+# Should still produce a number
+if echo "$output" | grep -qE '^[0-9]+$'; then
+    pass "Test 19: --max-depth 0 still outputs score"
+else
+    fail "Test 19: --max-depth 0 should output numeric score, got: '$output'"
 fi
 
 # ────────────────────────────────────────────

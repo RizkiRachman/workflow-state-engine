@@ -49,6 +49,11 @@
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?(\\+[a-zA-Z0-9.]+)?$"
     },
+    "version": {
+      "description": "Semantic version of this contract instance.",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?(\\+[a-zA-Z0-9.]+)?$"
+    },
     "session": {
       "type": "object",
       "additionalProperties": true,
@@ -170,7 +175,9 @@
         "approved_architecture",
         "coding_standard",
         "rejected_approaches",
-        "adr_log"
+        "adr_log",
+        "ddd_performed",
+        "confidence_scores"
       ],
       "properties": {
         "approved_architecture": {
@@ -200,6 +207,51 @@
           "items": {
             "$ref": "#/$defs/adr_entry"
           }
+        },
+        "ddd_performed": {
+          "description": "Whether Doubt-Driven Development adversarial review was performed.",
+          "type": "boolean"
+        },
+        "confidence_scores": {
+          "description": "Confidence scores for architectural decisions.",
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "ponytail": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Ponytail debt tracking — intentional shortcuts and frugality intensity.",
+      "required": [
+        "debt_items",
+        "intensity"
+      ],
+      "properties": {
+        "debt_items": {
+          "description": "List of intentional ponytail debt items (intentional shortcuts).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "intensity": {
+          "description": "Ponytail frugality intensity level.",
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "per_agent_overrides": {
+          "description": "Per-agent overrides for ponytail rules.",
+          "type": "object",
+          "additionalProperties": true
         }
       }
     },
@@ -269,7 +321,9 @@
           "required": [
             "do",
             "dont",
-            "allowed_execution"
+            "allowed_execution",
+            "read_only_fields",
+            "writeable_fields"
           ],
           "properties": {
             "do": {
@@ -309,6 +363,20 @@
                   }
                 }
               }
+            },
+            "read_only_fields": {
+              "description": "Fields that are read-only for the active agent.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "writeable_fields": {
+              "description": "Fields that are writeable for the active agent.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
@@ -326,7 +394,9 @@
       "additionalProperties": true,
       "required": [
         "block_on",
-        "rule_overrides"
+        "rule_overrides",
+        "build_verified",
+        "phase_gates"
       ],
       "properties": {
         "block_on": {
@@ -360,6 +430,15 @@
         },
         "rule_overrides": {
           "description": "Overrides for specific validation rules. Free-form object.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "build_verified": {
+          "description": "Whether the build was verified after implementation.",
+          "type": "boolean"
+        },
+        "phase_gates": {
+          "description": "Phase-specific gate configurations.",
           "type": "object",
           "additionalProperties": true
         }

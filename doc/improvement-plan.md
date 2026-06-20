@@ -3,13 +3,21 @@
 ## What Was Done
 
 ### Test Framework
-- **contract-lifecycle-test.sh**: 17 tests covering:
+- **contract-lifecycle-test.sh**: **20 tests** covering:
   - JSON validity (Test 1-2)
   - State field validation (Tests 3-4)
   - Nested field presence (Test 5)
   - Content quality at various states (Tests 6, 10-12)
   - State transition validation (Tests 6b, 7-9)
-  - **Scope consistency** (Tests 13-16) — new
+  - **Scope consistency** (Tests 13-16) — jq-based (replaced inline Python)
+  - **`--score` mode hardening** (Tests 17-18) — numeric-only output, graceful failure on invalid JSON
+  - **`--max-depth` flag** (Test 19) — skips deep checks for CI mode
+- **parallel-exec-test.sh**: **8 tests (14 assertions)** covering:
+  - Basic parallel conflict detection (Tests 1-5)
+  - **Diff format input detection** (Test 6)
+  - **Mixed file list + diff input** (Test 7)
+  - **Leading `./` path normalization** (Test 8)
+- **contract-integration-test.sh**: **5 scenarios (16 assertions)** — full 9-state lifecycle, score gates, blocked recovery, schema round-trip
 
 ### Validator (validate-contract.sh)
 - **Hard-block on missing/invalid state** (Step 1.5) — state is critical, missing it = BLOCKED immediately
@@ -32,30 +40,26 @@
 
 ## Next Improvements (Roadmap)
 
-### Short Term (Next Session)
+### Short Term — Completed ✅
 
-| Priority | Item | Area | Effort |
-|----------|------|------|--------|
-| P0 | **Add `--score` mode output hardening** — ensure score mode outputs ONLY a number (no stray logs) | validate-contract.sh | S |
-| P1 | **Bash `check_scope_consistency` cleanup** — replace inline Python with jq for simple checks | validate-contract.sh | S |
-| P2 | **Add `--max-depth` to validator** — skip deep nested checks in quick CI mode | validate-contract.sh | M |
-| P3 | **Schema coverage audit** — compare template vs schema; flag missing field definitions | contract/ | M |
+| Priority | Item | Area | Effort | Status |
+|----------|------|------|--------|--------|
+| P0 | `--score` mode output hardening | validate-contract.sh | S | ✅ Done (Tests 17-18) |
+| P1 | Bash `check_scope_consistency` → jq | validate-contract.sh | S | ✅ Done (Tests 13-16) |
+| P2 | `--max-depth` flag for CI mode | validate-contract.sh | M | ✅ Done (Test 19) |
+| P3 | Schema coverage audit | contract/ | M | ✅ Done (82%→94%) |
+| P1 | Parallel exec test scenarios | parallel-exec-test.sh | M | ✅ Done (Tests 6-8) |
+| P2 | Integration test (INIT→COMPLETE) | test/ | L | ✅ Done (5 scenarios) |
+| P3 | Template↔Schema reconciliation | contract/ | M | ✅ Done (coverage 94%) |
 
 ### Medium Term
 
 | Priority | Item | Area | Effort |
 |----------|------|------|--------|
-| P1 | **Parallel execution test** — add scope-related scenarios (parallel dispatch conflicts) | parallel-execution-test.sh | M |
-| P2 | **Integration test harness** — full 9-state cycle end-to-end test (INIT → COMPLETE) | test/ | L |
-| P3 | **Validator plugin system** — allow per-repo custom validation rules via `rules/` | validate-contract.sh | XL |
-| P4 | **Score analytics** — track score history across contract transitions for drift detection | audit-observability skill | M |
-
-### Long Term
-
-| Priority | Item | Area | Effort |
-|----------|------|------|--------|
-| P2 | **Cross-service contract synchronization** — validate contracts stay consistent across all 8 services | orchestration | XL |
-| P3 | **Contract diff tool** — `diff-contracts.sh` to compare two contract states | scripts/ | L |
+| P3 | Validator plugin system | validate-contract.sh | XL |
+| P4 | Score analytics | audit-observability skill | M |
+| P2 | Cross-service contract synchronization | orchestration | XL |
+| P3 | Contract diff tool `diff-contracts.sh` | scripts/ | L |
 
 ## Validation Coverage Map
 

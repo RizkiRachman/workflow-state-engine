@@ -38,6 +38,8 @@
         "tools": [],
         "denied": []
       },
+      "do": [],
+      "dont": [],
       "read_only_fields": [
         "metrics",
         "audit_log",
@@ -75,6 +77,7 @@
     "score_threshold": 70,
     "escalation_threshold": 50,
     "current_phase": "",
+    "issues": [],
     "phase_issues": [],
     "escalation_trace": []
   },

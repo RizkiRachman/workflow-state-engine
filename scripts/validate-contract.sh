@@ -30,6 +30,7 @@ RULES_FILE="$PROJECT_DIR/rules/rules.json"
 PREV_STATE=""
 VERBOSE=false
 SCORE_MODE=false
+MAX_DEPTH=2
 PASS_COUNT=0
 FAIL_COUNT=0
 DEDUCTION=0
@@ -58,6 +59,7 @@ Options:
   --prev-state STATE  Expected previous state for transition validation
   --verbose           Show detailed field-level results
   --score             Output numeric score only (for CI/scripts)
+  --max-depth N       Max validation depth: 0=minimal, 1=basic, 2=full (default: 2)
   --help              Show this message
 EOF
     exit 0
@@ -452,55 +454,66 @@ sys.exit(0)
     fi
 }
 
-# --- Step 6b: Scope consistency checks --------------------------------------
+# --- Step 6b: Scope consistency checks (jq-based) ---------------------------
 check_scope_consistency() {
     local file="$1"
     local issues=0
-    if python3 -c "
-import json, sys
 
-with open('$file') as f:
-    data = json.load(f)
+    # Check 1: parallel_eligible=true -> max_parallel_agents >= 1
+    if ! jq -e '.scope | if .parallel_eligible then (.max_parallel_agents | type == "number" and . >= 1) else true end' "$file" >/dev/null 2>&1; then
+        local mpa
+        mpa=$(jq -r '.scope.max_parallel_agents // "missing"' "$file")
+        log_fail "parallel_eligible=true but max_parallel_agents=$mpa (must be >= 1)"
+        issues=$((issues + 1))
+    fi
 
-scope = data.get('scope', {})
-failures = []
+    # Check 2: included / excluded overlap
+    local overlap
+    overlap=$(jq -r '.scope.included[] as $i | .scope.excluded[] | select(. == $i)' "$file" 2>/dev/null | head -5 | tr '\n' ',')
+    if [[ -n "$overlap" ]]; then
+        log_fail "scope.included and scope.excluded overlap: $overlap"
+        issues=$((issues + 1))
+    fi
 
-pe = scope.get('parallel_eligible', False)
-mpa = scope.get('max_parallel_agents', 1)
+    # Check 3: shard_id implies parallel_eligible
+    local shard_id
+    shard_id=$(jq -r '.scope.shard_id // ""' "$file")
+    if [[ -n "$shard_id" ]]; then
+        local pe
+        pe=$(jq -r '.scope.parallel_eligible // false' "$file")
+        if [[ "$pe" != "true" ]]; then
+            log_fail "shard_id=\"$shard_id\" set but parallel_eligible=false"
+            issues=$((issues + 1))
+        fi
+    fi
 
-# 1. parallel_eligible=true  →  max_parallel_agents >= 1
-if pe and (not isinstance(mpa, int) or mpa < 1):
-    failures.append('parallel_eligible=true but max_parallel_agents=%s (must be >= 1)' % mpa)
+    # Check 4: parallel_instances non-empty when parallel_eligible=true
+    local pe
+    pe=$(jq -r '.scope.parallel_eligible // false' "$file")
+    if [[ "$pe" == "true" ]]; then
+        local inst_count
+        inst_count=$(jq -r '.scope.parallel_instances | length' "$file")
+        if [[ "$inst_count" -eq 0 ]]; then
+            log_fail "parallel_eligible=true but parallel_instances empty"
+            issues=$((issues + 1))
+        fi
+    fi
 
-# 2. included / excluded overlap
-included = set(scope.get('included', []))
-excluded = set(scope.get('excluded', []))
-overlap = included & excluded
-if overlap:
-    failures.append('scope.included and scope.excluded overlap: %s' % ', '.join(sorted(overlap)))
+    # Check 5: shard_id in parallel_instances
+    if [[ -n "$shard_id" && "$pe" == "true" ]]; then
+        local found
+        found=$(jq -r --arg sid "$shard_id" '.scope.parallel_instances | index($sid)' "$file")
+        if [[ "$found" == "null" ]]; then
+            log_fail "shard_id=\"$shard_id\" not in parallel_instances"
+            issues=$((issues + 1))
+        fi
+    fi
 
-# 3. shard_id implies parallel_eligible
-sid = scope.get('shard_id', '')
-if sid and not pe:
-    failures.append('shard_id=\"%s\" set but parallel_eligible=false' % sid)
-
-# 4. parallel_instances consistency
-instances = scope.get('parallel_instances', [])
-if pe and len(instances) == 0:
-    failures.append('parallel_eligible=true but parallel_instances empty')
-if pe and sid and instances and sid not in instances:
-    failures.append('shard_id=\"%s\" not in parallel_instances %s' % (sid, instances))
-
-if failures:
-    for f in failures:
-        print('  [SCOPE] ' + f)
-    sys.exit(1)
-sys.exit(0)
-" 2>&1; then
+    if [[ $issues -eq 0 ]]; then
         log_pass "Scope consistency checks passed"
         return 0
     else
-        log_fail "Scope consistency issues detected (see above)"
+        log_fail "Scope consistency: $issues issue(s) detected"
         return 1
     fi
 }
@@ -630,6 +643,8 @@ check_score_gate() {
 compute_score() {
     local total_checks=$((PASS_COUNT + FAIL_COUNT))
     if [[ $total_checks -eq 0 ]]; then
+        # This occurs when no checks ran at all (e.g., --score mode with --max-depth=0
+        # before any checks are registered). Score 0 is safer than a crash.
         echo "0"
         return
     fi
@@ -661,6 +676,7 @@ main() {
             --prev-state) PREV_STATE="$2"; shift 2 ;;
             --verbose) VERBOSE=true; shift ;;
             --score) SCORE_MODE=true; shift ;;
+            --max-depth) MAX_DEPTH="$2"; shift 2 ;;
             --help|-h) usage ;;
             *) echo "Unknown option: $1"; usage ;;
         esac
@@ -752,36 +768,41 @@ main() {
         fi
     fi
 
-    # Step 4: Nested fields
-    if run_check check_nested_fields "$CONTRACT_FILE"; then
-        PASS_COUNT=$((PASS_COUNT + 1))
-    else
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-        DEDUCTION=$((DEDUCTION + 15))
+    # Step 4: Nested fields (depth >= 1)
+    if [[ $MAX_DEPTH -ge 1 ]]; then
+        if run_check check_nested_fields "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 15))
+        fi
     fi
 
-    # Step 5: Content quality checks
-    if run_check check_content_quality "$CONTRACT_FILE"; then
-        PASS_COUNT=$((PASS_COUNT + 1))
-    else
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-        DEDUCTION=$((DEDUCTION + 20))
-    fi
+    # Steps 5-6b: Content quality, access control, scope (depth >= 2)
+    if [[ $MAX_DEPTH -ge 2 ]]; then
+        # Step 5: Content quality checks
+        if run_check check_content_quality "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 20))
+        fi
 
-    # Step 6: Field-level access control
-    if run_check check_field_access "$CONTRACT_FILE"; then
-        PASS_COUNT=$((PASS_COUNT + 1))
-    else
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-        DEDUCTION=$((DEDUCTION + 15))
-    fi
+        # Step 6: Field-level access control
+        if run_check check_field_access "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 15))
+        fi
 
-    # Step 6b: Scope consistency
-    if run_check check_scope_consistency "$CONTRACT_FILE"; then
-        PASS_COUNT=$((PASS_COUNT + 1))
-    else
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-        DEDUCTION=$((DEDUCTION + 15))
+        # Step 6b: Scope consistency
+        if run_check check_scope_consistency "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 15))
+        fi
     fi
 
     # Step 7: Transition (conditional)
