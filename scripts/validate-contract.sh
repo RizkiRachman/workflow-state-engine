@@ -30,6 +30,7 @@ RULES_FILE="$PROJECT_DIR/rules/rules.json"
 PREV_STATE=""
 VERBOSE=false
 SCORE_MODE=false
+MAX_DEPTH=2
 PASS_COUNT=0
 FAIL_COUNT=0
 DEDUCTION=0
@@ -58,6 +59,7 @@ Options:
   --prev-state STATE  Expected previous state for transition validation
   --verbose           Show detailed field-level results
   --score             Output numeric score only (for CI/scripts)
+  --max-depth N       Max validation depth: 0=minimal, 1=basic, 2=full (default: 2)
   --help              Show this message
 EOF
     exit 0
@@ -190,14 +192,14 @@ check_nested_fields() {
         "governance:mode"
         "governance:applicable_skills"
         "governance:rules_references"
-        "governance:cur_guidance"
+        "governance:current_guidance"
         "governance:permissions"
-        "governance:prev_blockers"
+        "governance:previous_blockers"
         "score:rules"
         "score:judge"
         "score:combined"
         "score:verdict"
-        "retry:cur_phase"
+        "retry:current_phase"
         "retry:attempt"
         "retry:max_attempts"
         "retry:score_threshold"
@@ -452,6 +454,70 @@ sys.exit(0)
     fi
 }
 
+# --- Step 6b: Scope consistency checks (jq-based) ---------------------------
+check_scope_consistency() {
+    local file="$1"
+    local issues=0
+
+    # Check 1: parallel_eligible=true -> max_parallel_agents >= 1
+    if ! jq -e '.scope | if .parallel_eligible then (.max_parallel_agents | type == "number" and . >= 1) else true end' "$file" >/dev/null 2>&1; then
+        local mpa
+        mpa=$(jq -r '.scope.max_parallel_agents // "missing"' "$file")
+        log_fail "parallel_eligible=true but max_parallel_agents=$mpa (must be >= 1)"
+        issues=$((issues + 1))
+    fi
+
+    # Check 2: included / excluded overlap
+    local overlap
+    overlap=$(jq -r '.scope.included[] as $i | .scope.excluded[] | select(. == $i)' "$file" 2>/dev/null | head -5 | tr '\n' ',')
+    if [[ -n "$overlap" ]]; then
+        log_fail "scope.included and scope.excluded overlap: $overlap"
+        issues=$((issues + 1))
+    fi
+
+    # Check 3: shard_id implies parallel_eligible
+    local shard_id
+    shard_id=$(jq -r '.scope.shard_id // ""' "$file")
+    if [[ -n "$shard_id" ]]; then
+        local pe
+        pe=$(jq -r '.scope.parallel_eligible // false' "$file")
+        if [[ "$pe" != "true" ]]; then
+            log_fail "shard_id=\"$shard_id\" set but parallel_eligible=false"
+            issues=$((issues + 1))
+        fi
+    fi
+
+    # Check 4: parallel_instances non-empty when parallel_eligible=true
+    local pe
+    pe=$(jq -r '.scope.parallel_eligible // false' "$file")
+    if [[ "$pe" == "true" ]]; then
+        local inst_count
+        inst_count=$(jq -r '.scope.parallel_instances | length' "$file")
+        if [[ "$inst_count" -eq 0 ]]; then
+            log_fail "parallel_eligible=true but parallel_instances empty"
+            issues=$((issues + 1))
+        fi
+    fi
+
+    # Check 5: shard_id in parallel_instances
+    if [[ -n "$shard_id" && "$pe" == "true" ]]; then
+        local found
+        found=$(jq -r --arg sid "$shard_id" '.scope.parallel_instances | index($sid)' "$file")
+        if [[ "$found" == "null" ]]; then
+            log_fail "shard_id=\"$shard_id\" not in parallel_instances"
+            issues=$((issues + 1))
+        fi
+    fi
+
+    if [[ $issues -eq 0 ]]; then
+        log_pass "Scope consistency checks passed"
+        return 0
+    else
+        log_fail "Scope consistency: $issues issue(s) detected"
+        return 1
+    fi
+}
+
 # --- Step 7: Transition validation (if --prev-state) -----------------------
 TRANSITIONS_FILE=$(python3 -c "
 import json, sys
@@ -502,9 +568,9 @@ with open('$contract_file') as f:
     # Check score threshold for this transition (if defined in rules)
     local threshold
     threshold=$(jq -r --arg from "$PREV_STATE" --arg to "$current_state" '
-        .state_machine.transitions[]
+        [.state_machine.transitions[]
         | select(.from == $from and .to == $to)
-        | .require_score // null
+        | .require_score // null][0]
     ' "$rules_file" 2>/dev/null || echo "null")
 
     if [[ "$threshold" != "null" && -n "$threshold" ]]; then
@@ -577,6 +643,8 @@ check_score_gate() {
 compute_score() {
     local total_checks=$((PASS_COUNT + FAIL_COUNT))
     if [[ $total_checks -eq 0 ]]; then
+        # This occurs when no checks ran at all (e.g., --score mode with --max-depth=0
+        # before any checks are registered). Score 0 is safer than a crash.
         echo "0"
         return
     fi
@@ -608,6 +676,7 @@ main() {
             --prev-state) PREV_STATE="$2"; shift 2 ;;
             --verbose) VERBOSE=true; shift ;;
             --score) SCORE_MODE=true; shift ;;
+            --max-depth) MAX_DEPTH="$2"; shift 2 ;;
             --help|-h) usage ;;
             *) echo "Unknown option: $1"; usage ;;
         esac
@@ -645,6 +714,34 @@ main() {
     fi
     PASS_COUNT=$((PASS_COUNT + 1))
 
+    # Step 1.5: State field critical check (hard block — contract is meaningless without valid state)
+    STATE_VALUE=$(jq -r '.state // ""' "$CONTRACT_FILE" 2>/dev/null)
+
+    if [[ -z "$STATE_VALUE" ]]; then
+        if [[ "$SCORE_MODE" == false ]]; then
+            echo ""
+            echo "BLOCKED: Missing required 'state' field"
+        fi
+        exit 2
+    fi
+
+    VALID_STATES=("INIT" "PLAN" "PLAN_SCORED" "PONYTAIL_CHECK" "EXECUTE" "EXECUTE_SCORED" "REVIEW" "REVIEW_SCORED" "COMPLETE" "BLOCKED")
+    STATE_FOUND=false
+    for vs in "${VALID_STATES[@]}"; do
+        if [[ "$STATE_VALUE" == "$vs" ]]; then
+            STATE_FOUND=true
+            break
+        fi
+    done
+
+    if [[ "$STATE_FOUND" == false ]]; then
+        if [[ "$SCORE_MODE" == false ]]; then
+            echo ""
+            echo "BLOCKED: Invalid state enum value '$STATE_VALUE'"
+        fi
+        exit 2
+    fi
+
     # Step 2: Top-level fields
     if run_check check_top_level_fields "$CONTRACT_FILE"; then
         PASS_COUNT=$((PASS_COUNT + 1))
@@ -653,7 +750,7 @@ main() {
         DEDUCTION=$((DEDUCTION + 15))
     fi
 
-    # Step 3: State enum
+    # Step 3: State enum (already hard-blocked above, but still checked for scoring consistency)
     if run_check check_state_enum "$CONTRACT_FILE"; then
         PASS_COUNT=$((PASS_COUNT + 1))
     else
@@ -671,28 +768,41 @@ main() {
         fi
     fi
 
-    # Step 4: Nested fields
-    if run_check check_nested_fields "$CONTRACT_FILE"; then
-        PASS_COUNT=$((PASS_COUNT + 1))
-    else
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-        DEDUCTION=$((DEDUCTION + 15))
+    # Step 4: Nested fields (depth >= 1)
+    if [[ $MAX_DEPTH -ge 1 ]]; then
+        if run_check check_nested_fields "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 15))
+        fi
     fi
 
-    # Step 5: Content quality checks
-    if run_check check_content_quality "$CONTRACT_FILE"; then
-        PASS_COUNT=$((PASS_COUNT + 1))
-    else
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-        DEDUCTION=$((DEDUCTION + 20))
-    fi
+    # Steps 5-6b: Content quality, access control, scope (depth >= 2)
+    if [[ $MAX_DEPTH -ge 2 ]]; then
+        # Step 5: Content quality checks
+        if run_check check_content_quality "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 20))
+        fi
 
-    # Step 6: Field-level access control
-    if run_check check_field_access "$CONTRACT_FILE"; then
-        PASS_COUNT=$((PASS_COUNT + 1))
-    else
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-        DEDUCTION=$((DEDUCTION + 15))
+        # Step 6: Field-level access control
+        if run_check check_field_access "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 15))
+        fi
+
+        # Step 6b: Scope consistency
+        if run_check check_scope_consistency "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 15))
+        fi
     fi
 
     # Step 7: Transition (conditional)

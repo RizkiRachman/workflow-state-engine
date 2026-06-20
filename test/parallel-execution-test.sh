@@ -12,7 +12,7 @@ DETECT_SCRIPT="$SCRIPT_DIR/../scripts/detect-parallel-conflicts.sh"
 VERBOSE=false
 PASSED=0
 FAILED=0
-TOTAL=5
+TOTAL=8
 
 # Colors
 RED='\033[0;31m'
@@ -160,6 +160,59 @@ run_test \
 # ---- Results ----
 echo ""
 echo "============================================"
+# ---- Test 6: Diff format input ----
+td6="/tmp/parallel-test-6"
+mkdir -p "$td6"
+cat > "$td6/agent1.diff" << 'DIFF'
+--- a/src/main/java/A.java
++++ b/src/main/java/conflict.java
+@@ -1,3 +1,4 @@
+-old code
++new code
+--- a/src/main/java/C.java
++++ b/src/main/java/D.java
+@@ -5,2 +5,2 @@
+-change1
++change2
+DIFF
+cat > "$td6/agent2.diff" << 'DIFF'
+--- a/src/main/java/B.java
++++ b/src/main/java/conflict.java
+@@ -10,1 +10,1 @@
+-version1
++version2
+DIFF
+run_test \
+    "Test 6: Diff format input" \
+    1 "conflict.java" \
+    --diff1 "$td6/agent1.diff" --diff2 "$td6/agent2.diff"
+
+# ---- Test 7: Mixed file list + diff ----
+td7="/tmp/parallel-test-7"
+mkdir -p "$td7"
+printf 'src/main/java/X.java\nsrc/main/java/Y.java\n' > "$td7/agent1.txt"
+cat > "$td7/agent2.diff" << 'DIFF'
+--- a/src/main/java/X.java
++++ b/src/main/java/Y.java
+@@ -1,1 +1,1 @@
+-old
++new
+DIFF
+run_test \
+    "Test 7: Mixed file list + diff" \
+    1 "Y.java" \
+    --agent1 "$td7/agent1.txt" --diff2 "$td7/agent2.diff"
+
+# ---- Test 8: Leading ./ path normalization ----
+td8="/tmp/parallel-test-8"
+mkdir -p "$td8"
+printf './src/main/java/A.java\n./src/main/java/B.java\n' > "$td8/agent1.txt"
+printf 'src/main/java/B.java\nsrc/main/java/C.java\n' > "$td8/agent2.txt"
+run_test \
+    "Test 8: Leading ./ path normalization" \
+    1 "B.java" \
+    --agent1 "$td8/agent1.txt" --agent2 "$td8/agent2.txt"
+
 printf " Results: ${GREEN}${PASSED}${NC}/${TOTAL} passed"
 if [[ "$FAILED" -gt 0 ]]; then
     printf ", ${RED}${FAILED}${NC} failed"
