@@ -80,11 +80,11 @@ graphify-out/
 # === Project-specific: workspace ===
 workspace/
 
-# IMPORTANT: opencode.json is tracked and committed — it's the consumer's config.
-# Do NOT gitignore it. Use opencode.json.template as the template source instead.
 
 # === Project-specific: session runtime state (live state + archive — not source) ===
 .opencode/
+opencode.json
+opencode.*.json
 session/
 .gitnexus
 
