@@ -22,6 +22,17 @@ CHECK_COUNT=0
 PASS_COUNT=0
 FAIL_COUNT=0
 
+# Consumer mode — validates from a consumer's perspective
+CONSUMER_MODE=false
+# Auto-detect: if parent dir has .opencode/ symlinks pointing back to us
+if [ -L "../.opencode/agents" ] 2>/dev/null; then
+    target="$(readlink "../.opencode/agents" 2>/dev/null)"
+    if echo "$target" | grep -qE "^\\.\\./$(basename "$PROJECT_ROOT")/agents"; then
+        CONSUMER_MODE=true
+    fi
+fi
+CONSUMER_ROOT="$PROJECT_ROOT"
+
 # Color output (disable if not a terminal)
 if [[ -t 1 ]]; then
     GREEN='\033[0;32m'
@@ -46,6 +57,7 @@ Options:
     --help       Show this usage message
     --verbose    Print detailed output for each check
     --strict     Exit immediately on first violation
+    --consumer   Validate from consumer's perspective (checks consumer root)
 
 Checks performed:
   1. Required directories exist
@@ -112,6 +124,32 @@ check_required_dirs() {
     local violations=0
     local dir
 
+    # opencode.json — must exist with no remaining placeholders
+    local opencode_root="$PROJECT_ROOT"
+    if [ "$CONSUMER_MODE" = true ]; then
+        opencode_root="$CONSUMER_ROOT"
+    fi
+    if [[ -f "$opencode_root/opencode.json" ]]; then
+        local placeholder_count
+        placeholder_count=$(grep -c 'YOUR_' "$opencode_root/opencode.json" 2>/dev/null || true)
+        if [[ "$placeholder_count" -gt 0 ]]; then
+            if grep -q 'YOUR_FIRECRAWL_API_KEY' "$opencode_root/opencode.json" 2>/dev/null; then
+                log_info "opencode.json has YOUR_FIRECRAWL_API_KEY placeholder (update with real key)"
+            fi
+            log_fail "opencode.json has $placeholder_count placeholder(s) (YOUR_*) — replace with actual values"
+            violations=$((violations + 1))
+        else
+            log_pass "opencode.json exists with no remaining placeholders"
+        fi
+    else
+        if [ "$CONSUMER_MODE" = true ]; then
+            log_fail "opencode.json does not exist at consumer root ($opencode_root)"
+        else
+            log_fail "opencode.json does not exist at project root"
+        fi
+        violations=$((violations + 1))
+    fi
+
     # agents/ — at least 10 .md files
     dir="$PROJECT_ROOT/agents"
     if [[ ! -d "$dir" ]]; then
@@ -135,11 +173,7 @@ check_required_dirs() {
         violations=$((violations + 1))
     else
         local skill_count
-        skill_count=$(find "$dir" -maxdepth 1 -type d -print0 | xargs -0 -I {} echo | wc -l | tr -d ' ')
-        # Find counts . and .. on some platforms, so subtract 1 for .
-        if [[ "$skill_count" -gt 0 ]]; then
-            skill_count=$((skill_count - 1))
-        fi
+        skill_count=$(find "$dir" -maxdepth 1 -type d -not -name '.' -not -name '..' | wc -l | tr -d ' ')
         if [[ "$skill_count" -lt 5 ]]; then
             log_fail "skills/ has only $skill_count subdirectories (expected at least 5)"
             violations=$((violations + 1))
@@ -199,29 +233,33 @@ check_required_dirs() {
         fi
     fi
 
-    # session/ — state.md, index.md, at least one branch snapshot
-    dir="$PROJECT_ROOT/session"
-    if [[ ! -d "$dir" ]]; then
-        log_fail "session/ directory does not exist"
-        violations=$((violations + 1))
+    # session/ — skipped in consumer mode (session/ lives at consumer root)
+    if [ "$CONSUMER_MODE" = true ]; then
+        log_info "session/ — skipped in consumer mode (session/ lives at consumer root)"
     else
-        local ssn_violations=0
-        for f in state.md index.md; do
-            if [[ ! -f "$dir/$f" ]]; then
-                log_fail "session/$f is missing"
-                ssn_violations=$((ssn_violations + 1))
+        dir="$PROJECT_ROOT/session"
+        if [[ ! -d "$dir" ]]; then
+            log_fail "session/ directory does not exist"
+            violations=$((violations + 1))
+        else
+            local ssn_violations=0
+            for f in state.md index.md; do
+                if [[ ! -f "$dir/$f" ]]; then
+                    log_fail "session/$f is missing"
+                    ssn_violations=$((ssn_violations + 1))
+                    violations=$((violations + 1))
+                fi
+            done
+            # Check at least one branch snapshot dir
+            local snapshot_count
+            snapshot_count=$(find "$dir" -maxdepth 2 -type f -name 'contract.json' -print0 2>/dev/null | xargs -0 -I {} echo | wc -l | tr -d ' ')
+            if [[ "$snapshot_count" -eq 0 ]]; then
+                log_fail "session/ has no branch snapshot directories (no contract.json found at depth 2)"
                 violations=$((violations + 1))
             fi
-        done
-        # Check at least one branch snapshot dir
-        local snapshot_count
-        snapshot_count=$(find "$dir" -maxdepth 2 -type f -name 'contract.json' -print0 2>/dev/null | xargs -0 -I {} echo | wc -l | tr -d ' ')
-        if [[ "$snapshot_count" -eq 0 ]]; then
-            log_fail "session/ has no branch snapshot directories (no contract.json found at depth 2)"
-            violations=$((violations + 1))
-        fi
-        if [[ "$ssn_violations" -eq 0 && "$snapshot_count" -ge 1 ]]; then
-            log_pass "session/ exists with $snapshot_count branch snapshot(s) and required files"
+            if [[ "$ssn_violations" -eq 0 && "$snapshot_count" -ge 1 ]]; then
+                log_pass "session/ exists with $snapshot_count branch snapshot(s) and required files"
+            fi
         fi
     fi
 
@@ -269,13 +307,16 @@ check_required_dirs() {
         fi
     fi
 
-    # .opencode/ — directory exists
-    dir="$PROJECT_ROOT/.opencode"
-    if [[ ! -d "$dir" ]]; then
-        log_fail ".opencode/ directory does not exist"
+    # .opencode/ — directory exists (at CONSUMER_ROOT in consumer mode)
+    local opencode_dir="$PROJECT_ROOT/.opencode"
+    if [ "$CONSUMER_MODE" = true ]; then
+        opencode_dir="$CONSUMER_ROOT/.opencode"
+    fi
+    if [[ ! -d "$opencode_dir" ]]; then
+        log_fail "$(basename "$opencode_dir")/ directory does not exist"
         violations=$((violations + 1))
     else
-        log_pass ".opencode/ directory exists"
+        log_pass "$(basename "$opencode_dir")/ directory exists"
     fi
 
     if [[ "$violations" -eq 0 ]]; then
@@ -289,6 +330,11 @@ check_opencode_symlinks() {
 
     local violations=0
     local base="$PROJECT_ROOT/.opencode"
+    local submodule_rel=""
+    if [ "$CONSUMER_MODE" = true ]; then
+        base="$CONSUMER_ROOT/.opencode"
+        submodule_rel="$(basename "$PROJECT_ROOT")"
+    fi
 
     if [[ ! -d "$base" ]]; then
         log_info ".opencode/ directory missing — skipping symlink checks"
@@ -303,6 +349,7 @@ check_opencode_symlinks() {
         ["orchestration"]="contract"
         ["usage"]="usage"
         ["config"]="config"
+        ["plugins"]="plugins"
     )
 
     for symlink_name in "${!symlink_targets[@]}"; do
@@ -323,30 +370,40 @@ check_opencode_symlinks() {
         # Get the symlink target
         local actual_target
         actual_target=$(readlink "$symlink_path" 2>/dev/null)
-        local expected_relative="../$expected_target"
 
-        if [[ "$actual_target" != "$expected_relative" ]] && [[ "$actual_target" != "../$expected_target" ]]; then
-            # Also accept exact match without "../" prefix depending on depth
-            log_fail ".opencode/$symlink_name points to '$actual_target' (expected '$expected_relative')"
-            violations=$((violations + 1))
-        else
-            # Check that the target resolves (exists)
-            if [[ -d "$symlink_path" ]]; then
-                log_pass ".opencode/$symlink_name -> $expected_target/ (resolves correctly)"
-                log_verbose "  Target path: $(cd "$base" && readlink "$symlink_name")"
-            else
-                if [[ -f "$symlink_path" ]]; then
-                    log_pass ".opencode/$symlink_name -> $expected_target (resolves to a file)"
-                else
-                    log_fail ".opencode/$symlink_name -> $actual_target (symlink broken — target does not exist)"
-                    violations=$((violations + 1))
-                fi
+        # Compare expected vs actual — differs between engine and consumer mode
+        local target_mismatch=false
+        if [ "$CONSUMER_MODE" = true ]; then
+            # Consumer: symlinks point to ../.workflow-engine/agents (or .workflow-engine/agents)
+            if [[ "$actual_target" != "../$submodule_rel/$expected_target" ]] && [[ "$actual_target" != "$submodule_rel/$expected_target" ]]; then
+                target_mismatch=true
             fi
+        else
+            # Engine: symlinks point to ../agents (or agents)
+            if [[ "$actual_target" != "../$expected_target" ]] && [[ "$actual_target" != "$expected_target" ]]; then
+                target_mismatch=true
+            fi
+        fi
+
+        if [ "$target_mismatch" = true ]; then
+            log_fail ".opencode/$symlink_name points to '$actual_target' (expected '$expected_target')"
+            violations=$((violations + 1))
+        fi
+
+        # Check that the target resolves (exists)
+        if [[ -d "$symlink_path" ]]; then
+            log_pass ".opencode/$symlink_name -> $expected_target/ (resolves correctly)"
+            log_verbose "  Target path: $(cd "$(dirname "$symlink_path")" && readlink "$(basename "$symlink_path")")"
+        elif [[ -f "$symlink_path" ]]; then
+            log_pass ".opencode/$symlink_name -> $expected_target (resolves to a file)"
+        else
+            log_fail ".opencode/$symlink_name -> $actual_target (symlink broken — target does not exist)"
+            violations=$((violations + 1))
         fi
     done
 
     if [[ "$violations" -eq 0 ]]; then
-        echo "  Result: All 8 .opencode/ symlinks resolve correctly"
+        echo "  Result: All 7 .opencode/ symlinks resolve correctly"
     fi
 }
 
@@ -580,6 +637,10 @@ parse_args() {
                 STRICT=true
                 shift
                 ;;
+            --consumer)
+                CONSUMER_MODE=true
+                shift
+                ;;
             *)
                 echo "Unknown option: $1"
                 echo "Use --help for usage info."
@@ -593,9 +654,17 @@ parse_args() {
 main() {
     parse_args "$@"
 
+    # Set CONSUMER_ROOT if consumer mode was enabled (via flag or auto-detect)
+    if [ "$CONSUMER_MODE" = true ]; then
+        CONSUMER_ROOT="$(cd "$PROJECT_ROOT/.." && pwd)"
+    fi
+
     echo "=== Toolkit Validator — Workflow State Engine ==="
     echo "Project root: $PROJECT_ROOT"
-    echo "Mode: verbose=$VERBOSE, strict=$STRICT"
+    if [ "$CONSUMER_MODE" = true ]; then
+        echo "Consumer root: $CONSUMER_ROOT"
+    fi
+    echo "Mode: verbose=$VERBOSE, strict=$STRICT, consumer=$CONSUMER_MODE"
     echo ""
 
     check_required_dirs
