@@ -25,12 +25,13 @@
   ],
   "properties": {
     "state": {
-      "description": "Current state machine state. Transitions: INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE. Any → BLOCKED on escalation.",
+      "description": "Current state machine state. Transitions: INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE. Any → BLOCKED on escalation.",
       "type": "string",
       "enum": [
         "INIT",
         "PLAN",
         "PLAN_SCORED",
+        "PONYTAIL_CHECK",
         "EXECUTE",
         "EXECUTE_SCORED",
         "REVIEW",
@@ -786,6 +787,118 @@
       }
     }
   },
+  "allOf": [
+    {
+      "description": "PONYTAIL_CHECK — must have ponytail.debt_items defined.",
+      "if": {
+        "properties": {
+          "state": { "const": "PONYTAIL_CHECK" }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "ponytail": {
+            "required": ["debt_items"],
+            "properties": {
+              "debt_items": {
+                "type": "array",
+                "minItems": 0
+              }
+            }
+          }
+        },
+        "required": ["ponytail"]
+      }
+    },
+    {
+      "description": "PLAN_SCORED score gate — requires score.combined ≥ 70 to proceed to EXECUTE.",
+      "if": {
+        "properties": {
+          "state": { "const": "PLAN_SCORED" }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "score": {
+            "properties": {
+              "combined": { "minimum": 70 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "EXECUTE_SCORED score gate — requires score.combined ≥ 70 to proceed to REVIEW.",
+      "if": {
+        "properties": {
+          "state": { "const": "EXECUTE_SCORED" }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "score": {
+            "properties": {
+              "combined": { "minimum": 70 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "REVIEW_SCORED score gate — requires score.combined ≥ 70 to proceed to COMPLETE.",
+      "if": {
+        "properties": {
+          "state": { "const": "REVIEW_SCORED" }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "score": {
+            "properties": {
+              "combined": { "minimum": 70 }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "BLOCKED escalation check — requires retry.attempt ≥ 3 OR score.combined < 50.",
+      "if": {
+        "properties": {
+          "state": { "const": "BLOCKED" }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "properties": {
+              "retry": {
+                "properties": {
+                  "attempt": { "minimum": 3 }
+                },
+                "required": ["attempt"]
+              }
+            },
+            "required": ["retry"]
+          },
+          {
+            "properties": {
+              "score": {
+                "properties": {
+                  "combined": { "maximum": 49 }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
   "$defs": {
     "adr_entry": {
       "description": "An Architecture Decision Record entry.",

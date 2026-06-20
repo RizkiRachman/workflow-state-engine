@@ -51,7 +51,6 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 50,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
@@ -69,12 +68,13 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 80,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
         "skill": "allow",
-        "task": { "*": "deny" },
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
@@ -99,7 +99,6 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 100,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
@@ -122,12 +121,13 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 80,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
         "skill": "allow",
-        "task": { "*": "deny" },
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
@@ -151,12 +151,13 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 30,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
         "skill": "allow",
-        "task": { "*": "deny" },
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
@@ -181,12 +182,13 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 30,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
         "skill": "allow",
-        "task": { "*": "deny" },
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
@@ -210,12 +212,13 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 60,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
         "skill": "allow",
-        "task": { "*": "deny" },
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
@@ -239,7 +242,6 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 40,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
@@ -254,7 +256,9 @@
         "bash": "deny",
         "snip": "deny",
         "morph_edit": "deny",
-        "task": { "*": "deny" }
+        "task": {
+          "*": "deny"
+        }
       },
       "fallback_models": [
         "sumopod/deepseek-v4-flash"
@@ -264,12 +268,13 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 40,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
         "skill": "allow",
-        "task": { "*": "deny" },
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
@@ -294,12 +299,13 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0,
       "top_p": 1,
-      "steps": 30,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
         "skill": "allow",
-        "task": { "*": "deny" },
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
@@ -324,12 +330,13 @@
       "model": "sumopod/deepseek-v4-flash",
       "temperature": 0.2,
       "top_p": 1,
-      "steps": 30,
       "reasoningEffort": "high",
       "textVerbosity": "low",
       "permission": {
         "skill": "allow",
-        "task": { "*": "deny" },
+        "task": {
+          "*": "deny"
+        },
         "question": "deny",
         "webfetch": "deny",
         "morph_edit": "deny",
