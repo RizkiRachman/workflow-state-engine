@@ -1,6 +1,34 @@
-*.backup
-*.log
-*.tmp
+# === macOS ===
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.com.apple.timemachine.supported
+.PKInstallSandboxManager
+.PKInstallSandboxManager-SystemSoftware
+.hotfiles.btree
+.vol
+.file
+.disk_label*
+lost+found
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+Backups.backupdb
+.MobileBackups
+.MobileBackups.trash
+MobileBackups.trash
+tmbootpicker.efi
 
 # IDE
 .idea/
@@ -13,16 +41,53 @@ build/
 target/
 dist/
 
-# Runtime artifacts
-session/**/contract.json
-session/**/state.md
-session/**/superpowers-contract.json
+# === JetBrains IDEs ===
+.idea/*/workspace.xml
+.idea/*/tasks.xml
+.idea/*/usage.statistics.xml
+.idea/*/dictionaries
+.idea/*/shelf
+.idea/*/contentModel.xml
+.idea/*/dataSources/
+.idea/*/dataSources.ids
+.idea/*/dataSources.local.xml
+.idea/*/sqlDataSources.xml
+.idea/*/dynamic.xml
+.idea/*/uiDesigner.xml
+.idea/*/dbnavigator.xml
+.idea/*/gradle.xml
+.idea/*/libraries
+.idea/*/mongoSettings.xml
+.idea/*/aws.xml
+.idea/*/replstate.xml
+.idea/sonarlint/
+.idea/sonarlint.xml
+.idea/httpRequests
+.idea/caches/build_file_checksums.ser
+*.iws
+out/
+.idea_modules/
 
-# Tool caches
+# === Logs & Temp ===
+*.log
+*.tmp
+*.backup
+
+# === Project-specific: tool caches ===
 .lean-ctx/
 graphify-out/
 .workflow-engine/
 
-# Workspace
+# === Project-specific: workspace ===
 workspace/
 
+# === Project-specific: session runtime state (live state + archive — not source) ===
+.opencode/
+session/
+opencode.json
+opencode.*.json
+.gitnexus
+
+AGENTS.md
+CLAUDE.md
+.claude
