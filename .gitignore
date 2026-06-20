@@ -13,10 +13,8 @@ build/
 target/
 dist/
 
-# Runtime artifacts
-session/**/contract.json
-session/**/state.md
-session/**/superpowers-contract.json
+# Session runtime state (live state + archive — not source)
+session/
 
 # Tool caches
 .lean-ctx/
