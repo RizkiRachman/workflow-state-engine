@@ -1,3 +1,0 @@
-[submodule ".workflow-engine"]
-	path = .workflow-engine
-	url = https://github.com/RizkiRachman/workflow-state-engine.git
