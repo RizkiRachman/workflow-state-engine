@@ -14,3 +14,4 @@
 | [03-agents.md](./workflow/03-agents.md) | 11-agent integration matrix |
 | [04-scoring.md](./workflow/04-scoring.md) | 3-tier scoring, validation gates, governance |
 | [05-operations.md](./workflow/05-operations.md) | Post-flight, session lifecycle, scripts |
+| [06-consumer-integration.md](./workflow/06-consumer-integration.md) | Submodule setup, symlink topology, per-service config, multi-service orchestration |

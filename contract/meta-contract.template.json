@@ -1,0 +1,22 @@
+{
+  "_comment": "Meta-contract — tracks 8-service integration state. Used by root orchestrator cross-service orchestration.",
+  "contract_version": "0.8.0",
+  "workspace_root": "/Users/rizkirachman/IdeaProjects",
+  "services": [
+    { "name": "service",      "repo": "goods-price-comparison-service",      "state": "INIT", "phase": "A", "validated": false, "branch": "feature/enable-workflow-engine" },
+    { "name": "api",          "repo": "goods-price-comparison-api",          "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
+    { "name": "automation",   "repo": "goods-price-comparison-automation",   "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
+    { "name": "agent-helper", "repo": "goods-price-comparison-agent-helper", "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
+    { "name": "dashboard",    "repo": "goods-price-comparison-dashboard",    "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine", "notes": "9 legacy agents archived" },
+    { "name": "deployer",     "repo": "goods-price-comparison-deployer",     "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
+    { "name": "claude-service", "repo": "goods-price-comparison-claude-service", "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
+    { "name": "properties",   "repo": "goods-price-comparison-properties",   "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" }
+  ],
+  "integration_phases": {
+    "A": { "label": "Fix Pilot",       "complete": false },
+    "B": { "label": "Rollout 7",      "complete": false },
+    "C": { "label": "Tooling",        "complete": false },
+    "D": { "label": "Customization",  "complete": false }
+  },
+  "token_budget": { "max_per_session": 200000, "W_threshold": 0.8, "hard_limit": 0.95 }
+}
