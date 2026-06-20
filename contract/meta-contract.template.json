@@ -1,22 +1,102 @@
 {
-  "_comment": "Meta-contract — tracks 8-service integration state. Used by root orchestrator cross-service orchestration.",
+  "_comment": "Meta-contract \u2014 tracks 8-service integration state. Used by root orchestrator cross-service orchestration.",
   "contract_version": "0.8.0",
   "workspace_root": "/Users/rizkirachman/IdeaProjects",
   "services": [
-    { "name": "service",      "repo": "goods-price-comparison-service",      "state": "INIT", "phase": "A", "validated": false, "branch": "feature/enable-workflow-engine" },
-    { "name": "api",          "repo": "goods-price-comparison-api",          "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
-    { "name": "automation",   "repo": "goods-price-comparison-automation",   "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
-    { "name": "agent-helper", "repo": "goods-price-comparison-agent-helper", "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
-    { "name": "dashboard",    "repo": "goods-price-comparison-dashboard",    "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine", "notes": "9 legacy agents archived" },
-    { "name": "deployer",     "repo": "goods-price-comparison-deployer",     "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
-    { "name": "claude-service", "repo": "goods-price-comparison-claude-service", "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" },
-    { "name": "properties",   "repo": "goods-price-comparison-properties",   "state": "INIT", "phase": "B", "validated": false, "branch": "feature/enable-workflow-engine" }
+    {
+      "name": "service",
+      "repo": "goods-price-comparison-service",
+      "state": "COMPLETE",
+      "phase": "A",
+      "validated": true,
+      "branch": "feature/enable-workflow-engine",
+      "version": "0f20b5b"
+    },
+    {
+      "name": "api",
+      "repo": "goods-price-comparison-api",
+      "state": "COMPLETE",
+      "phase": "B",
+      "validated": true,
+      "branch": "feature/enable-workflow-engine",
+      "version": "0f20b5b"
+    },
+    {
+      "name": "automation",
+      "repo": "goods-price-comparison-automation",
+      "state": "COMPLETE",
+      "phase": "B",
+      "validated": true,
+      "branch": "feature/enable-workflow-engine",
+      "version": "0f20b5b"
+    },
+    {
+      "name": "agent-helper",
+      "repo": "goods-price-comparison-agent-helper",
+      "state": "COMPLETE",
+      "phase": "B",
+      "validated": true,
+      "branch": "feature/enable-workflow-engine",
+      "version": "0f20b5b"
+    },
+    {
+      "name": "dashboard",
+      "repo": "goods-price-comparison-dashboard",
+      "state": "COMPLETE",
+      "phase": "B",
+      "validated": true,
+      "branch": "feature/enable-workflow-engine",
+      "version": "0f20b5b"
+    },
+    {
+      "name": "deployer",
+      "repo": "goods-price-comparison-deployer",
+      "state": "COMPLETE",
+      "phase": "B",
+      "validated": true,
+      "branch": "feature/enable-workflow-engine",
+      "version": "0f20b5b"
+    },
+    {
+      "name": "claude-service",
+      "repo": "goods-price-comparison-claude-service",
+      "state": "COMPLETE",
+      "phase": "B",
+      "validated": true,
+      "branch": "feature/enable-workflow-engine",
+      "version": "0f20b5b"
+    },
+    {
+      "name": "properties",
+      "repo": "goods-price-comparison-properties",
+      "state": "COMPLETE",
+      "phase": "B",
+      "validated": true,
+      "branch": "feature/enable-workflow-engine",
+      "version": "0f20b5b"
+    }
   ],
   "integration_phases": {
-    "A": { "label": "Fix Pilot",       "complete": false },
-    "B": { "label": "Rollout 7",      "complete": false },
-    "C": { "label": "Tooling",        "complete": false },
-    "D": { "label": "Customization",  "complete": false }
+    "A": {
+      "label": "Fix Pilot",
+      "complete": true
+    },
+    "B": {
+      "label": "Rollout 7",
+      "complete": true
+    },
+    "C": {
+      "label": "Tooling",
+      "complete": true
+    },
+    "D": {
+      "label": "Customization",
+      "complete": true
+    }
   },
-  "token_budget": { "max_per_session": 200000, "W_threshold": 0.8, "hard_limit": 0.95 }
+  "token_budget": {
+    "max_per_session": 200000,
+    "W_threshold": 0.8,
+    "hard_limit": 0.95
+  }
 }
