@@ -10,6 +10,7 @@
     "archived_at": null
   },
   "requirements": {
+    "goal": "",
     "acceptance_criteria": [],
     "constraints": []
   },
@@ -78,6 +79,7 @@
     "escalation_trace": []
   },
   "outputs": {
+    "plan": "",
     "architecture": null,
     "code_changes": [],
     "test_results": null,
@@ -94,11 +96,11 @@
   },
   "token_budget": {
     "max_per_session": 200000,
-    "warning_threshold": 0.8,
+    "W_threshold": 0.8,
     "hard_limit": 0.95,
     "max_per_phase": {},
     "max_per_subagent_call": 50000,
-    "current_session_usage": 0,
+    "cur_session_usage": 0,
     "phase_usage": {}
   },
   "scope": {
@@ -107,6 +109,7 @@
     "boundary": "",
     "parallel_eligible": false,
     "max_parallel_agents": 1,
+    "shard_id": "",
     "parallel_instances": []
   },
   "validation": {

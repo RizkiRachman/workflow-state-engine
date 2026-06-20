@@ -120,6 +120,17 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 10
+        },
+        "shard_id": {
+          "description": "Identifies which shard of a parallelized task this contract represents (e.g. 'shard-a', 'service-pricing').",
+          "type": "string"
+        },
+        "parallel_instances": {
+          "description": "List of all parallel shard IDs for multi-agent dispatch.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

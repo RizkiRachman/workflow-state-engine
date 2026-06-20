@@ -58,3 +58,7 @@ doc/analysis/
 doc/releases/
 opencode.*.json
 opencode.json
+
+# Backup / stray artifacts
+rules.json.backup
+goods-price-comparison-integration.md

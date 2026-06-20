@@ -190,14 +190,14 @@ check_nested_fields() {
         "governance:mode"
         "governance:applicable_skills"
         "governance:rules_references"
-        "governance:cur_guidance"
+        "governance:current_guidance"
         "governance:permissions"
-        "governance:prev_blockers"
+        "governance:previous_blockers"
         "score:rules"
         "score:judge"
         "score:combined"
         "score:verdict"
-        "retry:cur_phase"
+        "retry:current_phase"
         "retry:attempt"
         "retry:max_attempts"
         "retry:score_threshold"
@@ -452,6 +452,59 @@ sys.exit(0)
     fi
 }
 
+# --- Step 6b: Scope consistency checks --------------------------------------
+check_scope_consistency() {
+    local file="$1"
+    local issues=0
+    if python3 -c "
+import json, sys
+
+with open('$file') as f:
+    data = json.load(f)
+
+scope = data.get('scope', {})
+failures = []
+
+pe = scope.get('parallel_eligible', False)
+mpa = scope.get('max_parallel_agents', 1)
+
+# 1. parallel_eligible=true  →  max_parallel_agents >= 1
+if pe and (not isinstance(mpa, int) or mpa < 1):
+    failures.append('parallel_eligible=true but max_parallel_agents=%s (must be >= 1)' % mpa)
+
+# 2. included / excluded overlap
+included = set(scope.get('included', []))
+excluded = set(scope.get('excluded', []))
+overlap = included & excluded
+if overlap:
+    failures.append('scope.included and scope.excluded overlap: %s' % ', '.join(sorted(overlap)))
+
+# 3. shard_id implies parallel_eligible
+sid = scope.get('shard_id', '')
+if sid and not pe:
+    failures.append('shard_id=\"%s\" set but parallel_eligible=false' % sid)
+
+# 4. parallel_instances consistency
+instances = scope.get('parallel_instances', [])
+if pe and len(instances) == 0:
+    failures.append('parallel_eligible=true but parallel_instances empty')
+if pe and sid and instances and sid not in instances:
+    failures.append('shard_id=\"%s\" not in parallel_instances %s' % (sid, instances))
+
+if failures:
+    for f in failures:
+        print('  [SCOPE] ' + f)
+    sys.exit(1)
+sys.exit(0)
+" 2>&1; then
+        log_pass "Scope consistency checks passed"
+        return 0
+    else
+        log_fail "Scope consistency issues detected (see above)"
+        return 1
+    fi
+}
+
 # --- Step 7: Transition validation (if --prev-state) -----------------------
 TRANSITIONS_FILE=$(python3 -c "
 import json, sys
@@ -502,9 +555,9 @@ with open('$contract_file') as f:
     # Check score threshold for this transition (if defined in rules)
     local threshold
     threshold=$(jq -r --arg from "$PREV_STATE" --arg to "$current_state" '
-        .state_machine.transitions[]
+        [.state_machine.transitions[]
         | select(.from == $from and .to == $to)
-        | .require_score // null
+        | .require_score // null][0]
     ' "$rules_file" 2>/dev/null || echo "null")
 
     if [[ "$threshold" != "null" && -n "$threshold" ]]; then
@@ -645,6 +698,34 @@ main() {
     fi
     PASS_COUNT=$((PASS_COUNT + 1))
 
+    # Step 1.5: State field critical check (hard block — contract is meaningless without valid state)
+    STATE_VALUE=$(jq -r '.state // ""' "$CONTRACT_FILE" 2>/dev/null)
+
+    if [[ -z "$STATE_VALUE" ]]; then
+        if [[ "$SCORE_MODE" == false ]]; then
+            echo ""
+            echo "BLOCKED: Missing required 'state' field"
+        fi
+        exit 2
+    fi
+
+    VALID_STATES=("INIT" "PLAN" "PLAN_SCORED" "PONYTAIL_CHECK" "EXECUTE" "EXECUTE_SCORED" "REVIEW" "REVIEW_SCORED" "COMPLETE" "BLOCKED")
+    STATE_FOUND=false
+    for vs in "${VALID_STATES[@]}"; do
+        if [[ "$STATE_VALUE" == "$vs" ]]; then
+            STATE_FOUND=true
+            break
+        fi
+    done
+
+    if [[ "$STATE_FOUND" == false ]]; then
+        if [[ "$SCORE_MODE" == false ]]; then
+            echo ""
+            echo "BLOCKED: Invalid state enum value '$STATE_VALUE'"
+        fi
+        exit 2
+    fi
+
     # Step 2: Top-level fields
     if run_check check_top_level_fields "$CONTRACT_FILE"; then
         PASS_COUNT=$((PASS_COUNT + 1))
@@ -653,7 +734,7 @@ main() {
         DEDUCTION=$((DEDUCTION + 15))
     fi
 
-    # Step 3: State enum
+    # Step 3: State enum (already hard-blocked above, but still checked for scoring consistency)
     if run_check check_state_enum "$CONTRACT_FILE"; then
         PASS_COUNT=$((PASS_COUNT + 1))
     else
@@ -689,6 +770,14 @@ main() {
 
     # Step 6: Field-level access control
     if run_check check_field_access "$CONTRACT_FILE"; then
+        PASS_COUNT=$((PASS_COUNT + 1))
+    else
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+        DEDUCTION=$((DEDUCTION + 15))
+    fi
+
+    # Step 6b: Scope consistency
+    if run_check check_scope_consistency "$CONTRACT_FILE"; then
         PASS_COUNT=$((PASS_COUNT + 1))
     else
         FAIL_COUNT=$((FAIL_COUNT + 1))
