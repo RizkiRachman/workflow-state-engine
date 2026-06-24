@@ -15,6 +15,7 @@
 #   ./scripts/snapshot-contract.sh --snapshot-only # Only copy files, skip index updates
 #   ./scripts/snapshot-contract.sh --branch BRANCH # Override branch name (CI/testing)
 #   ./scripts/snapshot-contract.sh --summary TEXT  # Custom summary text
+#   ./scripts/snapshot-contract.sh --archive       # Create tarball archive of session state
 #
 # Exit codes:
 #   0 — Snapshot created successfully
@@ -36,6 +37,7 @@ DRY_RUN=false
 SNAPSHOT_ONLY=false
 BRANCH_OVERRIDE=""
 SUMMARY_TEXT="Snapshot"
+ARCHIVE_MODE=false
 EXIT_CODE=0
 
 # Color output (disable if not a terminal)
@@ -68,6 +70,7 @@ OPTIONS
     --snapshot-only   Only validate session state, skip state.md/index.md updates
     --branch BRANCH   Override branch detection (for CI/testing)
     --summary TEXT    Custom summary text for state.md entry (default: "Snapshot")
+    --archive       Create a tarball archive of the session state in archive-sessions/
 
 BEHAVIOR
     1. Detects current git branch name
@@ -99,6 +102,7 @@ EXAMPLES
     ./scripts/snapshot-contract.sh --dry-run
     ./scripts/snapshot-contract.sh --branch feature/my-feature
     ./scripts/snapshot-contract.sh --summary "Post-review snapshot"
+    ./scripts/snapshot-contract.sh --archive
 USAGE
     exit 2
 }
@@ -166,6 +170,52 @@ get_date() {
     date -u +"%Y-%m-%d"
 }
 
+# Compute SHA-256 hash of a file and return the hex digest
+compute_hash() {
+    local file="$1"
+    if [[ ! -f "$file" ]]; then
+        echo "missing"
+        return 1
+    fi
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$file" | cut -d' ' -f1
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$file" | cut -d' ' -f1
+    elif command -v openssl >/dev/null 2>&1; then
+        openssl sha256 "$file" | cut -d' ' -f2
+    else
+        echo "unavailable"
+        return 1
+    fi
+}
+
+# Verify a contract.json against its stored .sha256 sidecar
+# Returns 0 if hash matches, 1 on mismatch or missing sidecar
+verify_hash() {
+    local contract_file="$1"
+    local hash_file="${contract_file}.sha256"
+
+    if [[ ! -f "$hash_file" ]]; then
+        log_verbose "No .sha256 sidecar found for $(basename "$contract_file") — skipping verification"
+        return 0
+    fi
+
+    local expected
+    expected="$(cat "$hash_file" | tr -d '[:space:]')"
+    local actual
+    actual="$(compute_hash "$contract_file")"
+
+    if [[ "$actual" == "$expected" ]]; then
+        log_verbose "Hash verification: PASS for $(basename "$contract_file")"
+        return 0
+    else
+        log_fail "Hash MISMATCH for $(basename "$contract_file")"
+        log_verbose "  Expected: $expected"
+        log_verbose "  Actual:   $actual"
+        return 1
+    fi
+}
+
 # Determine status label from contract state
 derive_status() {
     local state="$1"
@@ -200,12 +250,62 @@ discover_contract_files() {
     echo "$contract_file"
 }
 
+# Validate session contract integrity by checking .sha256 sidecar
+# Called during session resume to detect tampering
+verify_session_integrity() {
+    local branch="$1"
+    local session_dir="$PROJECT_ROOT/session/$branch"
+    local contract_file="$session_dir/contract.json"
+    local hash_file="${contract_file}.sha256"
+
+    if [[ ! -f "$hash_file" ]]; then
+        log_verbose "No integrity sidecar for branch '$branch' — skipping verification"
+        return 0
+    fi
+
+    if verify_hash "$contract_file"; then
+        log_pass "Session integrity verified for branch '$branch'"
+        return 0
+    else
+        log_fail "Session INTEGRITY FAILURE for branch '$branch' — contract.json does not match stored hash"
+        log_fail "Possible causes: manual edit, concurrent session conflict, or data corruption"
+        return 1
+    fi
+}
+
 # Validate session state file and log its state
 snapshot_files() {
     local branch="$1"
     local session_dir="$PROJECT_ROOT/session"
     local target_dir="$session_dir/$branch"
 
+
+    # Step 7: Create tarball archive if requested
+    if [[ "$ARCHIVE_MODE" == true ]]; then
+        echo "Step 7: Create tarball archive"
+        local archive_dir="$PROJECT_ROOT/archived-sessions"
+        local today="$(date '+%Y%m%d' 2>/dev/null || echo 'unknown')"
+        local archive_name="session-archive-${br}-${today}.tar.gz"
+        local archive_path="$archive_dir/$archive_name"
+        
+        if [[ "$DRY_RUN" == true ]]; then
+            log_dry "Would create archive: $archive_path"
+        else
+            mkdir -p "$archive_dir"
+            local session_dir="$PROJECT_ROOT/session/$br"
+            if [[ -d "$session_dir" ]]; then
+                if tar -C "$PROJECT_ROOT/session" -czf "$archive_path" "$br/" 2>/dev/null; then
+                    archive_size=$(wc -c < "$archive_path" | tr -d ' ')
+                    log_pass "Archive created: $archive_name ($archive_size bytes)"
+                else
+                    log_fail "Failed to create archive: $archive_path"
+                fi
+            else
+                log_info "No session state for branch '$br' — nothing to archive"
+            fi
+        fi
+    fi
+    
     if [[ "$DRY_RUN" == true ]]; then
         log_dry "Would validate session state at: $target_dir/contract.json"
         return 0
@@ -229,6 +329,17 @@ snapshot_files() {
     local score
     score="$(jq -r '.score.combined // 0' "$contract_file" 2>/dev/null || echo "0")"
     log_pass "Session state validated: state=$state, score=${score}/100"
+
+    # Compute and store SHA-256 hash for audit integrity
+    local hash_file="${contract_file}.sha256"
+    local computed_hash
+    computed_hash="$(compute_hash "$contract_file")"
+    if [[ "$computed_hash" != "unavailable" && "$computed_hash" != "missing" ]]; then
+        echo -n "$computed_hash" > "$hash_file"
+        log_verbose "Hash stored: $(basename "$hash_file") = ${computed_hash:0:16}..."
+    else
+        log_verbose "Hash not available (no sha256sum/shasum/openssl found)"
+    fi
 }
 
 # Append a new entry to session/state.md
@@ -238,14 +349,43 @@ update_state_log() {
     local combined_score="$3"
     local commit_hash="$4"
     local summary="$5"
+    local contract_hash="$6"
 
     local state_file="$PROJECT_ROOT/session/state.md"
 
     # Format the new row
     local date_str
     date_str="$(get_date)"
-    local row="| $date_str | \`$branch\` | $state | ${combined_score}/100 | $commit_hash | $summary |"
+    local hash_abbrev="${contract_hash:0:12}"
+    local row="| $date_str | \`$branch\` | $state | ${combined_score}/100 | \`$hash_abbrev\` | $commit_hash | $summary |"
 
+
+    # Step 7: Create tarball archive if requested
+    if [[ "$ARCHIVE_MODE" == true ]]; then
+        echo "Step 7: Create tarball archive"
+        local archive_dir="$PROJECT_ROOT/archived-sessions"
+        local today="$(date '+%Y%m%d' 2>/dev/null || echo 'unknown')"
+        local archive_name="session-archive-${br}-${today}.tar.gz"
+        local archive_path="$archive_dir/$archive_name"
+        
+        if [[ "$DRY_RUN" == true ]]; then
+            log_dry "Would create archive: $archive_path"
+        else
+            mkdir -p "$archive_dir"
+            local session_dir="$PROJECT_ROOT/session/$br"
+            if [[ -d "$session_dir" ]]; then
+                if tar -C "$PROJECT_ROOT/session" -czf "$archive_path" "$br/" 2>/dev/null; then
+                    archive_size=$(wc -c < "$archive_path" | tr -d ' ')
+                    log_pass "Archive created: $archive_name ($archive_size bytes)"
+                else
+                    log_fail "Failed to create archive: $archive_path"
+                fi
+            else
+                log_info "No session state for branch '$br' — nothing to archive"
+            fi
+        fi
+    fi
+    
     if [[ "$DRY_RUN" == true ]]; then
         log_dry "Would append to $state_file:"
         log_dry "  $row"
@@ -264,14 +404,14 @@ update_state_log() {
 ## Log Format
 
 ```
-| Date | Branch | State | Score | PR/Commit | Summary |
-|------|--------|-------|-------|-----------|---------|
+| Date | Branch | State | Score | Hash | PR/Commit | Summary |
+|------|--------|-------|-------|------|-----------|---------|
 ```
 
 ## Entries
 
-| Date | Branch | State | Score | PR/Commit | Summary |
-|------|--------|-------|-------|-----------|---------|
+| Date | Branch | State | Score | Hash | PR/Commit | Summary |
+|------|--------|-------|-------|------|-----------|---------|
 HEADER
         # Add empty newline after header
         echo "" >> "$state_file"
@@ -281,7 +421,7 @@ HEADER
     # Append the new row
     echo "$row" >> "$state_file"
     log_pass "Appended state log entry for branch '$branch'"
-    log_verbose "State: $state, Score: ${combined_score}/100, Commit: $commit_hash"
+    log_verbose "State: $state, Score: ${combined_score}/100, Hash: $hash_abbrev, Commit: $commit_hash"
 }
 
 # Add or update the branch row in session/index.md
@@ -290,15 +430,44 @@ update_branch_index() {
     local state="$2"
     local combined_score="$3"
     local commit_hash="$4"
+    local contract_hash="$5"
 
     local index_file="$PROJECT_ROOT/session/index.md"
     local date_str
     date_str="$(get_date)"
     local status
     status="$(derive_status "$state")"
+    local hash_abbrev="${contract_hash:0:12}"
 
+
+    # Step 7: Create tarball archive if requested
+    if [[ "$ARCHIVE_MODE" == true ]]; then
+        echo "Step 7: Create tarball archive"
+        local archive_dir="$PROJECT_ROOT/archived-sessions"
+        local today="$(date '+%Y%m%d' 2>/dev/null || echo 'unknown')"
+        local archive_name="session-archive-${br}-${today}.tar.gz"
+        local archive_path="$archive_dir/$archive_name"
+        
+        if [[ "$DRY_RUN" == true ]]; then
+            log_dry "Would create archive: $archive_path"
+        else
+            mkdir -p "$archive_dir"
+            local session_dir="$PROJECT_ROOT/session/$br"
+            if [[ -d "$session_dir" ]]; then
+                if tar -C "$PROJECT_ROOT/session" -czf "$archive_path" "$br/" 2>/dev/null; then
+                    archive_size=$(wc -c < "$archive_path" | tr -d ' ')
+                    log_pass "Archive created: $archive_name ($archive_size bytes)"
+                else
+                    log_fail "Failed to create archive: $archive_path"
+                fi
+            else
+                log_info "No session state for branch '$br' — nothing to archive"
+            fi
+        fi
+    fi
+    
     if [[ "$DRY_RUN" == true ]]; then
-        local row_preview="| \`$branch\` | ✅ | $status | $state | ${combined_score}/100 | — | $date_str |"
+        local row_preview="| \`$branch\` | ✅ | $status | $state | ${combined_score}/100 | \`$hash_abbrev\` | — | $date_str |"
         log_dry "Would update index.md with:"
         log_dry "  $row_preview"
         return 0
@@ -313,8 +482,8 @@ update_branch_index() {
 > Master index of all orchestration sessions. Each row represents one branch's orchestration lifecycle.
 > Sorted by most recent activity.
 
-| Branch | Active | Status | Last State | Score | PR | Last Activity |
-|--------|--------|--------|------------|-------|----|--------------|
+| Branch | Active | Status | Last State | Score | Snapshot Hash | PR | Last Activity |
+|--------|--------|--------|------------|-------|---------------|----|--------------|
 HEADER
         echo "" >> "$index_file"
         log_pass "Created index.md with header template"
@@ -337,15 +506,15 @@ HEADER
             if echo "$line" | grep -q "| \`${branch}\` |"; then
                 branch_exists=true
                 old_row="$line"
-                # Extract PR column (7th pipe-delimited field: |Branch|Active|Status|State|Score|PR|Date|)
-                existing_pr=$(echo "$line" | awk -F'|' '{print $7}' | xargs)
+                # Extract PR column (8th pipe-delimited field: |Branch|Active|Status|State|Score|Hash|PR|Date|)
+                existing_pr=$(echo "$line" | awk -F'|' '{print $8}' | xargs)
                 break
             fi
         done < "$index_file"
     fi
 
     # Build the new row
-    local new_row="| \`$branch\` | ✅ | $status | $state | ${combined_score}/100 | $existing_pr | $date_str |"
+    local new_row="| \`$branch\` | ✅ | $status | $state | ${combined_score}/100 | \`$hash_abbrev\` | $existing_pr | $date_str |"
 
     if [[ "$branch_exists" == true ]]; then
         # Update existing row using awk (portable across macOS/Linux)
@@ -467,7 +636,34 @@ main() {
 
     # Initialize session state if first run for this branch
     if [[ ! -f "$session_dir/contract.json" ]]; then
+    
+    # Step 7: Create tarball archive if requested
+    if [[ "$ARCHIVE_MODE" == true ]]; then
+        echo "Step 7: Create tarball archive"
+        local archive_dir="$PROJECT_ROOT/archived-sessions"
+        local today="$(date '+%Y%m%d' 2>/dev/null || echo 'unknown')"
+        local archive_name="session-archive-${br}-${today}.tar.gz"
+        local archive_path="$archive_dir/$archive_name"
+        
         if [[ "$DRY_RUN" == true ]]; then
+            log_dry "Would create archive: $archive_path"
+        else
+            mkdir -p "$archive_dir"
+            local session_dir="$PROJECT_ROOT/session/$br"
+            if [[ -d "$session_dir" ]]; then
+                if tar -C "$PROJECT_ROOT/session" -czf "$archive_path" "$br/" 2>/dev/null; then
+                    archive_size=$(wc -c < "$archive_path" | tr -d ' ')
+                    log_pass "Archive created: $archive_name ($archive_size bytes)"
+                else
+                    log_fail "Failed to create archive: $archive_path"
+                fi
+            else
+                log_info "No session state for branch '$br' — nothing to archive"
+            fi
+        fi
+    fi
+    
+    if [[ "$DRY_RUN" == true ]]; then
             log_dry "Would initialize session state in $session_dir"
         else
             mkdir -p "$session_dir"
@@ -504,6 +700,11 @@ main() {
     log_pass "State: $state | Score: ${combined_score}/100"
     log_verbose "Summary: $SUMMARY_TEXT"
 
+    # Compute SHA-256 hash for audit trail
+    local contract_hash
+    contract_hash="$(compute_hash "$src_json")"
+    log_verbose "Contract hash: ${contract_hash:0:16}..."
+
     # Step 4: Validate session state
     echo "---"
     echo "Step 4: Validate session state"
@@ -520,16 +721,43 @@ main() {
         echo "Step 5: Update state history (session/state.md)"
         local commit_hash
         commit_hash="$(get_commit_hash)"
-        update_state_log "$branch" "$state" "$combined_score" "$commit_hash" "$SUMMARY_TEXT"
+        update_state_log "$branch" "$state" "$combined_score" "$commit_hash" "$SUMMARY_TEXT" "$contract_hash"
 
         # Step 6: Update index.md
         echo "---"
         echo "Step 6: Update branch index (session/index.md)"
-        update_branch_index "$branch" "$state" "$combined_score" "$commit_hash"
+        update_branch_index "$branch" "$state" "$combined_score" "$commit_hash" "$contract_hash"
     else
         echo "Step 5-6: Skipped (--snapshot-only)"
         log_info "Skipping state.md and index.md updates (--snapshot-only)"
     fi
+
+    # Step 7: Create tarball archive if requested
+    if [[ "$ARCHIVE_MODE" == true ]]; then
+        echo "Step 7: Create tarball archive"
+        local archive_dir="$PROJECT_ROOT/archived-sessions"
+        local today="$(date '+%Y%m%d' 2>/dev/null || echo 'unknown')"
+        local archive_name="session-archive-${br}-${today}.tar.gz"
+        local archive_path="$archive_dir/$archive_name"
+        
+        if [[ "$DRY_RUN" == true ]]; then
+            log_dry "Would create archive: $archive_path"
+        else
+            mkdir -p "$archive_dir"
+            local session_dir="$PROJECT_ROOT/session/$br"
+            if [[ -d "$session_dir" ]]; then
+                if tar -C "$PROJECT_ROOT/session" -czf "$archive_path" "$br/" 2>/dev/null; then
+                    archive_size=$(wc -c < "$archive_path" | tr -d ' ')
+                    log_pass "Archive created: $archive_name ($archive_size bytes)"
+                else
+                    log_fail "Failed to create archive: $archive_path"
+                fi
+            else
+                log_info "No session state for branch '$br' — nothing to archive"
+            fi
+        fi
+    fi
+    
     if [[ "$DRY_RUN" == true ]]; then
         echo -e "${CYAN}DRY-RUN — no state files were modified.${NC}"
     elif [[ "$EXIT_CODE" -eq 0 ]]; then

@@ -1,13 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "contract/contract.schema.json",
-  "title": "Workflow State Engine — Contract Schema",
+  "title": "Workflow State Engine \u2014 Contract Schema",
   "description": "Validates the shared orchestration envelope (session/{branch}/contract.json). This Draft 2020-12 schema enforces the state machine transitions, scoring pipeline, governance, and audit trail for AI agent workflow orchestration.",
   "type": "object",
   "additionalProperties": true,
   "required": [
     "state",
     "contract_version",
+    "service_type",
     "state_machine_version",
     "session",
     "scope",
@@ -25,7 +26,7 @@
   ],
   "properties": {
     "state": {
-      "description": "Current state machine state. Transitions: INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE. Any → BLOCKED on escalation.",
+      "description": "Current state machine state. Transitions: INIT \u2192 PLAN \u2192 PLAN_SCORED \u2192 PONYTAIL_CHECK \u2192 EXECUTE \u2192 EXECUTE_SCORED \u2192 REVIEW \u2192 REVIEW_SCORED \u2192 COMPLETE. Any \u2192 BLOCKED on escalation.",
       "type": "string",
       "enum": [
         "INIT",
@@ -227,7 +228,7 @@
     "ponytail": {
       "type": "object",
       "additionalProperties": true,
-      "description": "Ponytail debt tracking — intentional shortcuts and frugality intensity.",
+      "description": "Ponytail debt tracking \u2014 intentional shortcuts and frugality intensity.",
       "required": [
         "debt_items",
         "intensity"
@@ -511,7 +512,7 @@
       }
     },
     "score": {
-      "description": "Three-tier scoring pipeline: rule checks → LLM-as-judge → combined verdict.",
+      "description": "Three-tier scoring pipeline: rule checks \u2192 LLM-as-judge \u2192 combined verdict.",
       "type": "object",
       "additionalProperties": true,
       "required": [
@@ -590,7 +591,7 @@
           "maximum": 100
         },
         "verdict": {
-          "description": "Combined verdict. INIT for unscored, PASS (≥70), RETRY (50-69), BLOCKED (<50 or max retries).",
+          "description": "Combined verdict. INIT for unscored, PASS (\u226570), RETRY (50-69), BLOCKED (<50 or max retries).",
           "type": "string",
           "enum": [
             "INIT",
@@ -634,7 +635,7 @@
           "maximum": 10
         },
         "score_threshold": {
-          "description": "Score threshold for PASS (≥ this value = pass).",
+          "description": "Score threshold for PASS (\u2265 this value = pass).",
           "type": "integer",
           "minimum": 0,
           "maximum": 100
@@ -785,21 +786,77 @@
       "items": {
         "$ref": "#/$defs/audit_entry"
       }
+    },
+    "service_type": {
+      "desc": "Service type classification for threshold enforcement. Controls ponytail intensity, score thresholds, max debt items, and SDD gate requirements.",
+      "type": "string",
+      "enum": [
+        "Core",
+        "UI",
+        "Support",
+        "Infrastructure"
+      ],
+      "default": "Core"
+    },
+    "service_type_rules": {
+      "desc": "Service-type-specific threshold overrides. If omitted, defaults from doc/service-rules-thresholds.md apply.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "ponytail_intensity": {
+          "desc": "Override ponytail frugality intensity for this service type.",
+          "type": "string",
+          "enum": [
+            "off",
+            "low",
+            "medium",
+            "high",
+            "full"
+          ]
+        },
+        "score_threshold": {
+          "desc": "Override score threshold for PASS (0-100).",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "max_debt_items": {
+          "desc": "Override max ponytail debt items.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "sdd_gate_required": {
+          "desc": "Override SDD gate requirement policy.",
+          "type": "string",
+          "enum": [
+            "always",
+            ">3 files",
+            "never"
+          ]
+        }
+      }
     }
   },
   "allOf": [
     {
-      "description": "PONYTAIL_CHECK — must have ponytail.debt_items defined.",
+      "description": "PONYTAIL_CHECK \u2014 must have ponytail.debt_items defined.",
       "if": {
         "properties": {
-          "state": { "const": "PONYTAIL_CHECK" }
+          "state": {
+            "const": "PONYTAIL_CHECK"
+          }
         },
-        "required": ["state"]
+        "required": [
+          "state"
+        ]
       },
       "then": {
         "properties": {
           "ponytail": {
-            "required": ["debt_items"],
+            "required": [
+              "debt_items"
+            ],
             "properties": {
               "debt_items": {
                 "type": "array",
@@ -808,70 +865,94 @@
             }
           }
         },
-        "required": ["ponytail"]
+        "required": [
+          "ponytail"
+        ]
       }
     },
     {
-      "description": "PLAN_SCORED score gate — requires score.combined ≥ 70 to proceed to EXECUTE.",
+      "description": "PLAN_SCORED score gate \u2014 requires score.combined \u2265 70 to proceed to EXECUTE.",
       "if": {
         "properties": {
-          "state": { "const": "PLAN_SCORED" }
+          "state": {
+            "const": "PLAN_SCORED"
+          }
         },
-        "required": ["state"]
+        "required": [
+          "state"
+        ]
       },
       "then": {
         "properties": {
           "score": {
             "properties": {
-              "combined": { "minimum": 70 }
+              "combined": {
+                "minimum": 70
+              }
             }
           }
         }
       }
     },
     {
-      "description": "EXECUTE_SCORED score gate — requires score.combined ≥ 70 to proceed to REVIEW.",
+      "description": "EXECUTE_SCORED score gate \u2014 requires score.combined \u2265 70 to proceed to REVIEW.",
       "if": {
         "properties": {
-          "state": { "const": "EXECUTE_SCORED" }
+          "state": {
+            "const": "EXECUTE_SCORED"
+          }
         },
-        "required": ["state"]
+        "required": [
+          "state"
+        ]
       },
       "then": {
         "properties": {
           "score": {
             "properties": {
-              "combined": { "minimum": 70 }
+              "combined": {
+                "minimum": 70
+              }
             }
           }
         }
       }
     },
     {
-      "description": "REVIEW_SCORED score gate — requires score.combined ≥ 70 to proceed to COMPLETE.",
+      "description": "REVIEW_SCORED score gate \u2014 requires score.combined \u2265 70 to proceed to COMPLETE.",
       "if": {
         "properties": {
-          "state": { "const": "REVIEW_SCORED" }
+          "state": {
+            "const": "REVIEW_SCORED"
+          }
         },
-        "required": ["state"]
+        "required": [
+          "state"
+        ]
       },
       "then": {
         "properties": {
           "score": {
             "properties": {
-              "combined": { "minimum": 70 }
+              "combined": {
+                "minimum": 70
+              }
             }
           }
         }
       }
     },
     {
-      "description": "BLOCKED escalation check — requires retry.attempt ≥ 3 OR score.combined < 50.",
+      "description": "BLOCKED escalation check \u2014 requires retry.attempt \u2265 3 OR score.combined < 50.",
       "if": {
         "properties": {
-          "state": { "const": "BLOCKED" }
+          "state": {
+            "const": "BLOCKED"
+          }
         },
-        "required": ["state"]
+        "required": [
+          "state"
+        ]
       },
       "then": {
         "anyOf": [
@@ -879,18 +960,26 @@
             "properties": {
               "retry": {
                 "properties": {
-                  "attempt": { "minimum": 3 }
+                  "attempt": {
+                    "minimum": 3
+                  }
                 },
-                "required": ["attempt"]
+                "required": [
+                  "attempt"
+                ]
               }
             },
-            "required": ["retry"]
+            "required": [
+              "retry"
+            ]
           },
           {
             "properties": {
               "score": {
                 "properties": {
-                  "combined": { "maximum": 49 }
+                  "combined": {
+                    "maximum": 49
+                  }
                 }
               }
             }

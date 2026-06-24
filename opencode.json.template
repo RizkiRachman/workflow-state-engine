@@ -1,5 +1,4 @@
 {
-  "_comment": "TEMPLATE \u2014 copy to opencode.json and configure. Set your own model/provider (remove provider section if not using Sumopod). Fill in MCP paths/keys: mcp.lean-ctx.command, mcp.lean-ctx.environment.LEAN_CTX_DATA_DIR, mcp.firecrawl.environment.FIRECRAWL_API_KEY",
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "tech-lead",
   "model": "YOUR_MODEL_ID",
@@ -363,42 +362,43 @@
     "lean-ctx_*": "allow"
   },
   "mcp": {
-    "context7": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@upstash/context7-mcp"
-      ]
-    },
-    "gitnexus": {
-      "type": "local",
-      "command": [
-        "npx",
-        "gitnexus",
-        "mcp"
-      ]
-    },
-    "lean-ctx": {
-      "type": "local",
-      "command": [
-        "/path/to/lean-ctx"
-      ],
-      "enabled": true,
-      "environment": {
-        "LEAN_CTX_DATA_DIR": "$HOME/.lean-ctx"
+      "context7": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@upstash/context7-mcp"
+        ]
+      },
+      "gitnexus": {
+        "type": "local",
+        "command": [
+          "npx",
+          "gitnexus",
+          "mcp"
+        ]
+      },
+      "lean-ctx": {
+        "type": "local",
+        "command": [
+          "/opt/homebrew/bin/lean-ctx"
+        ],
+        "enabled": true,
+        "environment": {
+          "LEAN_CTX_DATA_DIR": "/Users/rizkirachman/.lean-ctx"
+        }
+      },
+      "firecrawl": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "firecrawl-mcp"
+        ],
+        "environment": {
+          "FIRECRAWL_API_KEY": "{FIRECRAWL_API_KEY}"
+        }
       }
     },
-    "firecrawl": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "firecrawl-mcp"
-      ],
-      "environment": {
-        "FIRECRAWL_API_KEY": "YOUR_FIRECRAWL_API_KEY"
-      }
-    }
   }
 }

@@ -4,6 +4,16 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 if [[ "$BRANCH" == "main" || "$BRANCH" == "master" ]]; then
     exit 0
 fi
+
+# Branch naming validation: enforce feature/YYYYMMDD-* or bugfix/YYYYMMDD-*
+if [[ "$BRANCH" != "main" && "$BRANCH" != "master" && "$BRANCH" != "HEAD" ]]; then
+    if ! echo "$BRANCH" | grep -qE '^(feature|bugfix)/[0-9]{8}-'; then
+        echo "⚠️  PRE-COMMIT: Branch name '$BRANCH' does not follow convention."
+        echo "   Expected: feature/YYYYMMDD-<description> or bugfix/YYYYMMDD-<description>"
+        echo "   To bypass, commit on main/master or rename with: git branch -m <new-name>"
+    fi
+fi
+
 # Validate contract if it exists for this br
 CONTRACT_FILE="session/$BRANCH/contract.json"
 if [[ -f "$CONTRACT_FILE" ]]; then
@@ -17,6 +27,12 @@ if [[ -f "$CONTRACT_FILE" ]]; then
         fi
     fi
 fi
+
+# Run ponytail pre-commit scan if available
+if [[ -f "scripts/pre-commit-ponytail.sh" ]]; then
+    bash scripts/pre-commit-ponytail.sh --staged 2>/dev/null || true
+fi
+
 # Sync agent states (DISABLED — corrupts rules.json to null)
 # if [[ -f "scripts/sync-agent-states.sh" ]]; then
 #     if ! bash scripts/sync-agent-states.sh 2>/dev/null; then

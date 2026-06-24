@@ -26,7 +26,7 @@ tasks/
 
 | Stage | Files |
 |-------|-------|
-| 🟡 Backlogs | `architecture-backlog-20260618.md`, `duplication-analysis.md`, `meta-analysis-gaps-20260618.md` |
+| 🟡 Backlogs | `mcp-integration-planning-20260620.md` |
 | 🟢 Planning | (empty) |
 | 🔵 Development | (empty) |
-| 🟣 Review | `ponytail-explore.md`, `vercel-explore.md` |
+| 🟣 Review | (empty) |
