@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# post-merge — Sync session index after merge operations
+# Triggered by git merge, git pull (which merges), and git rebase (via post-rewrite)
+# Updates session/index.md to reflect merged branch states
+
+log_info() { echo -e "  \033[1;33m[INFO]\033[0m $*"; }
+log_pass() { echo -e "  \033[0;32m[PASS]\033[0m $*"; }
+log_warn() { echo -e "  \033[0;31m[WARN]\033[0m $*"; }
+
+echo "=== post-merge: Session Index Sync ==="
+
+# Re-index gitnexus after merge
+if [[ -f "scripts/gitnexus-analyze.sh" ]]; then
+    bash scripts/gitnexus-analyze.sh 2>/dev/null || log_info "gitnexus re-index skipped"
+fi
+
+# Update session index: mark merged branches
+CUR_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+INDEX_FILE="session/index.md"
+
+if [[ -f "$INDEX_FILE" ]]; then
+    log_info "Merged into '$CUR_BRANCH' — updating session index"
+
+    # Detect what was merged (from ORIG_HEAD or HEAD~1 for fast-forwards)
+    MERGED_BRANCH=$(git log ORIG_HEAD..HEAD --merges --format="%s" 2>/dev/null | head -1 | sed -nE 's/Merge branch '\''([^'\'']+)'\''.*/\1/p' || true)
+    if [[ -n "$MERGED_BRANCH" ]]; then
+        log_info "Merged branch: '$MERGED_BRANCH'"
+        # Mark the merged branch row with a merged status in index.md
+        if grep -q "| \`$MERGED_BRANCH\` |" "$INDEX_FILE" 2>/dev/null; then
+            awk -v br="$MERGED_BRANCH" '
+                index($0, "| `" br "` |") > 0 {
+                    sub(/\| ✅ \|/, "| ➡️ |")
+                    sub(/Active/, "Merged")
+                    print
+                    next
+                }
+                { print }
+            ' "$INDEX_FILE" > "${INDEX_FILE}.tmp" && mv "${INDEX_FILE}.tmp" "$INDEX_FILE"
+            log_pass "Marked '$MERGED_BRANCH' as merged in session index"
+        fi
+    fi
+
+    # Archive snapshot of current state post-merge
+    if [[ -f "scripts/snapshot-contract.sh" ]]; then
+        bash scripts/snapshot-contract.sh --summary "Post-merge snapshot" --verbose 2>/dev/null || true
+    fi
+fi
+
+exit 0

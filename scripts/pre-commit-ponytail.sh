@@ -190,6 +190,98 @@ check_missing_ponytail() {
     echo "$missing"
 }
 
+# ── Dependency Change Detection ──────────────────────────────────────────────
+# Scans staged changes to dependency manifest files (package.json, pom.xml,
+# build.gradle, Cargo.toml, go.mod, requirements.txt, Gemfile) and flags new
+# or upgraded dependencies as ponytail debt that requires justification.
+check_new_dependencies() {
+    local staged_files="$1"
+    local dep_found=0
+
+    # Dependency manifest patterns
+    local dep_files
+    dep_files="$(echo "$staged_files" | grep -E '(package\.json|pom\.xml|build\.gradle|Cargo\.toml|go\.mod|requirements\.txt|Gemfile|composer\.json|yarn\.lock|pnpm-lock\.yaml)' || true)"
+
+    if [[ -z "$dep_files" ]]; then
+        log_verbose "No dependency manifest changes detected."
+        echo 0
+        return 0
+    fi
+
+    log_section "Dependency Change Scan"
+
+    while IFS= read -r dep_file; do
+        [[ -z "$dep_file" ]] && continue
+        log_verbose "Checking: $dep_file"
+        local full_path="$PROJECT_DIR/$dep_file"
+        local extension="${dep_file##*.}"
+
+        if [[ ! -f "$full_path" ]]; then
+            log_verbose "  $dep_file is deleted — skipping"
+            continue
+        fi
+
+        if echo "$dep_file" | grep -qE '^package\.json$'; then
+            local deps_added
+            deps_added="$(git -C "$PROJECT_DIR" diff HEAD -- "$dep_file" 2>/dev/null | grep -E '^\+.*"' | grep -E '"(dependencies|devDependencies|peerDependencies)"' -A 100 | grep -E '^\+\s+' || true)"
+            if [[ -n "$deps_added" ]]; then
+                local dep_count
+                dep_count="$(echo "$deps_added" | grep -cE '"' || true)"
+                log_verbose "  ${YELLOW}⏱${NC} $dep_file: $dep_count new/upgraded dependency(ies)"
+                dep_found=$((dep_found + dep_count))
+                echo "$deps_added" | while IFS= read -r line; do
+                    local dep_name
+                    dep_name="$(echo "$line" | sed -nE 's/^\+\s+"([^"]+)":.*/\1/p' || true)"
+                    if [[ -n "$dep_name" ]]; then
+                        log_info "  New dependency: $dep_name in $dep_file — add ponytail: comment if intentional shortcut"
+                    fi
+                done
+            fi
+        elif echo "$dep_file" | grep -qE 'pom\.xml$'; then
+            local mvn_deps
+            mvn_deps="$(git -C "$PROJECT_DIR" diff HEAD -- "$dep_file" 2>/dev/null | grep -E '^\+.*<dependency>' -A 3 || true)"
+            if [[ -n "$mvn_deps" ]]; then
+                local mvn_count
+                mvn_count="$(echo "$mvn_deps" | grep -c '<dependency>' || true)"
+                log_verbose "  ${YELLOW}⏱${NC} $dep_file: $mvn_count new dependency(ies)"
+                dep_found=$((dep_found + mvn_count))
+            fi
+        elif echo "$dep_file" | grep -qE 'build\.gradle$'; then
+            local gradle_deps
+            gradle_deps="$(git -C "$PROJECT_DIR" diff HEAD -- "$dep_file" 2>/dev/null | grep -E '^\+.*(implementation|api|compileOnly|runtimeOnly)\s' || true)"
+            if [[ -n "$gradle_deps" ]]; then
+                local gradle_count
+                gradle_count="$(echo "$gradle_deps" | wc -l | tr -d ' ')"
+                log_verbose "  ${YELLOW}⏱${NC} $dep_file: $gradle_count new dependency(ies)"
+                dep_found=$((dep_found + gradle_count))
+            fi
+        elif echo "$dep_file" | grep -qE '(Cargo\.toml|go\.mod|requirements\.txt|Gemfile)$'; then
+            local raw_deps
+            raw_deps="$(git -C "$PROJECT_DIR" diff HEAD -- "$dep_file" 2>/dev/null | grep -E '^\+' | grep -vE '^\+\+\+' || true)"
+            local raw_count
+            raw_count="$(echo "$raw_deps" | wc -l | tr -d ' ')"
+            if [[ "$raw_count" -gt 0 ]]; then
+                log_verbose "  ${YELLOW}⏱${NC} $dep_file: $raw_count line(s) added"
+                dep_found=$((dep_found + raw_count))
+            fi
+        else
+            local lock_deps
+            lock_deps="$(git -C "$PROJECT_DIR" diff HEAD -- "$dep_file" 2>/dev/null | grep -cE '^\+' || true)"
+            if [[ "$lock_deps" -gt 5 ]]; then
+                log_info "  $dep_file: $lock_deps lines changed (lockfile sync)"
+            fi
+        fi
+    done <<< "$dep_files"
+
+    if [[ "$dep_found" -gt 0 ]]; then
+        log_info "Total new dependency lines: $dep_found — consider justifying each with ponytail: comment"
+    else
+        log_pass "No new dependencies detected in changed manifest files."
+    fi
+
+    echo "$dep_found"
+}
+
 # ── Map severity from scan output ───────────────────────────────────────────
 # The scan-ponytail-debt.sh uses marker types. We map:
 #   ponytail: comment content may contain severity keywords
@@ -354,7 +446,14 @@ run_debt_scan() {
             fi
         done <<< "$staged_files"
 
-        if [[ "$debt_found" == false ]] && [[ "$MISSING_PONYTAIL_COUNT" -eq 0 ]]; then
+        # Check for new/upgraded dependencies
+        local dep_count
+        dep_count="$(check_new_dependencies "$staged_files")"
+        if [[ "$dep_count" -gt 0 ]]; then
+            log_info "Dependency changes detected: $dep_count — review for necessity per frugality ladder"
+        fi
+
+        if [[ "$debt_found" == false ]] && [[ "$MISSING_PONYTAIL_COUNT" -eq 0 ]] && [[ "$dep_count" -eq 0 ]]; then
             log_pass "No ponytail violations in staged changes."
         fi
 
@@ -406,6 +505,15 @@ run_debt_scan() {
                 MISSING_PONYTAIL_COUNT=$((MISSING_PONYTAIL_COUNT + missing))
             fi
         done <<< "$scan_files"
+
+        # Check for new/upgraded dependencies in working tree
+        local all_files
+        all_files="$(find "$PROJECT_DIR" -maxdepth 3 -type f \( -name 'package.json' -o -name 'pom.xml' -o -name 'build.gradle' -o -name 'Cargo.toml' -o -name 'go.mod' -o -name 'requirements.txt' -o -name 'Gemfile' \) -not -path '*/node_modules/*' -not -path '*/.git/*' 2>/dev/null | sed "s|$PROJECT_DIR/||")"
+        local dep_count
+        dep_count="$(check_new_dependencies "$all_files")"
+        if [[ "$dep_count" -gt 0 ]]; then
+            log_info "Dependency changes detected: $dep_count"
+        fi
 
         if [[ "$DEBT_COUNT" -eq 0 ]] && [[ "$MISSING_PONYTAIL_COUNT" -eq 0 ]]; then
             log_pass "No ponytail violations in working tree."
