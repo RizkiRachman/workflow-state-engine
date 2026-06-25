@@ -2,6 +2,7 @@
 
 # Part D — Scoring & Governance
 
+> Source of truth: rules/rules.json §scoring
 > See [doc/workflow/README.md](../workflow/README.md) for index.
 
 This part defines how every delegation is scored across 3 tiers, what validation gates can block transitions, and the governance rules that constrain all agent behavior.
@@ -38,6 +39,8 @@ Tier 3 — Combined Verdict
 **SIMPLICITY_001 rule**: Detects unnecessary abstractions, unused deps, and over-engineered patterns. An `over_engineering_deduction: 15` applies when YAGNI violations are found. This rule is checked both at scoring time (Tier 1) and during code review (Ponytail Over-Engineering Check).
 
 See `rules/rules.json` §scoring for threshold values and rule configuration.
+
+**Timeout enforcement**: The `scoring.timeout_ms` field in the contract envelope is enforced at runtime. If `metrics.elapsed_ms` exceeds `scoring.timeout_ms` during any phase, the system triggers a BLOCKED transition with issue `scoring_timeout`. Enforced by `scripts/validate-contract.sh` (check_timeout_enforcement) and `scripts/contract-enforcer.sh` (runtime enforcement).
 
 ## D2. Validation Gates (block_on)
 
