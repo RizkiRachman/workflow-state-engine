@@ -69,6 +69,7 @@ session/                     ← Live state + historical archive
 | **State transition** | Update `session/{branch}/contract.json` → snapshot via `scripts/snapshot-contract.sh` |
 | **Session end** (COMPLETE/BLOCKED) | Final snapshot → append summary to `session/state.md` → update `session/index.md` |
 | **Branch switch** | Snapshot current branch first → checkout new branch → load `session/NEW/{branch}/` if exists, else init fresh |
+| **Post-merge** | Run `update all states`: GitNexus re-index → Graphify re-index → snapshot → save session |
 
 The `session/state.md` is an append-only chronological log — every state transition creates a new entry with timestamp, phase, score, and summary. This provides a durable audit trail for every session.
 

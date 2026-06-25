@@ -325,6 +325,26 @@ graphify --update 2>/dev/null || true
 
 **One-shot alias**: `save session` = all 6 steps above. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes.
 
+### Update All States (Post-Merge / Branch Switch)
+
+After merging PRs or switching branches, synchronize all state systems:
+
+```bash
+# 1. Re-index GitNexus code intelligence
+bash scripts/gitnexus-analyze.sh
+
+# 2. Re-index Graphify knowledge graph
+graphify --update 2>/dev/null || true
+
+# 3. Snapshot contract state (session/{branch}/ → archive)
+bash scripts/snapshot-contract.sh
+
+# 4. Save conversation context (survives OpenCode restart)
+lean-ctx ctx_session save
+```
+
+**One-shot alias**: `update all states` = all 4 steps. The post-merge git hook auto-runs steps 1, 3, and the session index sync — manually run step 2 (graphify) if semantic data changed.
+
 ### Session Lifecycle Protocol
 
 Every orchestration session persists contract state to the `session/` directory for cross-session traceability and safe resumption.
