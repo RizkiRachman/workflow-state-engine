@@ -305,21 +305,34 @@
   },
   "enforcement": {
     "version": "0.8.0",
-    "desc": "Runtime contract validation and agent→state MCP enforcement",
+    "desc": "Runtime contract validation and agent\u2192state MCP enforcement",
     "runtime_validation": {
       "enabled": true,
       "script": "scripts/contract-enforcer.sh",
-      "modes": ["validate", "enforce", "mcp"],
+      "modes": [
+        "validate",
+        "enforce",
+        "mcp"
+      ],
       "hardening_levels": {
-        "soft": {"threshold": 50, "timeout_enforcement": "warn"},
-        "medium": {"threshold": 70, "timeout_enforcement": "block"},
-        "hard": {"threshold": 85, "timeout_enforcement": "block"}
+        "soft": {
+          "threshold": 50,
+          "timeout_enforcement": "warn"
+        },
+        "medium": {
+          "threshold": 70,
+          "timeout_enforcement": "block"
+        },
+        "hard": {
+          "threshold": 85,
+          "timeout_enforcement": "block"
+        }
       },
       "default_hardening": "medium"
     },
     "agent_state_mcp": {
       "enabled": true,
-      "desc": "MCP-level agent→state mapping enforcement",
+      "desc": "MCP-level agent\u2192state mapping enforcement",
       "state_agent_map": {
         "INIT": "tech-lead",
         "PLAN": "system-analyst",
@@ -349,10 +362,22 @@
       "enabled": true,
       "script": "scripts/hook-enforcer.sh",
       "hooks": {
-        "pre-commit": {"required": true, "script": "scripts/pre-commit-ponytail.sh"},
-        "post-commit": {"required": false, "script": "scripts/post-commit-runner.sh"},
-        "post-merge": {"required": true, "script": ".githooks/post-merge"},
-        "pre-push": {"required": false, "script": "scripts/pre-push-validation.sh"}
+        "pre-commit": {
+          "required": true,
+          "script": "scripts/pre-commit-ponytail.sh"
+        },
+        "post-commit": {
+          "required": false,
+          "script": "scripts/post-commit-runner.sh"
+        },
+        "post-merge": {
+          "required": true,
+          "script": ".githooks/post-merge"
+        },
+        "pre-push": {
+          "required": false,
+          "script": "scripts/pre-push-validation.sh"
+        }
       },
       "repair_script": "scripts/hook-enforcer.sh --repair",
       "skip_override": "--skip-hooks (emergency only)"
@@ -373,13 +398,38 @@
       "enabled": true,
       "script": "scripts/mcp-retry.sh",
       "backoff_modes": {
-        "exponential": {"base_ms": 1000, "max_ms": 60000, "jitter": true},
-        "linear": {"step_ms": 5000, "max_ms": 60000},
-        "fibonacci": {"sequence": [1,1,2,3,5,8,13,21,34], "unit_ms": 1000}
+        "exponential": {
+          "base_ms": 1000,
+          "max_ms": 60000,
+          "jitter": true
+        },
+        "linear": {
+          "step_ms": 5000,
+          "max_ms": 60000
+        },
+        "fibonacci": {
+          "sequence": [
+            1,
+            1,
+            2,
+            3,
+            5,
+            8,
+            13,
+            21,
+            34
+          ],
+          "unit_ms": 1000
+        }
       },
       "default_mode": "exponential",
       "max_attempts": 5,
-      "retry_on_errors": ["timeout", "rate_limit", "connection_refused", "api_error"]
+      "retry_on_errors": [
+        "timeout",
+        "rate_limit",
+        "connection_refused",
+        "api_error"
+      ]
     },
     "circuit_breaker": {
       "enabled": true,
@@ -387,15 +437,28 @@
       "success_threshold": 3,
       "open_timeout_ms": 60000,
       "half_open_requests": 1,
-      "monitored_services": ["graphify-mcp", "gitnexus-mcp", "lean-ctx"]
+      "monitored_services": [
+        "graphify-mcp",
+        "gitnexus-mcp",
+        "lean-ctx"
+      ]
     },
     "health_endpoint": {
       "enabled": true,
       "script": "scripts/mcp-health.sh",
       "services": {
-        "graphify": {"url": "graphify-out/graph.json", "check": "file_exists"},
-        "gitnexus": {"cmd": "gitnexus context", "timeout_ms": 5000},
-        "sumopod": {"url": "https://ai.sumopod.com/v1/models", "timeout_ms": 10000}
+        "graphify": {
+          "url": "graphify-out/graph.json",
+          "check": "file_exists"
+        },
+        "gitnexus": {
+          "cmd": "gitnexus context",
+          "timeout_ms": 5000
+        },
+        "sumopod": {
+          "url": "https://ai.sumopod.com/v1/models",
+          "timeout_ms": 10000
+        }
       },
       "interval_ms": 300000,
       "on_failure": "log_and_proceed"
@@ -407,18 +470,36 @@
     "trend_analysis": {
       "enabled": true,
       "script": "scripts/trend-analyzer.sh",
-      "metrics_tracked": ["score", "elapsed_ms", "phases_completed", "retry_count"],
+      "metrics_tracked": [
+        "score",
+        "elapsed_ms",
+        "phases_completed",
+        "retry_count"
+      ],
       "lookback_sessions": 10,
       "regression_threshold": 15,
       "regression_window_s": 3600,
-      "output_modes": ["summary", "detailed", "sparkline"]
+      "output_modes": [
+        "summary",
+        "detailed",
+        "sparkline"
+      ]
     },
     "regression_tracking": {
       "enabled": true,
       "detection_methods": {
-        "score_drop": {"threshold": 15, "lookback": 3},
-        "elapsed_spike": {"threshold_multiplier": 2.0, "lookback": 5},
-        "failure_rate": {"threshold": 0.3, "lookback": 10}
+        "score_drop": {
+          "threshold": 15,
+          "lookback": 3
+        },
+        "elapsed_spike": {
+          "threshold_multiplier": 2.0,
+          "lookback": 5
+        },
+        "failure_rate": {
+          "threshold": 0.3,
+          "lookback": 10
+        }
       },
       "on_regression": "alert_and_recommend",
       "store_in": "session/state.md"
@@ -427,12 +508,29 @@
       "enabled": true,
       "script": "scripts/metrics-aggregator.sh",
       "quality_dimensions": {
-        "score_stability": {"target": 80, "tolerance": 10},
-        "completion_rate": {"target": 0.9, "tolerance": 0.1},
-        "block_rate": {"target": 0.1, "tolerance": 0.05},
-        "avg_duration": {"target_ms": 60000, "tolerance_ms": 30000}
+        "score_stability": {
+          "target": 80,
+          "tolerance": 10
+        },
+        "completion_rate": {
+          "target": 0.9,
+          "tolerance": 0.1
+        },
+        "block_rate": {
+          "target": 0.1,
+          "tolerance": 0.05
+        },
+        "avg_duration": {
+          "target_ms": 60000,
+          "tolerance_ms": 30000
+        }
       },
-      "aggregation_modes": ["summary", "by_state", "timeline", "quality"],
+      "aggregation_modes": [
+        "summary",
+        "by_state",
+        "timeline",
+        "quality"
+      ],
       "store_in": "doc/analysis/quality-metrics.json"
     }
   },
@@ -443,13 +541,33 @@
       "enabled": true,
       "script": "scripts/pr-feedback-loop.sh",
       "triggers": {
-        "on_merge": {"analyze": ["score", "quality_metrics", "ponytail_debt"]},
-        "on_block": {"analyze": ["failures", "violations"]}
+        "on_merge": {
+          "analyze": [
+            "score",
+            "quality_metrics",
+            "ponytail_debt"
+          ]
+        },
+        "on_block": {
+          "analyze": [
+            "failures",
+            "violations"
+          ]
+        }
       },
       "auto_adjustments": {
-        "threshold_lower": {"condition": "avg_score < 65", "adjustment": "-5"},
-        "threshold_raise": {"condition": "avg_score > 90", "adjustment": "+5"},
-        "max_debt_adjust": {"condition": "block_rate > 0.15", "adjustment": "-2"}
+        "threshold_lower": {
+          "condition": "avg_score < 65",
+          "adjustment": "-5"
+        },
+        "threshold_raise": {
+          "condition": "avg_score > 90",
+          "adjustment": "+5"
+        },
+        "max_debt_adjust": {
+          "condition": "block_rate > 0.15",
+          "adjustment": "-2"
+        }
       },
       "store_in": "config/pr-feedback-history.json"
     },
@@ -457,7 +575,11 @@
       "enabled": true,
       "script": "scripts/post-mortem.sh",
       "trigger_state": "BLOCKED",
-      "modes": ["quick", "deep", "report"],
+      "modes": [
+        "quick",
+        "deep",
+        "report"
+      ],
       "fields": {
         "blocked_at": "ISO timestamp",
         "state": "BLOCKED",
@@ -477,10 +599,22 @@
       "enabled": true,
       "script": "scripts/scheduled-runner.sh",
       "default_schedules": {
-        "ponytail_check": {"interval": "hourly", "task": "ponytail"},
-        "health_check": {"interval": "5min", "task": "health"},
-        "trend_analysis": {"interval": "daily", "task": "trend"},
-        "metrics_agg": {"interval": "weekly", "task": "metrics"}
+        "ponytail_check": {
+          "interval": "hourly",
+          "task": "ponytail"
+        },
+        "health_check": {
+          "interval": "5min",
+          "task": "health"
+        },
+        "trend_analysis": {
+          "interval": "daily",
+          "task": "trend"
+        },
+        "metrics_agg": {
+          "interval": "weekly",
+          "task": "metrics"
+        }
       },
       "fail_mode": "continue_with_log",
       "pid_management": true
@@ -507,5 +641,29 @@
       "threshold": 30,
       "action": "Flag for review"
     }
+  },
+  "pr_governance": {
+    "version": "0.8.0",
+    "desc": "Governance violation: direct PR approve/merge triggers BLOCKED state",
+    "require_review": {
+      "required": true,
+      "min_reviewers": 1,
+      "disallow_self_approve": true,
+      "desc": "PR must be approved by at least 1 reviewer who is not the author"
+    },
+    "disallow_direct_merge": {
+      "required": true,
+      "desc": "No merging without review approval \u2014 blocks direct approve-and-merge"
+    },
+    "disallow_force_merge": {
+      "required": true,
+      "desc": "Never --force merge or bypass review checks"
+    },
+    "require_review_artifact": {
+      "required": true,
+      "desc": "Review findings must be documented before merge approval",
+      "store_in": "contract.outputs.agent_reports[]"
+    },
+    "violation_action": "BLOCKED"
   }
 }

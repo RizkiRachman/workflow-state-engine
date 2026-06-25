@@ -383,6 +383,7 @@ See [orchestration-template skill](.opencode/skills/orchestration-template/SKILL
 - **Never push to `main` or `master`** — always PR
 - **Never force push** (`--force`, `-f`)
 - **Never merge PRs** or auto-approve reviews
+- **Never directly approve PRs** — PRs require at least 1 reviewer who is not the author; no self-approve, no direct merge without review
 - **Never commit secrets, credentials, tokens, `.env` files**
 - **Never modify CI/CD, git config, or GitHub settings** without asking
 
