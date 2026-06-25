@@ -39,11 +39,11 @@ This part walks through each phase of the state machine end-to-end, documents th
   - Can this be one line?
   - Only then: minimum code that works
 - **Ponytail scan**: scripts/pre-commit-ponytail.sh scans the staged changes for debt markers (ponytail:, TODO, FIXME, HACK) and undocumented shortcuts
-- **Gate**: Debt items ≤ max_debt_items (default: 5). Critical debt → BLOCKED. High debt → FLAG.
+- **Gate**: Debt items ≤ max_debt_items (default: 10). Critical debt → BLOCKED. High debt → FLAG.
 - **Outputs**: state=PONYTAIL_CHECK, ponytail.debt_items[] in contract, outputs.debt_ledger[]
 - **Scoring threshold**: Debt items ≤ max_debt_items to advance. If exceeded, the plan must be simplified before execution.
 - **Writes back**: contract.ponytail.debt_items (array of debt entries found), contract.ponytail.intensity (current intensity level)
-- **Next transition**: PONYTAIL_CHECK → EXECUTE runs the original SDD gate (spec check)
+- **Next transition**: PONYTAIL_CHECK → EXECUTE (normal path). If SDD is triggered, bypasses PONYTAIL_CHECK directly: PLAN_SCORED → EXECUTE (see B1d).
 
 ### B1d. PLAN_SCORED → EXECUTE [Gate: SDD]
 

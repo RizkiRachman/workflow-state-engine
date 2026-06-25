@@ -8,7 +8,7 @@ This part covers operational procedures (post-flight protocol, session lifecycle
 
 ## E1. Post-Flight Protocol
 
-This 8-step protocol runs before every commit. It verifies impact, persists knowledge, archives session state, and re-indexes code intelligence. Execute all 8 steps unless exceptions apply.
+This 9-step protocol runs before every commit. It verifies impact, persists knowledge, archives session state, and re-indexes code intelligence. Execute all 9 steps unless exceptions apply.
 
 | # | Step | Tool | Exceptions |
 |---|---|---|---|
@@ -19,6 +19,7 @@ This 8-step protocol runs before every commit. It verifies impact, persists know
 | 4 | Session archive | `bash scripts/snapshot-contract.sh --snapshot-only` | — |
 | 5 | Save conversation | `lean-ctx ctx_session save` | — |
 | 6 | Re-index GitNexus | `bash scripts/gitnexus-analyze.sh` | Docs-only skip |
+| 6b | Run metrics aggregation | `bash scripts/metrics-aggregator.sh` | Docs-only skip |
 | 7 | Re-index Graphify | `graphify --update 2>/dev/null || true` | Docs-only skip |
 
 ### Pre-Flight Protocol (Session Start)
@@ -35,7 +36,7 @@ Every agent runs this protocol at session start, before any work:
 | 6 | Check graph stats | graphify_graph_stats |
 | 7 | Load relevant skills | /skill matching domain |
 
-**One-shot alias**: `save session` = all 8 post-flight steps. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes.
+**One-shot alias**: `save session` = all 9 post-flight steps. Always run the full protocol — partial saves lose audit trail, break resumption, or leave stale indexes.
 
 ## E2. Session Lifecycle
 
@@ -232,6 +233,95 @@ bash scripts/install-hooks.sh --uninstall                # Remove hooks
 **`.githooks/pre-commit`** — Blocks commits on feature branches when the orchestration contract is in BLOCKED state (score < 50). Only activates when `session/{branch}/contract.json` exists.
 
 **`.githooks/post-commit`** — Auto re-indexes GitNexus after every commit by running `scripts/gitnexus-analyze.sh`.
+
+### Analytics & Trend Scripts
+
+**`scripts/trend-analyzer.sh`** — Score trend analysis over time. Reads session/{branch}/contract.json and session/state.md to detect regression patterns, score trends (improving/degrading/oscillating), and produce sparkline visualizations. Supports --days N, --all-branches, --json output modes.
+
+```bash
+bash scripts/trend-analyzer.sh                                  # Last 7 days by default
+bash scripts/trend-analyzer.sh --days 30 --all-branches         # 30 days, all branches
+bash scripts/trend-analyzer.sh --json                           # Machine-readable output
+```
+
+**`scripts/metrics-aggregator.sh`** — Cross-session quality metrics aggregation. Produces summary statistics (total sessions, avg score, pass rate), by-state breakdowns, timeline views, and quality metrics (avg issues per phase, retry rate, avg duration). Reads from session/state.md and session/index.md.
+
+```bash
+bash scripts/metrics-aggregator.sh                              # Default summary mode
+bash scripts/metrics-aggregator.sh --mode by-state              # Breakdown by state
+bash scripts/metrics-aggregator.sh --mode timeline              # Timeline view
+bash scripts/metrics-aggregator.sh --mode quality               # Quality metrics
+```
+
+### MCP Reliability Scripts
+
+**`scripts/mcp-retry.sh`** — Auto-retry with configurable backoff strategies for MCP failures. Supports exponential, linear, and fibonacci backoff modes with configurable base delay (default 1s), max delay (default 30s), and max retries (default 3). Includes jitter for thundering herd prevention and circuit breaker state tracking.
+
+```bash
+bash scripts/mcp-retry.sh --cmd "graphify query 'test'"         # Retry a command
+bash scripts/mcp-retry.sh --cmd "curl $URL" --backoff linear    # Linear backoff
+bash scripts/mcp-retry.sh --cmd "mcp-health.sh" --max-retries 5 # Increase retry limit
+```
+
+**`scripts/mcp-health.sh`** — MCP server health checks. Tests connectivity to graphify-mcp, gitnexus, sumopod API, and other MCP endpoints. Supports single-check and continuous monitoring modes. Returns pass/fail with response time and error details. Results are persisted to `session/health-record.md` for historical trend analysis.
+
+```bash
+bash scripts/mcp-health.sh                                      # Single check all endpoints
+bash scripts/mcp-health.sh --continuous                         # Continuous monitoring
+bash scripts/mcp-health.sh --endpoint sumopod                   # Check specific endpoint
+```
+
+### Feedback & Learning Scripts
+
+**`scripts/pr-feedback-loop.sh`** — Automated PR feedback analysis. Analyzes PR review scores, block rate, and retry frequency to auto-adjust configuration thresholds. Tracks improvement over time and recommends threshold changes when patterns emerge.
+
+```bash
+bash scripts/pr-feedback-loop.sh                                # Analyze recent PRs
+bash scripts/pr-feedback-loop.sh --adjust                       # Auto-adjust thresholds
+bash scripts/pr-feedback-loop.sh --dry-run                      # Preview adjustments
+```
+
+**`scripts/post-mortem.sh`** — BLOCKED state post-mortem analysis. Analyzes the escalation trace from BLOCKED events and produces structured findings: root cause, failure pattern, lessons learned, and recommendations. Supports quick, deep, and report output modes.
+
+```bash
+bash scripts/post-mortem.sh --contract session/{branch}/contract.json  # Analyze a BLOCKED contract
+bash scripts/post-mortem.sh --branch feature/my-branch --mode deep     # Deep analysis
+bash scripts/post-mortem.sh --mode report                              # Generate full report
+```
+
+### Enforcement & Monitoring Scripts
+
+**`scripts/contract-enforcer.sh`** — Runtime contract validation enforcement. Monitors contract state in real-time, validates transitions against rules.json, enforces agent→state MCP mappings, and can trigger BLOCKED transitions on violation. Supports validate (check only), enforce (auto-block), and mcp (agent-level enforcement) modes.
+
+```bash
+bash scripts/contract-enforcer.sh --mode validate              # Check contract state
+bash scripts/contract-enforcer.sh --mode enforce               # Enforce with auto-block
+bash scripts/contract-enforcer.sh --mode mcp --agent developer # Agent-level enforcement
+```
+
+**`scripts/ponytail-daemon.sh`** — Continuous ponytail debt monitoring. Runs as a lightweight daemon that periodically scans the codebase for new ponytail debt markers, compares against the last scan, and alerts on debt growth. Supports --interval, --alert-threshold, and --json output.
+
+```bash
+bash scripts/ponytail-daemon.sh                                # Start with default interval
+bash scripts/ponytail-daemon.sh --interval 300                 # Every 5 minutes
+bash scripts/ponytail-daemon.sh --alert-threshold 5            # Alert at 5+ new debt items
+```
+
+**`scripts/hook-enforcer.sh`** — Git hook installation and enforcement. Ensures all required git hooks (pre-commit, post-commit) are installed and enforced. Can detect missing hooks, install them automatically, and report compliance.
+
+```bash
+bash scripts/hook-enforcer.sh                                  # Check hook status
+bash scripts/hook-enforcer.sh --install                        # Install missing hooks
+bash scripts/hook-enforcer.sh --enforce                        # Force hook requirements
+```
+
+**`scripts/scheduled-runner.sh`** — Cron-style scheduled task runner for workflow operations. Supports scheduled ponytail scans, health checks, trend analysis, and metrics aggregation. Schedule config from rules.json §scheduled. Supports --list, --run, --daemon modes.
+
+```bash
+bash scripts/scheduled-runner.sh --list                        # List scheduled tasks
+bash scripts/scheduled-runner.sh --run ponytail                # Run ponytail scan
+bash scripts/scheduled-runner.sh --daemon                      # Start scheduler daemon
+```
 
 ### Ponytail Debt Convention
 
