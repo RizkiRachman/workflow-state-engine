@@ -303,6 +303,189 @@
       "repair_script": "scripts/self-repair.sh --dry-run"
     }
   },
+  "enforcement": {
+    "version": "0.8.0",
+    "desc": "Runtime contract validation and agent→state MCP enforcement",
+    "runtime_validation": {
+      "enabled": true,
+      "script": "scripts/contract-enforcer.sh",
+      "modes": ["validate", "enforce", "mcp"],
+      "hardening_levels": {
+        "soft": {"threshold": 50, "timeout_enforcement": "warn"},
+        "medium": {"threshold": 70, "timeout_enforcement": "block"},
+        "hard": {"threshold": 85, "timeout_enforcement": "block"}
+      },
+      "default_hardening": "medium"
+    },
+    "agent_state_mcp": {
+      "enabled": true,
+      "desc": "MCP-level agent→state mapping enforcement",
+      "state_agent_map": {
+        "INIT": "tech-lead",
+        "PLAN": "system-analyst",
+        "PLAN_SCORED": "tech-lead",
+        "PONYTAIL_CHECK": "tech-lead",
+        "EXECUTE": "developer",
+        "EXECUTE_SCORED": "tech-lead",
+        "REVIEW": "quality-analyst",
+        "REVIEW_SCORED": "tech-lead",
+        "COMPLETE": "tech-lead",
+        "BLOCKED": "tech-lead"
+      },
+      "violation_action": "BLOCKED"
+    },
+    "runtime_timeout": {
+      "enabled": true,
+      "script": "scripts/contract-enforcer.sh --mode enforce --timeout",
+      "checks": {
+        "scoring_timeout_ms": 30000,
+        "delegation_timeout_ms": 120000,
+        "mcp_health_timeout_ms": 10000,
+        "hook_execution_timeout_ms": 60000
+      },
+      "enforcement": "block_on_violation"
+    },
+    "hook_enforcement": {
+      "enabled": true,
+      "script": "scripts/hook-enforcer.sh",
+      "hooks": {
+        "pre-commit": {"required": true, "script": "scripts/pre-commit-ponytail.sh"},
+        "post-commit": {"required": false, "script": "scripts/post-commit-runner.sh"},
+        "post-merge": {"required": true, "script": ".githooks/post-merge"},
+        "pre-push": {"required": false, "script": "scripts/pre-push-validation.sh"}
+      },
+      "repair_script": "scripts/hook-enforcer.sh --repair",
+      "skip_override": "--skip-hooks (emergency only)"
+    },
+    "ponytail_continuous": {
+      "enabled": true,
+      "script": "scripts/ponytail-daemon.sh",
+      "interval_s": 60,
+      "max_debt": 10,
+      "alert_mode": "warn",
+      "block_on_critical": true
+    }
+  },
+  "resilience": {
+    "version": "0.8.0",
+    "desc": "MCP retry backoff and circuit breaker for agent reliability",
+    "mcp_retry": {
+      "enabled": true,
+      "script": "scripts/mcp-retry.sh",
+      "backoff_modes": {
+        "exponential": {"base_ms": 1000, "max_ms": 60000, "jitter": true},
+        "linear": {"step_ms": 5000, "max_ms": 60000},
+        "fibonacci": {"sequence": [1,1,2,3,5,8,13,21,34], "unit_ms": 1000}
+      },
+      "default_mode": "exponential",
+      "max_attempts": 5,
+      "retry_on_errors": ["timeout", "rate_limit", "connection_refused", "api_error"]
+    },
+    "circuit_breaker": {
+      "enabled": true,
+      "failure_threshold": 5,
+      "success_threshold": 3,
+      "open_timeout_ms": 60000,
+      "half_open_requests": 1,
+      "monitored_services": ["graphify-mcp", "gitnexus-mcp", "lean-ctx"]
+    },
+    "health_endpoint": {
+      "enabled": true,
+      "script": "scripts/mcp-health.sh",
+      "services": {
+        "graphify": {"url": "graphify-out/graph.json", "check": "file_exists"},
+        "gitnexus": {"cmd": "gitnexus context", "timeout_ms": 5000},
+        "sumopod": {"url": "https://ai.sumopod.com/v1/models", "timeout_ms": 10000}
+      },
+      "interval_ms": 300000,
+      "on_failure": "log_and_proceed"
+    }
+  },
+  "metrics": {
+    "version": "0.8.0",
+    "desc": "Trend analysis and regression tracking across sessions",
+    "trend_analysis": {
+      "enabled": true,
+      "script": "scripts/trend-analyzer.sh",
+      "metrics_tracked": ["score", "elapsed_ms", "phases_completed", "retry_count"],
+      "lookback_sessions": 10,
+      "regression_threshold": 15,
+      "regression_window_s": 3600,
+      "output_modes": ["summary", "detailed", "sparkline"]
+    },
+    "regression_tracking": {
+      "enabled": true,
+      "detection_methods": {
+        "score_drop": {"threshold": 15, "lookback": 3},
+        "elapsed_spike": {"threshold_multiplier": 2.0, "lookback": 5},
+        "failure_rate": {"threshold": 0.3, "lookback": 10}
+      },
+      "on_regression": "alert_and_recommend",
+      "store_in": "session/state.md"
+    },
+    "cross_session_quality": {
+      "enabled": true,
+      "script": "scripts/metrics-aggregator.sh",
+      "quality_dimensions": {
+        "score_stability": {"target": 80, "tolerance": 10},
+        "completion_rate": {"target": 0.9, "tolerance": 0.1},
+        "block_rate": {"target": 0.1, "tolerance": 0.05},
+        "avg_duration": {"target_ms": 60000, "tolerance_ms": 30000}
+      },
+      "aggregation_modes": ["summary", "by_state", "timeline", "quality"],
+      "store_in": "doc/analysis/quality-metrics.json"
+    }
+  },
+  "feedback": {
+    "version": "0.8.0",
+    "desc": "PR feedback loops and post-mortem analysis",
+    "pr_feedback_loop": {
+      "enabled": true,
+      "script": "scripts/pr-feedback-loop.sh",
+      "triggers": {
+        "on_merge": {"analyze": ["score", "quality_metrics", "ponytail_debt"]},
+        "on_block": {"analyze": ["failures", "violations"]}
+      },
+      "auto_adjustments": {
+        "threshold_lower": {"condition": "avg_score < 65", "adjustment": "-5"},
+        "threshold_raise": {"condition": "avg_score > 90", "adjustment": "+5"},
+        "max_debt_adjust": {"condition": "block_rate > 0.15", "adjustment": "-2"}
+      },
+      "store_in": "config/pr-feedback-history.json"
+    },
+    "post_mortem": {
+      "enabled": true,
+      "script": "scripts/post-mortem.sh",
+      "trigger_state": "BLOCKED",
+      "modes": ["quick", "deep", "report"],
+      "fields": {
+        "blocked_at": "ISO timestamp",
+        "state": "BLOCKED",
+        "score": "int",
+        "violations": "list of rule violations",
+        "root_cause": "analysis",
+        "resolution": "action taken",
+        "lessons": "list of lessons learned"
+      },
+      "store_in": "session/post-mortems/"
+    }
+  },
+  "scheduled": {
+    "version": "0.8.0",
+    "desc": "Scheduled/recurring run mechanisms",
+    "scheduled_runs": {
+      "enabled": true,
+      "script": "scripts/scheduled-runner.sh",
+      "default_schedules": {
+        "ponytail_check": {"interval": "hourly", "task": "ponytail"},
+        "health_check": {"interval": "5min", "task": "health"},
+        "trend_analysis": {"interval": "daily", "task": "trend"},
+        "metrics_agg": {"interval": "weekly", "task": "metrics"}
+      },
+      "fail_mode": "continue_with_log",
+      "pid_management": true
+    }
+  },
   "decisions": {
     "confidence_journal": {
       "enabled": true,
