@@ -16,7 +16,8 @@
     "opencode-websearch-cited",
     "opencode-worktree",
     "./.opencode/plugins/auto-wrap.ts",
-    ".opencode/plugins/ponytail.mjs"
+    ".opencode/plugins/ponytail.mjs",
+    ".opencode/plugins/graphify.js"
   ],
   "compaction": {
     "auto": true,
@@ -397,6 +398,20 @@
         ],
         "environment": {
           "FIRECRAWL_API_KEY": "{FIRECRAWL_API_KEY}"
+        }
+      },
+      "graphify": {
+        "type": "local",
+        "command": [
+          "graphify-mcp",
+          "--graph",
+          "graphify-out/graph.json"
+        ],
+        "enabled": true,
+        "environment": {
+          "OPENAI_API_KEY": "{OPENAI_API_KEY}",
+          "OPENAI_BASE_URL": "https://ai.sumopod.com/v1",
+          "OPENAI_MODEL": "deepseek-v4-flash"
         }
       }
     }
