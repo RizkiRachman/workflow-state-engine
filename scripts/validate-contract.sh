@@ -518,7 +518,62 @@ check_scope_consistency() {
     fi
 }
 
-# --- Step 7: Transition validation (if --prev-state) -----------------------
+# --- Step 6c: Timeout enforcement checks -----------------------------------
+check_timeout_enforcement() {
+    local file="$1"
+    local rules_file="$2"
+    if [[ ! -f "$rules_file" ]]; then
+        log_verbose "No rules file, skipping timeout enforcement"
+        ret 0
+    local scoring_timeout
+    scoring_timeout=$(jq -r '.scoring.timeout_ms // 30000' "$rules_file" 2>/dev/null)
+    local delegation_timeout
+    delegation_timeout=$(jq -r '.agent_watchdog.delegation_timeout_ms // 120000' "$rules_file" 2>/dev/null)
+    local elapsed
+    elapsed=$(jq -r '.metrics.elapsed_ms // 0' "$file")
+    local issues=0
+    # Check 1: elapsed_ms exceeds scoring.timeout_ms
+    if [[ "$elapsed" -gt 0 && "$elapsed" -gt "$scoring_timeout" ]]; then
+        log_fail "metrics.elapsed_ms ($elapsed ms) exceeds scoring.timeout_ms ($scoring_timeout ms)"
+        issues=$((issues + 1))
+    # Check 2: delegation_timeout_ms documented but not enforced in code
+    if [[ "$delegation_timeout" -gt 0 ]]; then
+        log_verbose "delegation_timeout_ms configured: $delegation_timeout ms"
+    if [[ $issues -eq 0 ]]; then
+        log_pass "Timeout enforcement checks passed"
+        ret 0
+        log_fail "Timeout enforcement: $issues issue(s) detected"
+        ret 1
+# --- Step 6d: Parallel deadlock detection config check ---------------------
+check_deadlock_config() {
+    local file="$1"
+    local rules_file="$2"
+    if [[ ! -f "$rules_file" ]]; then
+        log_verbose "No rules file, skipping deadlock config check"
+        ret 0
+    local deadlock_enabled
+    deadlock_enabled=$(jq -r '.agent_watchdog.parallel_deadlock_detection.enabled // false' "$rules_file")
+    local parallel_eligible
+    parallel_eligible=$(jq -r '.scope.parallel_eligible // false' "$file")
+    local issues=0
+    if [[ "$deadlock_enabled" == "true" && "$parallel_eligible" == "false" ]]; then
+        log_fail "parallel_deadlock_detection enabled in rules but scope.parallel_eligible=false in contract"
+        issues=$((issues + 1))
+    if [[ "$deadlock_enabled" == "true" ]]; then
+        local max_cycles script
+        max_cycles=$(jq -r '.agent_watchdog.parallel_deadlock_detection.max_wait_cycles // 0' "$rules_file")
+        script=$(jq -r '.agent_watchdog.parallel_deadlock_detection.resolution // ""' "$rules_file")
+        if [[ "$max_cycles" -eq 0 ]]; then
+            log_fail "parallel_deadlock_detection enabled but max_wait_cycles=0"
+            issues=$((issues + 1))
+        if [[ -z "$script" ]]; then
+            log_fail "parallel_deadlock_detection enabled but no resolution strategy defined"
+            issues=$((issues + 1))
+    if [[ $issues -eq 0 ]]; then
+        log_pass "Parallel deadlock detection config valid"
+        ret 0
+        log_fail "Deadlock detection config: $issues issue(s) detected"
+        ret 1
 TRANSITIONS_FILE=$(python3 -c "
 import json, sys
 with open('$RULES_FILE') as f:
@@ -778,7 +833,7 @@ main() {
         fi
     fi
 
-    # Steps 5-6b: Content quality, access control, scope (depth >= 2)
+    # Steps 5-6d: Content quality, access control, scope, enforcement (depth >= 2)
     if [[ $MAX_DEPTH -ge 2 ]]; then
         # Step 5: Content quality checks
         if run_check check_content_quality "$CONTRACT_FILE"; then
@@ -798,6 +853,22 @@ main() {
 
         # Step 6b: Scope consistency
         if run_check check_scope_consistency "$CONTRACT_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 15))
+        fi
+
+        # Step 6c: Timeout enforcement
+        if run_check check_timeout_enforcement "$CONTRACT_FILE" "$RULES_FILE"; then
+            PASS_COUNT=$((PASS_COUNT + 1))
+        else
+            FAIL_COUNT=$((FAIL_COUNT + 1))
+            DEDUCTION=$((DEDUCTION + 15))
+        fi
+
+        # Step 6d: Parallel deadlock detection config
+        if run_check check_deadlock_config "$CONTRACT_FILE" "$RULES_FILE"; then
             PASS_COUNT=$((PASS_COUNT + 1))
         else
             FAIL_COUNT=$((FAIL_COUNT + 1))

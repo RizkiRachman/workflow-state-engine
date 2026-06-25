@@ -2,6 +2,8 @@
   "$schema": "../contract/contract.schema.json",
   "version": "0.8.0",
   "state_machine_version": "0.8.0",
+  "service_type": "Core",
+  "service_type_rules": {},
   "state": "INIT",
   "session": {
     "task_id": "",

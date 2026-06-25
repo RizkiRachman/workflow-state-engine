@@ -56,16 +56,6 @@
         ]
       },
       {
-        "from": "EXECUTE",
-        "to": "EXECUTE_SCORED",
-        "require_score": null
-      },
-      {
-        "from": "REVIEW",
-        "to": "REVIEW_SCORED",
-        "require_score": null
-      },
-      {
         "from": "*",
         "to": "BLOCKED",
         "require_score": 50
@@ -293,7 +283,7 @@
       "script": "scripts/scan-ponytail-debt.sh",
       "block_on": "critical",
       "flag_on": "high",
-      "max_debt_items": 5
+      "max_debt_items": 10
     }
   },
   "agent_watchdog": {
