@@ -31,7 +31,7 @@ export type State = (typeof STATES)[number];
 export interface Transition {
   from: State;
   to: State;
-  gate?: "always" | "score_ge_70" | "score_lt_50_or_retry_ge_3" | "ponytail_pass";
+  gate?: "always" | "score_ge_70" | "score_lt_50_or_retry_ge_3" | "ponytail_pass" | "sdd_triggered";
   description: string;
 }
 
@@ -39,6 +39,7 @@ export const TRANSITIONS: Transition[] = [
   { from: "INIT",           to: "PLAN",           gate: "always",                     description: "Session created" },
   { from: "PLAN",           to: "PLAN_SCORED",    gate: "always",                     description: "Plan produced by system-analyst" },
   { from: "PLAN_SCORED",    to: "PONYTAIL_CHECK", gate: "score_ge_70",                description: "Plan scored ≥ 70 → ponytail gate" },
+  { from: "PLAN_SCORED",    to: "EXECUTE",        gate: "sdd_triggered",              description: "SDD gate bypasses ponytail check" },
   { from: "PONYTAIL_CHECK", to: "EXECUTE",        gate: "ponytail_pass",              description: "Ponytail debt ≤ max_debt_items" },
   { from: "EXECUTE",        to: "EXECUTE_SCORED", gate: "always",                     description: "Implementation done by developer" },
   { from: "EXECUTE_SCORED", to: "REVIEW",         gate: "score_ge_70",                description: "Implementation scored ≥ 70 → review" },
@@ -83,6 +84,7 @@ export interface OrchestrationContext {
   score: { combined: number };
   retry: { attempt: number };
   ponytail: { debt_items: unknown[] };
+  sdd_triggered?: boolean;
 }
 
 function checkScoreGate(score: number): boolean {
@@ -107,6 +109,7 @@ export function orchestrateTransition(ctx: OrchestrationContext): State {
   // Plan scoring gate
   if (currentState === "PLAN_SCORED") {
     if (checkEscalation(score.combined, retry.attempt)) return "BLOCKED";
+    if (ctx.sdd_triggered && checkScoreGate(score.combined)) return "EXECUTE";
     if (checkScoreGate(score.combined)) return "PONYTAIL_CHECK";
     return "BLOCKED";
   }

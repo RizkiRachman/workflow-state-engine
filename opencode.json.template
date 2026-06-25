@@ -399,6 +399,5 @@
           "FIRECRAWL_API_KEY": "{FIRECRAWL_API_KEY}"
         }
       }
-    },
+    }
   }
-}

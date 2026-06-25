@@ -28,6 +28,11 @@ if [[ -f "$CONTRACT_FILE" ]]; then
     fi
 fi
 
+# Run pre-flight enforcement (contract validation, blast radius, timeouts)
+if [[ -f "scripts/pre-post-flight.sh" && -f "$CONTRACT_FILE" ]]; then
+    bash scripts/pre-post-flight.sh pre-flight --file "$CONTRACT_FILE" --branch "$BRANCH" 2>/dev/null || true
+fi
+
 # Run ponytail pre-commit scan if available
 if [[ -f "scripts/pre-commit-ponytail.sh" ]]; then
     bash scripts/pre-commit-ponytail.sh --staged 2>/dev/null || true
