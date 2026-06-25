@@ -524,56 +524,62 @@ check_timeout_enforcement() {
     local rules_file="$2"
     if [[ ! -f "$rules_file" ]]; then
         log_verbose "No rules file, skipping timeout enforcement"
-        ret 0
-    local scoring_timeout
+        return 0
+    fi
+    local scoring_timeout delegation_timeout elapsed issues=0
     scoring_timeout=$(jq -r '.scoring.timeout_ms // 30000' "$rules_file" 2>/dev/null)
-    local delegation_timeout
     delegation_timeout=$(jq -r '.agent_watchdog.delegation_timeout_ms // 120000' "$rules_file" 2>/dev/null)
-    local elapsed
     elapsed=$(jq -r '.metrics.elapsed_ms // 0' "$file")
-    local issues=0
-    # Check 1: elapsed_ms exceeds scoring.timeout_ms
     if [[ "$elapsed" -gt 0 && "$elapsed" -gt "$scoring_timeout" ]]; then
         log_fail "metrics.elapsed_ms ($elapsed ms) exceeds scoring.timeout_ms ($scoring_timeout ms)"
         issues=$((issues + 1))
-    # Check 2: delegation_timeout_ms documented but not enforced in code
+    fi
     if [[ "$delegation_timeout" -gt 0 ]]; then
         log_verbose "delegation_timeout_ms configured: $delegation_timeout ms"
+    fi
     if [[ $issues -eq 0 ]]; then
         log_pass "Timeout enforcement checks passed"
-        ret 0
+        return 0
+    else
         log_fail "Timeout enforcement: $issues issue(s) detected"
-        ret 1
+        return 1
+    fi
+}
 # --- Step 6d: Parallel deadlock detection config check ---------------------
 check_deadlock_config() {
     local file="$1"
     local rules_file="$2"
     if [[ ! -f "$rules_file" ]]; then
         log_verbose "No rules file, skipping deadlock config check"
-        ret 0
-    local deadlock_enabled
+        return 0
+    fi
+    local deadlock_enabled parallel_eligible issues=0 max_cycles script
     deadlock_enabled=$(jq -r '.agent_watchdog.parallel_deadlock_detection.enabled // false' "$rules_file")
-    local parallel_eligible
     parallel_eligible=$(jq -r '.scope.parallel_eligible // false' "$file")
-    local issues=0
     if [[ "$deadlock_enabled" == "true" && "$parallel_eligible" == "false" ]]; then
         log_fail "parallel_deadlock_detection enabled in rules but scope.parallel_eligible=false in contract"
         issues=$((issues + 1))
+    fi
     if [[ "$deadlock_enabled" == "true" ]]; then
-        local max_cycles script
         max_cycles=$(jq -r '.agent_watchdog.parallel_deadlock_detection.max_wait_cycles // 0' "$rules_file")
         script=$(jq -r '.agent_watchdog.parallel_deadlock_detection.resolution // ""' "$rules_file")
         if [[ "$max_cycles" -eq 0 ]]; then
             log_fail "parallel_deadlock_detection enabled but max_wait_cycles=0"
             issues=$((issues + 1))
+        fi
         if [[ -z "$script" ]]; then
             log_fail "parallel_deadlock_detection enabled but no resolution strategy defined"
             issues=$((issues + 1))
+        fi
+    fi
     if [[ $issues -eq 0 ]]; then
         log_pass "Parallel deadlock detection config valid"
-        ret 0
+        return 0
+    else
         log_fail "Deadlock detection config: $issues issue(s) detected"
-        ret 1
+        return 1
+    fi
+}
 TRANSITIONS_FILE=$(python3 -c "
 import json, sys
 with open('$RULES_FILE') as f:

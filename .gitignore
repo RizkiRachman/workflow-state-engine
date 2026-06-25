@@ -77,6 +77,10 @@ out/
 .lean-ctx/
 graphify-out/
 
+# === Project-specific: one-time helpers ===
+.graphify_deepseek.py
+.graphify_run.sh
+
 # === Project-specific: workspace ===
 workspace/
 
