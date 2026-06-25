@@ -96,3 +96,6 @@ session/
 AGENTS.md
 CLAUDE.md
 .claude
+
+# === Project-specific: simulation artifacts (local-only) ===
+doc/simulations/
