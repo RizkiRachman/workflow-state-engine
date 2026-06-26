@@ -19,8 +19,8 @@ This 9-step protocol runs before every commit. It verifies impact, persists know
 | 4 | Session archive | `bash scripts/snapshot-contract.sh --snapshot-only` | — |
 | 5 | Save conversation | `lean-ctx ctx_session save` | — |
 | 6 | Re-index GitNexus | `bash scripts/gitnexus-analyze.sh` | Docs-only skip |
-| 6b | Run metrics aggregation | `bash scripts/metrics-aggregator.sh` | Docs-only skip |
-| 7 | Re-index Graphify | `graphify --update 2>/dev/null || true` | Docs-only skip |
+| 7 | Run metrics aggregation | `bash scripts/metrics-aggregator.sh` | Docs-only skip |
+| 8 | Re-index Graphify | `graphify --update 2>/dev/null || true` | Docs-only skip |
 
 ### Pre-Flight Protocol (Session Start)
 

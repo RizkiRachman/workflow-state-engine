@@ -220,11 +220,11 @@ Start at 100. Deduct for each violation:
 | Writing order correct | Verify port→service→mapper→adapter order in plan | -15 |
 | Required fields present | Check expected keys are non-null in output | -15 |
 
-If subtotal < 70: skip Tier 2, use subtotal as combined score, apply combined verdict thresholds below.
+Tier 1 always proceeds to Tier 2 (combined formula applies regardless of subtotal).
 
 **Tier 2 — LLM-as-Judge (subtask):**
 
-If Tier 1 subtotal ≥ 70, run a judge via `subtask()`:
+Run a judge via `subtask()`:
 
 ```
 Judge prompt:
@@ -240,7 +240,7 @@ Judge prompt:
 **Tier 3 — Combined Verdict:**
 
 ```
-combined = Tier 2 score (or Tier 1 subtotal if Tier 2 skipped)
+combined = (tier1_subtotal + tier2_judge.score) / 2  (rounded to nearest integer)
 
 combined ≥ 70          → verdict = PASS
 50 ≤ combined < 70     → verdict = RETRY (if attempt < max_attempts)
@@ -326,12 +326,13 @@ After each subagent delegation returns and scoring completes, persist state acro
 The orchestrator drives transitions based on the shared envelope's `state` field:
 
 ```
-INIT → PLAN → PLAN_SCORED → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
+INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED → REVIEW → REVIEW_SCORED → COMPLETE
 BLOCKED (any phase) → user intervention → retry with guidance
 ```
 
 **Transition Rules:**
-- `PLAN_SCORED → EXECUTE` — only if `score.combined ≥ score_threshold (70)`
+- `PLAN_SCORED → PONYTAIL_CHECK` — only if `score.combined ≥ score_threshold (70)`
+- `PONYTAIL_CHECK → EXECUTE` — only if ponytail debt items ≤ `max_debt_items` (pre-commit-ponytail.sh)
 - `EXECUTE_SCORED → REVIEW` — only if `score.combined ≥ score_threshold (70)`
 - Any phase → `BLOCKED` — if `score.combined < escalation_threshold (50)` OR `retry.attempt ≥ max_attempts (3)`
 

@@ -30,6 +30,8 @@ INIT → PLAN → PLAN_SCORED → PONYTAIL_CHECK → EXECUTE → EXECUTE_SCORED 
 
 Source of truth: `rules/rules.json` §state_machine.transitions.
 
+**SDD Gate Bypass**: When Spec-Driven Development (SDD) is triggered (task touches >3 files, crosses service boundaries, or takes >30 min), the `PLAN_SCORED → EXECUTE` transition can bypass `PONYTAIL_CHECK` if `sdd_triggered` flag is set in the envelope. This bypass is only valid when a full GWT-format spec has been produced and approved via the DDD (Doubt-Driven Development) cross-examination process. The bypass is enforced by `state-machine.ts` and requires explicit documentation in `decisions.sdd_rationale[]`.
+
 ## A2. Contract Envelope Structure
 
 The envelope is stored in lean-ctx knowledge as `orchestration-contract`. File: `contract/contract.template.json`. Full schema at `contract/contract.schema.json`.

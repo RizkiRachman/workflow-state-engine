@@ -15,12 +15,15 @@ The orchestration contract is the shared JSON envelope that tracks every task fr
 |---|---|---|---|---|
 | INIT→PLAN | requirements.*, governance.*, retry.issues[] | Delegate system design & plan | state: PLAN, session.*, scope.* | system-analyst |
 | PLAN→PLAN_SCORED | outputs.plan, scope.* | Score plan (+ SDD spec) | state: PLAN_SCORED, score.*, decisions.* | tech-lead |
-| PLAN_SCORED→EXECUTE | score.*, decisions.*, outputs.plan | Implement per spec | state: EXECUTE, governance.mode: spec | developer |
+| PLAN_SCORED→PONYTAIL_CHECK | score.* (proves ≥70), decisions.* | Run ponytail scan | state: PONYTAIL_CHECK, ponytail.debt_items[] | tech-lead |
+| PONYTAIL_CHECK→EXECUTE | ponytail.debt_items[] | Implement per spec (if debt ≤ max) | state: EXECUTE, governance.mode: spec | developer |
 | EXECUTE→EXECUTE_SCORED | outputs.code_changes[], outputs.test_results | Score implementation | state: EXECUTE_SCORED, score.* | tech-lead |
 | EXECUTE_SCORED→REVIEW | score.*, outputs.* | Code quality review | state: REVIEW | quality-analyst |
 | REVIEW→REVIEW_SCORED | outputs.agent_reports[] | Score review findings | state: REVIEW_SCORED, score.*, outputs.score_summary | tech-lead |
 | REVIEW_SCORED→COMPLETE | score.*, outputs.* | Ship, learn, persist | state: COMPLETE, lessons_learned[], metrics.* | quality-analyst-learner |
 | At BLOCKED | retry.issues[], retry.cur_phase | Escalate, persist | state: BLOCKED, retry.escalation_trace[], retry.attempt+1 | tech-lead |
+
+**SDD Gate Bypass**: When Spec-Driven Development is triggered (>3 files, cross-service, >30 min), `PLAN_SCORED → EXECUTE` can bypass `PONYTAIL_CHECK` if `sdd_triggered` flag is set. Requires full GWT spec approved via DDD. See [01-fundamentals.md](./01-fundamentals.md) for details.
 
 ## File Index
 

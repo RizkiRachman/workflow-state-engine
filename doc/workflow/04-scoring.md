@@ -21,9 +21,9 @@ Tier 1 — Rule-Based Checks (tool calls, no LLM)
   - Over-engineering?      -15  if YAGNI violated (SIMPLICITY_001 rule)
   - Required fields?       -15  (envelope completeness)
 
-  If subtotal < 70 → skip Tier 2, use subtotal as combined
+  If subtotal < 70 → still run Tier 2 (combined formula applies)
 
-Tier 2 — LLM-as-Judge (if Tier 1 ≥ 70)
+Tier 2 — LLM-as-Judge (always runs if Tier 1 completes)
   Score 0-100:
   - Fulfills requirements?  0-40  (matches acceptance criteria)
   - Follows governance?     0-30  (compliance with _governance.md)
@@ -31,6 +31,7 @@ Tier 2 — LLM-as-Judge (if Tier 1 ≥ 70)
   - Edge cases covered?     0-10  (nulls, errors, boundaries)
 
 Tier 3 — Combined Verdict
+  combined = (tier1_subtotal + tier2_judge.score) / 2  (rounded to nearest integer)
   ≥ 70  → PASS   → advance state
   50-69 → RETRY  → re-delegate with issues; max 3 attempts
   < 50  → BLOCKED → escalate to user
