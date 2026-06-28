@@ -669,7 +669,8 @@ main() {
     elif [[ "$TIER_FILTER" == "2" ]]; then
         combined_score=$judge_score
     else
-        combined_score=$judge_score
+        # Per spec: combined = (tier1_subtotal + judge_score) / 2 rounded
+        combined_score=$(( (tier1_subtotal + judge_score + 1) / 2 ))
     fi
 
     local verdict
