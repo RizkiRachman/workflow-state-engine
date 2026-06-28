@@ -66,7 +66,7 @@ if command -v grep &>/dev/null; then
     while IFS= read -r f; do
         [[ -z "$f" ]] && continue
         # Count methods as lines starting with 'public function', 'def ', 'fun ', etc.
-        method_count=$(grep -cE '^\s*(public|private|protected)?\s*(function|def|fun|void|int|String|boolean|Boolean|Object|static).*\(' "$f" 2>/dev/null || echo "0")
+        method_count=$(grep -cE '^\s*(public|private|protected)?\s*(function|def|fun|void|int|String|boolean|Boolean|Object|static).*\(' "$f" 2>/dev/null || true)
         if [[ "$method_count" -gt 20 ]]; then
             rel_path="${f#$PROJECT_DIR/}"
             log_fail "Possible god class: $rel_path ($method_count methods)"
@@ -151,8 +151,8 @@ log_info "Pattern 4: Null safety detection..."
 ORIG_VIOLATIONS=$PATTERN_VIOLATIONS
 while IFS= read -r f; do
     [[ -z "$f" ]] && continue
-    null_return=$(grep -c 'return null' "$f" 2>/dev/null || echo "0")
-    if [[ "$null_return" -gt 3 ]]; then
+    null_return=$(grep -c 'return null' "$f" 2>/dev/null || true)
+    if [[ "${null_return:-0}" -gt 3 ]]; then
         rel_path="${f#$PROJECT_DIR/}"
         log_fail "Null returns in $rel_path: $null_return occurrences (consider using Optional)"
         PATTERN_VIOLATIONS=$((PATTERN_VIOLATIONS + 1))
