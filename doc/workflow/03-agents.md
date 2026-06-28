@@ -133,7 +133,7 @@ This mapping shows what each directory contributes at runtime. `contract/` provi
 
 ## C4. Companion Skills Registry Pattern
 
-Some meta-skills (like `java-developer`) act as **registries** that link to specialized companion skills. This pattern enables lazy-loading of domain-specific knowledge without bloating the core skill.
+Meta-skills like `java-developer` act as **registries** linking to specialized companion skills. Lazy-loads domain knowledge without bloating core skill.
 
 ### How It Works
 
