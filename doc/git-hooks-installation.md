@@ -1,56 +1,72 @@
-# Git Hooks Installation
+# Git Hooks
 
-## Overview
-The workflow-state-engine ships pre-commit and post-commit hooks in `.githooks/`. These hooks enforce ponytail debt checks and auto-index GitNexus after commits.
+The workflow-state-engine ships `pre-commit` and `post-commit` hooks in `.githooks/`. These hooks enforce structural validation, ponytail debt checks, and auto-index GitNexus after commits.
 
 ## Installation
 
-### Per Service
-```bash
-cd /path/to/goods-price-comparison-<service>
+```sh
+# Root project
+bash scripts/install-hooks.sh
+
+# Consumer service (submodule)
 bash .workflow-engine/scripts/install-hooks.sh
 ```
 
-If `install-hooks.sh` does not exist in the submodule, configure directly:
-```bash
-cd /path/to/goods-price-comparison-<service>
-git config core.hooksPath .workflow-engine/.githooks/
+If `install-hooks.sh` is not available, configure core.hooksPath directly:
+
+```sh
+git config core.hooksPath .githooks/
 ```
 
-### What Gets Installed
-- **pre-commit**: runs `pre-commit-ponytail.sh` — scans modified files for ponytail debt items exceeding the configured max. Blocks commit if debt exceeds threshold.
-- **post-commit**: auto re-indexes GitNexus (if GitNexus is available in the repo). Updates AGENTS.md with current symbol/relationship counts.
+## What the Hooks Do
 
-## Verification
-```bash
-ls -la .git/hooks/pre-commit .git/hooks/post-commit
+### pre-commit (4-stage validation)
+
+The pre-commit hook runs 4 stages. Any failure blocks the commit:
+
+| Stage | Script | What It Checks | Blocking |
+|-------|--------|----------------|----------|
+| 1. State gate | Inline | Contract `state != BLOCKED` when `session/{branch}/contract.json` exists | Yes |
+| 2. Kit integrity | `scripts/validate-toolkit.sh` | `.opencode/` symlinks resolve, agent files complete, contract schema valid | Yes |
+| 3. Writing order | `scripts/check-writing-order.sh` | No merge conflict markers in staged files | Yes (conflict markers) |
+| 4. Agent sync | `scripts/sync-agent-states.sh` | Agent state maps match `rules.json agent_states` | Warning only |
+
+### post-commit
+
+```sh
+bash scripts/gitnexus-analyze.sh   # Updates AGENTS.md with current symbol/rel counts
 ```
 
-Or check the hooks path:
-```bash
+Only runs if GitNexus is available.
+
+## Check Installation
+
+```sh
 git config core.hooksPath
-# Expected: .workflow-engine/.githooks/
+# Expected: .githooks/  (or .workflow-engine/.githooks/ for consumers)
 ```
 
-## Removal
-```bash
-git config --unset core.hooksPath
-rm -f .git/hooks/pre-commit .git/hooks/post-commit
+## Uninstall
+
+```sh
+bash scripts/install-hooks.sh --uninstall
+# Or: git config --unset core.hooksPath
 ```
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
-|---|---|---|
-| `pre-commit` fails during commit | Ponytail debt exceeds threshold | Fix debt items or `git commit --no-verify` |
-| Hooks not executable | Permissions lost on clone | `chmod +x .git/hooks/pre-commit .git/hooks/post-commit` |
-| `post-commit` hangs | GitNexus not installed | Install GitNexus or disable post-commit hook |
+|---------|-------|-----|
+| pre-commit fails: "BLOCKED state" | Contract is BLOCKED | Resolve blocker or `git commit --no-verify` |
+| pre-commit fails: "X violation(s)" | Broken symlinks or missing files | `bash scripts/validate-toolkit.sh` to see details |
+| pre-commit fails: "Merge conflict" | Unresolved `<<<<<<<` markers | Resolve conflicts, re-stage, commit |
+| Hooks not executable | Permissions lost on clone | `chmod +x .githooks/pre-commit .githooks/post-commit` |
+| Post-commit hangs | GitNexus not installed | Install GitNexus or remove post-commit hook |
 
 ## Per-Service Customization
 
-Hooks are shared via the submodule, so all services use the same hooks. If a service needs custom behavior, copy the hook file to `.git/hooks/` and modify locally:
-```bash
-cp .workflow-engine/.githooks/pre-commit .git/hooks/pre-commit
+```sh
+cp .githooks/pre-commit .git/hooks/pre-commit
 # Edit .git/hooks/pre-commit as needed
 git config core.hooksPath .git
 ```
