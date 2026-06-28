@@ -880,6 +880,26 @@ main() {
             FAIL_COUNT=$((FAIL_COUNT + 1))
             DEDUCTION=$((DEDUCTION + 15))
         fi
+
+        # Step 6e (GAP-1): Architecture drift detection
+        if [[ -x "$SCRIPT_DIR/check-architecture-drift.sh" ]]; then
+            if "$SCRIPT_DIR/check-architecture-drift.sh" --file "$CONTRACT_FILE" 2>/dev/null; then
+                PASS_COUNT=$((PASS_COUNT + 1))
+            else
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+                DEDUCTION=$((DEDUCTION + 15))
+            fi
+        fi
+
+        # Step 6f (GAP-3): Writing order validation (file-level)
+        if [[ -x "$SCRIPT_DIR/check-writing-order.sh" ]]; then
+            if "$SCRIPT_DIR/check-writing-order.sh" --file "$CONTRACT_FILE" 2>/dev/null; then
+                PASS_COUNT=$((PASS_COUNT + 1))
+            else
+                FAIL_COUNT=$((FAIL_COUNT + 1))
+                DEDUCTION=$((DEDUCTION + 15))
+            fi
+        fi
     fi
 
     # Step 7: Transition (conditional)

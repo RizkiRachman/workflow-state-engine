@@ -57,10 +57,10 @@ This part walks through each phase of the state machine end-to-end, documents th
 - **Delegates to**: @developer (implementation per spec, TDD cycle)
 - **Writes back**: state=EXECUTE, governance.mode: spec, governance.current_guidance (any execution direction from orchestrator)
 
-### B1e. EXECUTE → EXECUTE_SCORED [Gate: Ponytail]
+### B1e. EXECUTE → EXECUTE_SCORED [Gate: Scoring + Continuous Ponytail]
 
 - **Reads**: outputs.plan (task breakdown, dependency graph), decisions.* (approved architecture, coding standard)
-- **Gate**: Ponytail fires before ANY code is written — run the 6-rung frugality ladder:
+- **Continuous Ponytail Check**: During EXECUTE phase, the 6-rung frugality ladder is continuously enforced (not a separate state, but ongoing validation):
   1. Does this need to exist? → skip it (YAGNI)
   2. Standard library does it? → use it
   3. Native platform feature? → use it
@@ -87,11 +87,11 @@ This part walks through each phase of the state machine end-to-end, documents th
 - **Activity**: Score implementation (Tier 1 → Tier 2 → Tier 3). Pass ≥ 70 advances to REVIEW.
 - **Writes back**: state=REVIEW, score.* (updated with implementation score)
 
-### B1g. REVIEW → REVIEW_SCORED [Gate: Ponytail]
+### B1g. REVIEW → REVIEW_SCORED [Gate: Scoring + Over-Engineering Check]
 
 - **Reads**: score.* (proves ≥70), outputs.* (code_changes, test_results, risks_introduced[])
 - **Delegates to**: @quality-analyst (code quality review — 6 dimensions)
-- **Gate**: Ponytail fires here — quality-analyst runs the Over-Engineering Check alongside the standard review:
+- **Over-Engineering Check**: During REVIEW phase, quality-analyst runs the ponytail over-engineering validation alongside the standard review:
   - Is every abstraction justified? Any YAGNI violations?
   - Could stdlib or existing deps replace any custom code?
   - Any unnecessary indirection (factories, interfaces with one impl, over-abstracted patterns)?
@@ -149,6 +149,8 @@ When state becomes BLOCKED, all agents must follow this strict escalation protoc
 
 ## B2a. Prototype Mode — Lightweight Alternative
 
+**Status**: Conceptual feature documented for future implementation. Not yet enforced by `state-machine.ts`. Currently relies on agent discipline to skip steps.
+
 For rapid prototyping, low-risk experiments, or early-stage exploration, the orchestrator can switch to **Prototype-First Mode** (G26). This bypasses the full state machine for a faster, low-ceremony workflow:
 
 | Full Orchestration | Prototype Mode |
@@ -178,7 +180,17 @@ When confidence in a decision is low, the orchestrator routes to appropriate esc
 - **Confidence 61-85** → PROCEED WITH NOTES; flag concerns for later review (exit 0)
 - **Confidence 86-100** → AUTO-APPROVE without further review (exit 0)
 
-Thresholds are read from `rules.json -> decisions.confidence_journal` (map from 1-5 scale). The `--advisory-only` flag emits the recommendation without blocking execution.
+**Scale Mapping**: `rules.json → decisions.confidence_journal` uses a 1-5 scale. Map to 0-100 as follows:
+
+| 1-5 Scale | 0-100 Scale | Meaning |
+|-----------|-------------|---------|
+| 1 (Guess) | 0-20 | No evidence, pure speculation |
+| 2 (Informed) | 21-40 | Partial evidence, uncertain |
+| 3 (Confident) | 41-60 | Supported by data, reasonable |
+| 4 (Strong) | 61-80 | Multiple corroborating sources |
+| 5 (Certain) | 81-100 | Verifiable, deterministic |
+
+The `--advisory-only` flag emits the recommendation without blocking execution.
 
 ```bash
 bash scripts/uncertainty-router.sh --score 25 --domain architecture     # Blocks, escalate

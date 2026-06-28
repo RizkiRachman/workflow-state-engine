@@ -38,10 +38,10 @@ if [[ -f "scripts/pre-commit-ponytail.sh" ]]; then
     bash scripts/pre-commit-ponytail.sh --staged 2>/dev/null || true
 fi
 
-# Sync agent states (DISABLED — corrupts rules.json to null)
-# if [[ -f "scripts/sync-agent-states.sh" ]]; then
-#     if ! bash scripts/sync-agent-states.sh 2>/dev/null; then
-#         echo "⚠️  PRE-COMMIT: Agent states drift detected. Run scripts/sync-agent-states.sh to fix."
-#     fi
-# fi
+# Sync agent states
+if [[ -f "scripts/sync-agent-states.sh" ]]; then
+    if ! bash scripts/sync-agent-states.sh 2>/dev/null; then
+        echo "⚠️  PRE-COMMIT: Agent states drift detected. Run scripts/sync-agent-states.sh to fix."
+    fi
+fi
 exit 0

@@ -61,20 +61,52 @@ agent_states_json=$(jq -n \
         "available_agents": $agents
     }')
 
-# Backup original rules file
-if [[ -f "$RULES_FILE" ]]; then
-    cp "$RULES_FILE" "${RULES_FILE}.backup"
-    echo "✅ Backed up original rules file to ${RULES_FILE}.backup"
+# Validate generated JSON is not null or empty
+if [[ -z "$agent_states_json" || "$agent_states_json" == "null" ]]; then
+    echo "❌ Error: Generated agent_states is null or empty — refusing to write" >&2
+    exit 1
+fi
+if ! echo "$agent_states_json" | jq -e . >/dev/null 2>&1; then
+    echo "❌ Error: Generated agent_states is invalid JSON — refusing to write" >&2
+    exit 1
 fi
 
-# Write new agent_states to rules file
-echo "$agent_states_json" | jq '.agent_states' > "$OUTPUT_FILE" 2>/dev/null && \
-    echo "✅ Agent states updated in $OUTPUT_FILE" || \
-    echo "❌ Failed to update agent states" >&2
+# Backup original rules file with timestamp
+if [[ -f "$RULES_FILE" ]]; then
+    backup_file="${RULES_FILE}.backup.$(date +%Y%m%d%H%M%S)"
+    cp "$RULES_FILE" "$backup_file"
+    echo "✅ Backed up rules file to $backup_file"
+fi
+
+# Atomically merge agent_states into rules.json (preserves all other keys)
+tmp_file="${OUTPUT_FILE}.tmp.$$"
+if ! jq --argjson new_states "$agent_states_json" '
+    .agent_states = $new_states
+' "$RULES_FILE" > "$tmp_file" 2>/dev/null; then
+    echo "❌ Error: Failed to merge agent states into rules.json" >&2
+    rm -f "$tmp_file"
+    exit 1
+fi
+
+# Validate merged output is valid JSON with non-null agent_states
+if ! jq -e '.agent_states' "$tmp_file" >/dev/null 2>&1; then
+    echo "❌ Error: Merged rules.json has null agent_states — refusing to overwrite" >&2
+    rm -f "$tmp_file"
+    exit 1
+fi
+if ! jq -e . "$tmp_file" >/dev/null 2>&1; then
+    echo "❌ Error: Merged output is invalid JSON — refusing to overwrite" >&2
+    rm -f "$tmp_file"
+    exit 1
+fi
+
+mv "$tmp_file" "$OUTPUT_FILE"
+echo "✅ Agent states updated in $OUTPUT_FILE"
 
 # Verify the update
 if [[ -f "$OUTPUT_FILE" ]]; then
     echo ""
     echo "Agent states in $OUTPUT_FILE:"
-    jq '.agent_states | to_entries[] | "\(.key): \(.value | join(", "))"' "$OUTPUT_FILE"
+    jq -r '.agent_states | to_entries[] | "  \(.key): [\(.value | join(", "))]"' "$OUTPUT_FILE"
 fi
+echo "✅ Agent state sync complete"

@@ -99,3 +99,7 @@ CLAUDE.md
 
 # === Project-specific: simulation artifacts (local-only) ===
 doc/simulations/
+
+# === Project-specific: reports (local/transient) ===
+doc/report/
+doc/reports/
