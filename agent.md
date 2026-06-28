@@ -113,14 +113,15 @@ You reference `.opencode/` paths — OpenCode resolves symlinks to root-level so
 ├── rules/             ← rules.json (state machine, scoring)
 ├── skills/            ← 29 skill directories (java-developer, gitnexus/, spec-driven-dev, etc.)
 ├── contract/          ← contract.template.json, contract.schema.json, state.template.md, superpowers-contract.json
+├── .githooks/          ← Git hooks (pre-commit with 4-stage validation)
 ├── usage/             ← 15 tool usage guides (one per tool group)
-└── setup.sh           ← Bootstrap: creates all .opencode/ → root-level symlinks
+└── setup.sh           ← Bootstrap: symlinks + git hooks installation
 ```
 
 ### Fresh Clone Setup
 
 ```bash
-bash setup.sh    # Creates all .opencode/ → root-level symlinks
+bash setup.sh    # Creates all .opencode/ → root-level symlinks + installs .githooks/
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -295,6 +296,7 @@ Use **Doubt-Driven Development (DDD)** when uncertain: spawn a fresh-context adv
 | 6 | Session save (complete) | See **Save Session Protocol** below
 
 **Pre-flight**: `bash scripts/validate-contract.sh --file session/{branch}/contract.json --score` (score < 70 = BLOCKED)
+**Pre-commit hook**: `.githooks/pre-commit` auto-runs 4-stage validation on `git commit` (state gate, validate-toolkit.sh, check-writing-order.sh, sync-agent-states.sh)
 **Parallel conflict check**: `bash scripts/detect-parallel-conflicts.sh --file1 /tmp/a.txt --file2 /tmp/b.txt`
 **Atomic persist**: `bash scripts/persist-contract.sh --file session/{branch}/contract.json --inject-score 85` |
 
@@ -343,7 +345,7 @@ bash scripts/snapshot-contract.sh
 lean-ctx ctx_session save
 ```
 
-**One-shot alias**: `update all states` = all 4 steps. The post-merge git hook auto-runs steps 1, 3, and the session index sync — manually run step 2 (graphify) if semantic data changed.
+**One-shot alias**: `update all states` = all 4 steps. The post-merge git hook auto-runs steps 1, 3, and the session index sync — manually run step 2 (graphify) if semantic data changed. The pre-commit hook (`.githooks/pre-commit`) also auto-runs 4-stage validation on every `git commit`.
 
 ### Session Lifecycle Protocol
 
@@ -461,7 +463,7 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 | `gitnexus-{exploring,impact,debug,refactor,cli,guide}` | GitNexus-specific workflows |
 | `firecrawl-*` (30 skills in `~/.agents/skills/`) | Web search, scraping, crawling, monitoring |
 
-*Last updated: 2026-06-18. If you modify conventions, workflows, or config, update this file.*
+*Last updated: 2026-06-28. If you modify conventions, workflows, or config, update this file.*
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

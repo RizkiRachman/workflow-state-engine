@@ -73,7 +73,7 @@ ln -sfn ../agents   .opencode/agents
 ln -sfn ../skills   .opencode/skills
 ln -sfn ../plugins  .opencode/plugins
 ln -sfn ../rules    .opencode/rules
-ln -sfn ../template .opencode/orchestration
+ln -sfn ../contract .opencode/orchestration
 ln -sfn ../doc/planning .opencode/planning
 ln -sfn ../usage    .opencode/usage
 ln -sfn ../doc/reports .opencode/reports

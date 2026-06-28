@@ -44,4 +44,31 @@ if [[ -f "scripts/sync-agent-states.sh" ]]; then
         echo "⚠️  PRE-COMMIT: Agent states drift detected. Run scripts/sync-agent-states.sh to fix."
     fi
 fi
+
+# ── Run validate-toolkit.sh for structural integrity ──────────────────────
+if [[ -f "scripts/validate-toolkit.sh" ]]; then
+    if ! bash scripts/validate-toolkit.sh 2>/dev/null; then
+        echo "⚠️  PRE-COMMIT: validate-toolkit.sh found violations (structural integrity)"
+    fi
+fi
+
+# ── Check writing order for merge conflict prevention ────────────────────
+if [[ -f "scripts/check-writing-order.sh" ]]; then
+    if ! bash scripts/check-writing-order.sh 2>/dev/null; then
+        echo "⛔ PRE-COMMIT BLOCKED: Writing order violation detected."
+        echo "   Run: scripts/check-writing-order.sh to see details."
+        exit 1
+    fi
+fi
+
+# ── Validate meta-contract if contract files are staged ──────────────────
+if [[ -f "scripts/validate-meta-contract.sh" ]]; then
+    STAGED_CONTRACT=$(git diff --cached --name-only | grep -cE '^contract/' || true)
+    if [[ "$STAGED_CONTRACT" -gt 0 ]] && [[ -f "$CONTRACT_FILE" ]]; then
+        if ! bash scripts/validate-meta-contract.sh --contract "$CONTRACT_FILE" 2>/dev/null; then
+            echo "⚠️  PRE-COMMIT: validate-meta-contract.sh found issues"
+        fi
+    fi
+fi
+
 exit 0

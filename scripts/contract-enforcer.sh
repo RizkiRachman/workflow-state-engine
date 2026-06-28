@@ -70,7 +70,23 @@ parse_args() {
 }
 
 get_timestamp() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
-get_epoch_ms() { date +%s%3N; }
+get_epoch_ms() {
+  # GNU date: date +%s%3N (linux/gnu coreutils)
+  # BSD date: fallback to python3, perl, or seconds*1000
+  local ms
+  ms=$(date +%s%3N 2>/dev/null)
+  if [[ "$ms" =~ ^[0-9]+$ ]]; then
+    echo "$ms"
+    return
+  fi
+  if command -v python3 &>/dev/null; then
+    python3 -c 'import time; print(int(time.time() * 1000))'
+  elif command -v perl &>/dev/null; then
+    perl -MTime::HiRes -e 'print int(Time::HiRes::time*1000)'
+  else
+    echo $(( $(date +%s) * 1000 ))
+  fi
+}
 
 validate_contract() {
     log_info "Validating contract: $CONTRACT_FILE"

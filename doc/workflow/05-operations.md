@@ -231,7 +231,7 @@ bash scripts/install-hooks.sh --status                   # Check current state
 bash scripts/install-hooks.sh --uninstall                # Remove hooks
 ```
 
-**`.githooks/pre-commit`** — Blocks commits on feature branches when the orchestration contract is in BLOCKED state (score < 50). Only activates when `session/{branch}/contract.json` exists.
+**`.githooks/pre-commit`** — 4-stage validation gate. Blocks on: BLOCKED contract state, broken toolkit structure (validate-toolkit.sh), merge conflict markers (check-writing-order.sh). Warns on agent-state drift (sync-agent-states.sh). Activates when `session/{branch}/contract.json` exists. See [`doc/git-hooks-installation.md`](../git-hooks-installation.md) for full breakdown.
 
 **`.githooks/post-commit`** — Auto re-indexes GitNexus after every commit by running `scripts/gitnexus-analyze.sh`.
 
