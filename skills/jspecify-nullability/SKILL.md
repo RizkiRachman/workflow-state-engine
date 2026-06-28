@@ -1,6 +1,6 @@
 ---
 name: jspecify-nullability
-description: JSpecify annotations, null-safety contracts, static analysis
+desc: JSpecify annotations, null-safety contracts, static analysis
 triggers:
   - "JSpecify"
   - "nullability"

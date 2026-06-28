@@ -1,6 +1,6 @@
 ---
 name: spring-boot-enterprise
-description: Spring Boot 3.x enterprise patterns — REST, JPA, Security, OAuth2, testing
+desc: Spring Boot 3.x enterprise patterns — REST, JPA, Security, OAuth2, testing
 triggers:
   - "spring boot enterprise"
   - "REST API patterns"

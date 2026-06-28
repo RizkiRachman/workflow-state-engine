@@ -1,6 +1,6 @@
 ---
 name: spring-boot-4x
-description: Spring Boot 4.x patterns, virtual threads, GraalVM native image
+desc: Spring Boot 4.x patterns, virtual threads, GraalVM native image
 triggers:
   - "spring boot 4"
   - "virtual threads"

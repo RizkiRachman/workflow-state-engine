@@ -1,6 +1,6 @@
 ---
 name: java-code-quality
-description: Code review, SOLID principles, clean code, anti-patterns detection
+desc: Code review, SOLID principles, clean code, anti-patterns detection
 triggers:
   - "code review"
   - "SOLID principles"

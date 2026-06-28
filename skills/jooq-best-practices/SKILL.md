@@ -1,6 +1,6 @@
 ---
 name: jooq-best-practices
-description: jOOQ type-safe SQL queries, code generation, DSL patterns
+desc: jOOQ type-safe SQL queries, code generation, DSL patterns
 triggers:
   - "jOOQ"
   - "type-safe SQL"

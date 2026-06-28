@@ -1,6 +1,6 @@
 ---
 name: jdb-debugger
-description: JDB agentic debugging, breakpoints, variable inspection, remote debug
+desc: JDB agentic debugging, breakpoints, variable inspection, remote debug
 triggers:
   - "JDB debugger"
   - "agentic debugging"

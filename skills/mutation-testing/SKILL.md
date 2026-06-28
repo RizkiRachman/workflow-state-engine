@@ -1,6 +1,6 @@
 ---
 name: mutation-testing
-description: pitest mutation testing, test quality assessment, mutation scores
+desc: pitest mutation testing, test quality assessment, mutation scores
 triggers:
   - "mutation testing"
   - "pitest"

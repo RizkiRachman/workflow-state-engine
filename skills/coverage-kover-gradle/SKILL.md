@@ -1,6 +1,6 @@
 ---
 name: coverage-kover-gradle
-description: Kover Gradle plugin, coverage reports, threshold enforcement
+desc: Kover Gradle plugin, coverage reports, threshold enforcement
 triggers:
   - "Kover coverage"
   - "code coverage Gradle"

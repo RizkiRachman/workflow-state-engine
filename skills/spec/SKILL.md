@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Specification writing, requirements documentation, acceptance criteria
+desc: Specification writing, requirements documentation, acceptance criteria
 triggers:
   - "specification"
   - "acceptance criteria"

@@ -1,6 +1,6 @@
 ---
 name: java-optional
-description: Java Optional patterns, antipatterns, best practices for null safety
+desc: Java Optional patterns, antipatterns, best practices for null safety
 triggers:
   - "optional pattern"
   - "null safety"

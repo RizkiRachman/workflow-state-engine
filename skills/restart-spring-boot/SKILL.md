@@ -1,6 +1,6 @@
 ---
 name: restart-spring-boot
-description: Spring Boot restart and hot-reload patterns for development
+desc: Spring Boot restart and hot-reload patterns for development
 triggers:
   - "hot reload"
   - "spring boot restart"

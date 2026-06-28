@@ -1,6 +1,6 @@
 ---
 name: postgres-table-design
-description: PostgreSQL schema design, indexing strategies, partitioning, constraints
+desc: PostgreSQL schema design, indexing strategies, partitioning, constraints
 triggers:
   - "PostgreSQL schema"
   - "table design"

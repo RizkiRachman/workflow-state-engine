@@ -1,6 +1,6 @@
 ---
 name: ralph-coverage
-description: Ralph coverage analysis, test gap detection, coverage insights
+desc: Ralph coverage analysis, test gap detection, coverage insights
 triggers:
   - "Ralph"
   - "coverage analysis"

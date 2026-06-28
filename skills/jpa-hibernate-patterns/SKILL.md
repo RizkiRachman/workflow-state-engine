@@ -1,6 +1,6 @@
 ---
 name: jpa-hibernate-patterns
-description: N+1 prevention, lazy loading, @EntityGraph, batch fetching, query optimization
+desc: N+1 prevention, lazy loading, @EntityGraph, batch fetching, query optimization
 triggers:
   - "JPA patterns"
   - "Hibernate optimization"

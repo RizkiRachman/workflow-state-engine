@@ -1,6 +1,6 @@
 ---
 name: java-design-patterns
-description: GoF design patterns, Java idioms, refactoring techniques
+desc: GoF design patterns, Java idioms, refactoring techniques
 triggers:
   - "design patterns"
   - "GoF patterns"

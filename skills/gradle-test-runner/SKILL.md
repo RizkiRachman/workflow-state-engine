@@ -1,6 +1,6 @@
 ---
 name: gradle-test-runner
-description: Gradle test execution, filtering, parallel runs, test configuration
+desc: Gradle test execution, filtering, parallel runs, test configuration
 triggers:
   - "Gradle test"
   - "test runner"

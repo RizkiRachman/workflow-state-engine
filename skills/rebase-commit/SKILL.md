@@ -1,6 +1,6 @@
 ---
 name: rebase-commit
-description: Interactive rebase, squash, commit cleanup, history management
+desc: Interactive rebase, squash, commit cleanup, history management
 triggers:
   - "interactive rebase"
   - "squash commits"

@@ -1,6 +1,6 @@
 ---
 name: java-streams
-description: Java Streams API, Collectors, Gatherers, parallel streams, performance
+desc: Java Streams API, Collectors, Gatherers, parallel streams, performance
 triggers:
   - "stream API"
   - "parallel streams"

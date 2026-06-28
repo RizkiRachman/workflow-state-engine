@@ -1,6 +1,6 @@
 ---
 name: pgvector-search
-description: pgvector semantic search, embeddings storage, similarity queries
+desc: pgvector semantic search, embeddings storage, similarity queries
 triggers:
   - "pgvector"
   - "semantic search"

@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Conventional commits, atomic commits, commit message best practices
+desc: Conventional commits, atomic commits, commit message best practices
 triggers:
   - "commit message"
   - "conventional commit"

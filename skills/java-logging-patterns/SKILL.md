@@ -1,6 +1,6 @@
 ---
 name: java-logging-patterns
-description: SLF4J, Logback, structured logging, MDC correlation
+desc: SLF4J, Logback, structured logging, MDC correlation
 triggers:
   - "logging patterns"
   - "SLF4J"

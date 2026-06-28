@@ -1,6 +1,6 @@
 ---
 name: postgres-text-search
-description: Full-text search, hybrid search, tsvector, GIN indexes
+desc: Full-text search, hybrid search, tsvector, GIN indexes
 triggers:
   - "full-text search"
   - "tsvector"
