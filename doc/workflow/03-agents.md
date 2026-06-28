@@ -131,6 +131,60 @@ This mapping shows what each directory contributes at runtime. `contract/` provi
 | Session archive | Per-branch snapshots | `session/{branch}/` | scripts/snapshot-contract.sh |
 | Audit-observability | State tracking, score analytics | `skills/audit-observability/SKILL.md` | On-demand via skill() |
 
+## C4. Companion Skills Registry Pattern
+
+Some meta-skills (like `java-developer`) act as **registries** that link to specialized companion skills. This pattern enables lazy-loading of domain-specific knowledge without bloating the core skill.
+
+### How It Works
+
+```
+Agent loads /skill java-developer
+       ↓
+java-developer/SKILL.md contains "Companion Skills" table
+       ↓
+Agent sees: "Need JPA patterns? Load /skill jpa-hibernate-patterns"
+       ↓
+Agent loads companion skill on-demand (39-line reference stub)
+       ↓
+Companion skill points to canonical source (e.g., piomin/claude-ai-spring-boot)
+```
+
+### Structure
+
+| Layer | Location | Purpose | Size |
+|-------|----------|---------|------|
+| **Meta-skill** | `skills/java-developer/SKILL.md` | Core patterns + companion registry table | ~467 lines |
+| **Companion skill** | `skills/jpa-hibernate-patterns/SKILL.md` | Reference stub with source URL + when-to-use | ~39 lines |
+| **Canonical source** | GitHub repo (external) | Full implementation guidance | Varies |
+
+### Companion Skills (22 total, linked from java-developer)
+
+| Category | Skills |
+|----------|--------|
+| **Framework** | `spring-boot-enterprise`, `spring-boot-4x`, `restart-spring-boot` |
+| **Language** | `java-streams`, `java-optional`, `java-code-quality`, `java-design-patterns`, `java-logging-patterns`, `jspecify-nullability` |
+| **Database** | `jpa-hibernate-patterns`, `jooq-best-practices`, `postgres-table-design`, `pgvector-search`, `postgres-text-search` |
+| **Testing** | `mutation-testing`, `coverage-kover-gradle`, `ralph-coverage`, `gradle-test-runner`, `jdb-debugger` |
+| **Workflow** | `commit`, `rebase-commit`, `spec` |
+
+### Benefits
+
+- **Token-efficient**: Agent loads only the companion skill it needs (39 lines vs 467 lines)
+- **Source attribution**: Each companion links to canonical jvmskills.com repo
+- **Discoverable**: Registry table in meta-skill shows all available companions
+- **Maintainable**: Add/remove companions without touching core skill
+
+### Source Repositories
+
+All companion skills reference canonical sources from [jvmskills.com](https://jvmskills.com):
+- [piomin/claude-ai-spring-boot](https://github.com/piomin/claude-ai-spring-boot) — Spring Boot, JPA, code quality, design patterns, logging
+- [martinfrancois/java-streams-skill](https://github.com/martinfrancois/java-streams-skill) — Streams API
+- [martinfrancois/java-optionals-skill](https://github.com/martinfrancois/java-optionals-skill) — Optional patterns
+- [sivaprasadreddy/sivalabs-agent-skills](https://github.com/sivaprasadreddy/sivalabs-agent-skills) — Spring Boot 4.x, JSpecify
+- [timescale/pg-aiguide](https://github.com/timescale/pg-aiguide) — PostgreSQL design, pgvector, text search
+- [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) — jOOQ, mutation testing, Kover, workflow skills
+- [brunoborges/jdb-agentic-debugger](https://github.com/brunoborges/jdb-agentic-debugger) — JDB debugging
+
 ---
 
 [workflow-shield]: https://img.shields.io/badge/Workflow-Orchestration-blue?style=for-the-badge

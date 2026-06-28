@@ -434,7 +434,23 @@ All skills at `.opencode/skills/` (symlinked from `skills/`). Use `/skill <name>
 
 | Skill | When to Load |
 |-------|-------------|
-| `java-developer` | Java 21 idioms, anti-patterns, quality gates |
+| `java-developer` | Java 21 idioms, anti-patterns, quality gates (meta-skill — see companion skills below) |
+| `spring-boot-enterprise` | Spring Boot 3.x REST, JPA, Security, OAuth2 (companion to java-developer) |
+| `spring-boot-4x` | Spring Boot 4.x, virtual threads, GraalVM (companion to java-developer) |
+| `java-streams` | Streams API, Collectors, Gatherers (companion to java-developer) |
+| `java-optional` | Optional patterns, antipatterns (companion to java-developer) |
+| `java-code-quality` | SOLID, clean code, anti-patterns (companion to java-developer) |
+| `java-design-patterns` | GoF patterns, Java idioms (companion to java-developer) |
+| `java-logging-patterns` | SLF4J, Logback, structured logging (companion to java-developer) |
+| `jspecify-nullability` | JSpecify annotations, null-safety (companion to java-developer) |
+| `jpa-hibernate-patterns` | N+1 prevention, @EntityGraph, batch fetching (companion to java-developer) |
+| `jooq-best-practices` | jOOQ type-safe queries, DSL (companion to java-developer) |
+| `postgres-table-design` | PostgreSQL schema, indexing, partitioning (companion to java-developer) |
+| `pgvector-search` | pgvector semantic search, embeddings (companion to java-developer) |
+| `postgres-text-search` | Full-text search, tsvector (companion to java-developer) |
+| `mutation-testing` | pitest, mutation testing (companion to java-developer) |
+| `coverage-kover-gradle` | Kover Gradle coverage reports (companion to java-developer) |
+| `jdb-debugger` | JDB agentic debugging (companion to java-developer) |
 | `software-developer` | Full-stack conventions, clean code, SOLID |
 | `system-analyst` | Architecture evaluation, dependency mapping |
 | `business-analyst` | Requirements gathering, acceptance criteria |

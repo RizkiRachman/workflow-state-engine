@@ -401,6 +401,52 @@ all = all.stream().sorted(comparator).toList();
 
 **Exceptions:** Constants, utility functions, abstract/overridden methods.
 
+## Companion Skills (Load on demand)
+
+Load these when the task requires specialized Java/JVM knowledge beyond core hexagonal architecture.
+
+### Framework
+| /skill | Covers | Source |
+|--------|--------|--------|
+| `spring-boot-enterprise` | REST, JPA, Security, OAuth2, testing patterns | [piomin/claude-ai-spring-boot](https://github.com/piomin/claude-ai-spring-boot) |
+| `spring-boot-4x` | Spring Boot 4.x patterns, virtual threads, GraalVM | [sivaprasadreddy/sivalabs-agent-skills](https://github.com/sivaprasadreddy/sivalabs-agent-skills) |
+| `restart-spring-boot` | Spring Boot restart & hot-reload patterns | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+
+### Language
+| /skill | Covers | Source |
+|--------|--------|--------|
+| `java-streams` | Streams API, Collectors, Gatherers, parallel streams | [martinfrancois/java-streams-skill](https://github.com/martinfrancois/java-streams-skill) |
+| `java-optional` | Optional patterns, antipatterns, best practices | [martinfrancois/java-optionals-skill](https://github.com/martinfrancois/java-optionals-skill) |
+| `java-code-quality` | Code review, SOLID, clean code, anti-patterns | [piomin/claude-ai-spring-boot](https://github.com/piomin/claude-ai-spring-boot) |
+| `java-design-patterns` | GoF patterns, Java idioms, refactoring | [piomin/claude-ai-spring-boot](https://github.com/piomin/claude-ai-spring-boot) |
+| `java-logging-patterns` | SLF4J, Logback, structured logging, MDC | [piomin/claude-ai-spring-boot](https://github.com/piomin/claude-ai-spring-boot) |
+| `jspecify-nullability` | JSpecify annotations, null-safety contracts | [sivaprasadreddy/sivalabs-agent-skills](https://github.com/sivaprasadreddy/sivalabs-agent-skills) |
+
+### Database
+| /skill | Covers | Source |
+|--------|--------|--------|
+| `jpa-hibernate-patterns` | N+1 prevention, lazy loading, @EntityGraph, batch fetching | [piomin/claude-ai-spring-boot](https://github.com/piomin/claude-ai-spring-boot) |
+| `jooq-best-practices` | jOOQ type-safe queries, code generation, DSL | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+| `postgres-table-design` | PostgreSQL schema design, indexing, partitioning | [timescale/pg-aiguide](https://github.com/timescale/pg-aiguide) |
+| `pgvector-search` | pgvector semantic search, embeddings, similarity | [timescale/pg-aiguide](https://github.com/timescale/pg-aiguide) |
+| `postgres-text-search` | Full-text search, hybrid search, tsvector | [timescale/pg-aiguide](https://github.com/timescale/pg-aiguide) |
+
+### Testing
+| /skill | Covers | Source |
+|--------|--------|--------|
+| `mutation-testing` | pitest, mutation testing, test quality assessment | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+| `coverage-kover-gradle` | Kover Gradle plugin, coverage reports, thresholds | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+| `ralph-coverage` | Ralph coverage analysis, test gap detection | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+| `gradle-test-runner` | Gradle test execution, filtering, parallel runs | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+| `jdb-debugger` | JDB agentic debugging, breakpoints, inspection | [brunoborges/jdb-agentic-debugger](https://github.com/brunoborges/jdb-agentic-debugger) |
+
+### Workflow
+| /skill | Covers | Source |
+|--------|--------|--------|
+| `commit` | Conventional commits, atomic commits, commit messages | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+| `rebase-commit` | Interactive rebase, squash, commit cleanup | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+| `spec` | Specification writing, requirements, acceptance criteria | [jvm-skills/jvm-skills](https://github.com/jvm-skills/jvm-skills) |
+
 ## Token Optimization
 
 ```bash
